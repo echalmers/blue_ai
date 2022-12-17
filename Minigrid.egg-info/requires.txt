@@ -1,6 +1,7 @@
 numpy>=1.18.0
 gymnasium>=0.26
 matplotlib>=3.0
+imageio
 
 [testing]
 pytest>=7.0.1
