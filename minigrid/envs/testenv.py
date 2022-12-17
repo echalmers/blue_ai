@@ -80,15 +80,16 @@ class TestEnv(MiniGridEnv):
         self,
         agent_start_pos=(1, 1),
         agent_start_dir=0,
-        max_steps: Optional[int] = None,
+        termination_reward=1,
         **kwargs
     ):
-    
+
         im = imageio.imread('env1.png')
         width = len(im[0])
         height = len(im)
         self.agent_start_pos = agent_start_pos
         self.agent_start_dir = agent_start_dir
+        self.termination_reward = termination_reward
 
         mission_space = MissionSpace(mission_func=self._gen_mission)
 
@@ -168,3 +169,9 @@ class TestEnv(MiniGridEnv):
         #     self.place_agent()
 
         self.mission = "get to the green goal square"
+
+    def _reward(self) -> float:
+        """
+        Compute the reward to be given upon success
+        """
+        return self.termination_reward

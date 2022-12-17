@@ -122,8 +122,9 @@ class Goal(WorldObj):
         fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
 
 class GoalNoTerminate(WorldObj):
-    def __init__(self):
+    def __init__(self, reward=0.5):
         super().__init__("goalNoTerminate", "blue")
+        self.reward = reward
 
     def can_overlap(self):
         return True

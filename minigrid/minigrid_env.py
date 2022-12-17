@@ -559,8 +559,7 @@ class MiniGridEnv(gym.Env):
                 reward = self._reward()
                 mandatory += 1
             if fwd_cell is not None and fwd_cell.type == "goalNoTerminate":
-                reward = self._reward()
-                reward = reward*0.7
+                reward = fwd_cell.reward
                 optional += 1
                 self.grid.set(fwd_pos[0], fwd_pos[1], None)
             if fwd_cell is not None and fwd_cell.type == "lava":
