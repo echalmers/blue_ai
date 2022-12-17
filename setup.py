@@ -50,7 +50,7 @@ def get_tests_requirements():
 extras = {"testing": get_tests_requirements()}
 
 version = get_version()
-header_count, long_description = get_description()
+# header_count, long_description = get_description()
 
 setup(
     name="Minigrid",
@@ -61,7 +61,7 @@ setup(
     url="https://minigrid.farama.org/",
     license="Apache",
     license_files=("LICENSE",),
-    long_description=long_description,
+    long_description='',  #long_description,
     long_description_content_type="text/markdown",
     keywords=["Memory, Environment, Agent, RL, Gymnasium"],
     python_requires=">=3.7, <3.11",
