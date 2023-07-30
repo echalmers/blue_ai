@@ -103,6 +103,11 @@ class DQN:
         self.update_counter = 0
         self.softmax_temp = softmax_temp
 
+
+    def get_action_values(self, state):
+        with torch.no_grad():
+            return self.policy_net(torch.tensor(state.astype(np.float32), device=self.device))[0]
+
     def select_action(self, state):
         if random.random() < self.epsilon:
             return np.random.choice(self.n_outputs)

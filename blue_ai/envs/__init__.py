@@ -1,1 +1,1 @@
-from blue_ai_envs.envs.transient_goals import TransientGoals
+from blue_ai.envs.transient_goals import TransientGoals

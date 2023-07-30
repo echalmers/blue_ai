@@ -1,12 +1,15 @@
-import argparse
+import pickle
+import os
 
-from blue_ai_envs.envs.transient_goals import TransientGoals
-from blue_ai_envs.agents.dqn import DQN
+from blue_ai.envs.transient_goals import TransientGoals
+from blue_ai.agents.dqn import DQN
 
 import gymnasium as gym
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 from torch import nn
+import pandas as pd
 
 
 
@@ -16,6 +19,7 @@ object_vector_map = {
     OBJECT_TO_IDX['goal']: [0, 1, 0],
     OBJECT_TO_IDX['goalNoTerminate']: [0, 0, 1],
 }
+
 
 class Image2VecWrapper(gym.ObservationWrapper):
     def __init__(self, env):
@@ -38,9 +42,11 @@ class Image2VecWrapper(gym.ObservationWrapper):
         return np.moveaxis(vec, (2, 0, 1), (0, 1, 2))
 
 
-def train(dropout):
+def run_trial(dropout, trial_id=None):
+    trial_id = trial_id or os.getpid()
+
     # instantiate environment
-    env = Image2VecWrapper(gym.make('blue_ai_envs/TransientGoals', tile_size=32, render_mode='none'))
+    env = Image2VecWrapper(TransientGoals(tile_size=32, render_mode='none'))
 
     # a multi-layer network
     multilayer = nn.Sequential(
@@ -77,11 +83,14 @@ def train(dropout):
 
     # run a number of steps in the environment
     N_STEPS = 30000
-    reward_history = np.zeros(N_STEPS)
+    episode_num = 0
+    cumulative_reward = 0
+
+    # setup results dataframe
+    results = pd.DataFrame()
 
     # create the environment
     state, _ = env.reset()
-    print(state)
 
     for step in range(N_STEPS):
         # get & execute action
@@ -95,18 +104,51 @@ def train(dropout):
         if done:
             print(str(dropout) + f' goal reached at step {step}/{N_STEPS}')
             state, _ = env.reset()
+            episode_num += 1
         else:
             state = new_state
 
-        # add reward to the history
-        reward_history[step] = reward
+        # add results to the history
+        transient_goal = reward == env.transient_reward
+        terminal_goal = reward == env.termination_reward
+        cumulative_reward += reward
+        results = pd.concat(
+            (
+                results,
+                pd.DataFrame([
+                    {
+                        'trial_id': trial_id,
+                        'dropout': dropout,
+                        'step': step,
+                        'episode': episode_num,
+                        'reward': reward,
+                        'cumulative_reward': cumulative_reward,
+                        'terminal_goal': terminal_goal,
+                        'transient_goal': transient_goal
+                    }])
+            ),
+            ignore_index=True
+        )
 
-    return reward_history
+    return results, agent
+
+
+def run_trial_and_save(dropout, filename, trial_id=None):
+    results, agent = run_trial(dropout, trial_id)
+    with open(filename, 'wb') as f:
+        pickle.dump(
+            {'results': results, 'agent': agent},
+            f
+        )
+    return results, agent
+
+
+def load_trial(filename):
+    with open(filename, 'rb') as f:
+        data = pickle.load(f)
+    return data['results'], data['agent']
 
 
 if __name__ == '__main__':
-    plt.plot(train(dropout=0).cumsum())
-    plt.plot(train(dropout=50).cumsum())
-    plt.legend(['0% dropout (healthy)', '50% dropout (depressed)'])
-    plt.title('cumulative reward')
-    plt.show()
+    results_healthy, agent_healthy = run_trial_and_save(dropout=0, trial_id=1, filename='0.pkl')
+    results_dep, agent_dep = run_trial_and_save(dropout=66, trial_id=2, filename='66.pkl')

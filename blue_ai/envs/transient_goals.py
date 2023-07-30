@@ -1,7 +1,7 @@
 from minigrid.core.grid import Grid
 from minigrid.core.mission import MissionSpace
 from minigrid.core.world_object import Goal
-from blue_ai_envs.envs.custom_world_objects import GoalNoTerminate
+from blue_ai.envs.custom_world_objects import GoalNoTerminate
 from minigrid.minigrid_env import MiniGridEnv
 from minigrid.core.world_object import Wall
 import numpy as np
@@ -17,16 +17,21 @@ class TransientGoals(MiniGridEnv):
         agent_start_dir=0,
         termination_reward=1,
         transient_reward=0.25,
+        n_transient_goals=3,
+        img_filename='env1.png',
+        transient_locations=None,
         **kwargs
     ):
 
-        self.im = imageio.imread(os.path.join(os.path.dirname(__file__), 'env1.png'))
+        self.im = imageio.imread(os.path.join(os.path.dirname(__file__), img_filename))
         width = len(self.im[0])
         height = len(self.im)
         self.agent_start_pos = agent_start_pos
         self.agent_start_dir = agent_start_dir
         self.termination_reward = termination_reward
         self.transient_reward = transient_reward
+        self.n_transient_goals = n_transient_goals
+        self.transient_locations = transient_locations
 
         mission_space = MissionSpace(mission_func=self._gen_mission)
 
@@ -141,8 +146,6 @@ class TransientGoals(MiniGridEnv):
         hasGoal = False
         hasStart = False
 
-        self.n_obstacles = 3
-
         # Generate the surrounding walls
         for x in range(0, width):
             for y in range(0, height):
@@ -154,25 +157,30 @@ class TransientGoals(MiniGridEnv):
                     hasGoal = True
                 # start 1 - 100
                 # if np.sum(im[y][x]) > 511 and np.sum(im[y][x]) < 1020 and np.sum(im[y][x]) != 594:
-                if np.sum(im[y][x]) > 511 and np.sum(im[y][x]) < 1020:
-                    # print("set start pos")
-                    self.agent_start_pos = (x, y)
-                    hasStart = True
+                # if np.sum(im[y][x]) > 511 and np.sum(im[y][x]) < 1020:
+                #     # print("set start pos")
+                #     self.agent_start_pos = (x, y)
+                #     hasStart = True
                 # if np.sum(im[y][x]) == 594:
                 #     self.put_obj(KeyReward(), x, y)
 
         # Place the agent
         if self.agent_start_pos is not None:
-            self.agent_pos = (1, 1)
-            self.agent_dir = 0
+            self.agent_pos = self.agent_start_pos
+            self.agent_dir = self.agent_start_dir
         else:
             self.place_agent()
 
-        # randomly generate
+        # add transient goals
         self.obstacles = []
-        for i_obst in range(self.n_obstacles):
-            self.obstacles.append(GoalNoTerminate(reward=self.transient_reward))
-            self.place_obj(self.obstacles[i_obst], max_tries=100)
+        if self.transient_locations is not None:
+            for location in self.transient_locations:
+                self.obstacles.append(GoalNoTerminate(reward=self.transient_reward))
+                self.grid.set(location[0], location[1], self.obstacles[0])
+        else:
+            for i_obst in range(self.n_transient_goals):
+                self.obstacles.append(GoalNoTerminate(reward=self.transient_reward))
+                self.place_obj(self.obstacles[i_obst], max_tries=100)
 
         # Place a goal square in the bottom-right corner
         if hasGoal is False:
