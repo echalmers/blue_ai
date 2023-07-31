@@ -6,7 +6,7 @@ import gymnasium as gym
 
 
 from minigrid.minigrid_env import MiniGridEnv
-from blue_ai_envs.envs.transient_goals import TransientGoals
+from blue_ai.envs.transient_goals import TransientGoals
 from minigrid.utils.window import Window
 from minigrid.wrappers import ImgObsWrapper, RGBImgPartialObsWrapper
 

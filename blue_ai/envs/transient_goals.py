@@ -20,6 +20,7 @@ class TransientGoals(MiniGridEnv):
         n_transient_goals=3,
         img_filename='env1.png',
         transient_locations=None,
+        replace_transient_goals=True,
         **kwargs
     ):
 
@@ -32,6 +33,7 @@ class TransientGoals(MiniGridEnv):
         self.transient_reward = transient_reward
         self.n_transient_goals = n_transient_goals
         self.transient_locations = transient_locations
+        self.replace_transient_goals = replace_transient_goals
 
         mission_space = MissionSpace(mission_func=self._gen_mission)
 
@@ -85,6 +87,11 @@ class TransientGoals(MiniGridEnv):
                 reward = fwd_cell.reward
                 optional += 1
                 self.grid.set(fwd_pos[0], fwd_pos[1], None)
+
+                if self.replace_transient_goals:
+                    self.obstacles.append(GoalNoTerminate(reward=self.transient_reward))
+                    self.place_obj(self.obstacles[-1], max_tries=100)
+
             if fwd_cell is not None and fwd_cell.type == "lava":
                 terminated = True
 
@@ -193,7 +200,7 @@ class TransientGoals(MiniGridEnv):
         # else:
         #     self.place_agent()
 
-        self.mission = "get to the green goal square"
+        self.mission = ""
 
     def _reward(self) -> float:
         """

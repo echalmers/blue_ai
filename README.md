@@ -10,4 +10,4 @@ this repository extends minigrid with the following environments:
 ### Installation and Demo
 After cloning, install using `pip install .`
 
-Demo the custom environment using `python manual_control.py --env blue_ai_envs/TransientGoals`
+Demo the custom environment using `python manual_control.py --env blue_ai/TransientGoals`

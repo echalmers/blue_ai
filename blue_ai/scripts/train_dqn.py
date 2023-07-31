@@ -4,6 +4,7 @@ import os
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.agents.dqn import DQN
 
+import torch
 import gymnasium as gym
 import numpy as np
 import matplotlib.pyplot as plt
@@ -42,19 +43,30 @@ class Image2VecWrapper(gym.ObservationWrapper):
         return np.moveaxis(vec, (2, 0, 1), (0, 1, 2))
 
 
-def run_trial(dropout, trial_id=None):
+class LostSpinesLayer(nn.Module):
+    def __init__(self, in_features, sparsity):
+        super().__init__()
+        self.mask = torch.rand(in_features, requires_grad=False) > sparsity
+
+    def forward(self, x):
+        return x * self.mask
+
+
+def run_trial(dropout, trial_id=None, transient_reward=0.25, termination_reward=1.0):
     trial_id = trial_id or os.getpid()
 
     # instantiate environment
-    env = Image2VecWrapper(TransientGoals(tile_size=32, render_mode='none'))
+    env = Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=transient_reward, termination_reward=termination_reward))
 
     # a multi-layer network
     multilayer = nn.Sequential(
         nn.Flatten(1, -1),
         nn.Dropout(p=(dropout / 100)),
+        # LostSpinesLayer(in_features=147, sparsity=dropout),
         nn.Linear(147, 10),
         nn.Tanh(),
         nn.Dropout(p=(dropout / 100)),
+        # LostSpinesLayer(in_features=10, sparsity=dropout),
         nn.Linear(10, 3)
     )
 
@@ -77,12 +89,13 @@ def run_trial(dropout, trial_id=None):
         update_frequency=5,
         lr=0.005,
         sync_frequency=25,
-        gamma=0.85, epsilon=0.05,
+        gamma=0.9, epsilon=0.05,
         batch_size=1500
     )
 
     # run a number of steps in the environment
     N_STEPS = 30000
+    steps_this_episode = 0
     episode_num = 0
     cumulative_reward = 0
 
@@ -93,6 +106,8 @@ def run_trial(dropout, trial_id=None):
     state, _ = env.reset()
 
     for step in range(N_STEPS):
+        steps_this_episode += 1
+
         # get & execute action
         action = agent.select_action(np.expand_dims(state, 0))
         new_state, reward, done, _, _ = env.step(action)
@@ -101,10 +116,11 @@ def run_trial(dropout, trial_id=None):
         agent.update(state, action, reward, new_state, done=False)
 
         # reset environment if done (ideally env would do this itself)
-        if done:
-            print(str(dropout) + f' goal reached at step {step}/{N_STEPS}')
+        if done or steps_this_episode > 500:
+            print(str(dropout) + f' goal reached at step {step}/{N_STEPS}' if done else '***TIMEOUT***')
             state, _ = env.reset()
             episode_num += 1
+            steps_this_episode = 0
         else:
             state = new_state
 
@@ -133,14 +149,23 @@ def run_trial(dropout, trial_id=None):
     return results, agent
 
 
-def run_trial_and_save(dropout, filename, trial_id=None):
-    results, agent = run_trial(dropout, trial_id)
-    with open(filename, 'wb') as f:
-        pickle.dump(
-            {'results': results, 'agent': agent},
-            f
-        )
-    return results, agent
+class TrialRunner:
+
+    def __init__(self, dropout, filename, trial_id=None, termination_reward=1.0, transient_reward=0.25):
+        self.dropout = dropout
+        self.filename = filename
+        self.trial_id = trial_id
+        self.transient_reward = transient_reward
+        self.termination_reward = termination_reward
+
+    def __call__(self):
+        results, agent = run_trial(dropout=self.dropout, trial_id=self.trial_id, termination_reward=self.termination_reward, transient_reward=self.transient_reward)
+        with open(self.filename, 'wb') as f:
+            pickle.dump(
+                {'results': results, 'agent': agent},
+                f
+            )
+        return results, agent
 
 
 def load_trial(filename):
@@ -150,5 +175,44 @@ def load_trial(filename):
 
 
 if __name__ == '__main__':
-    results_healthy, agent_healthy = run_trial_and_save(dropout=0, trial_id=1, filename='0.pkl')
-    results_dep, agent_dep = run_trial_and_save(dropout=66, trial_id=2, filename='66.pkl')
+    import random
+    from multiprocessing import Pool, cpu_count
+
+    trials = []
+    for dropout in [0, 50]:
+        for trial in range(5):
+
+            trials.append(
+                TrialRunner(
+                    dropout=dropout,
+                    filename=os.path.join('.', 'data', f'highterminal_{dropout}_{trial}.pkl'),
+                    trial_id=f'{dropout}-{trial}'
+                )
+            )
+
+            trials.append(
+                TrialRunner(
+                    dropout=dropout,
+                    filename=os.path.join('.', 'data', f'hightransient_{dropout}-{trial}.pkl'),
+                    trial_id=f'{dropout}-{trial}',
+                    transient_reward=1,
+                    termination_reward=0.25
+                )
+            )
+
+    random.shuffle(trials)
+    pool = Pool(cpu_count() - 1)
+    for trial in trials:
+        pool.apply_async(trial)
+    pool.close()
+    pool.join()
+
+    #
+    # results_healthy, agent_healthy = run_trial_and_save(dropout=0, trial_id=1, filename='0.pkl')
+    # results_dep, agent_dep = run_trial_and_save(dropout=50, trial_id=2, filename='50.pkl')
+
+    # plt.plot(results_healthy['cumulative_reward'])
+    # plt.plot(results_dep['cumulative_reward'])
+    # plt.legend(['healthy', 'depressed'])
+    # plt.ylabel('cumulative reward')
+    # plt.show()
