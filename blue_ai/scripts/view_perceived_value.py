@@ -7,13 +7,17 @@ import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-plt.figure()
+plt.subplot(1,2,1)
 env = Image2VecWrapper(TransientGoals(img_filename='env1.png', render_mode='rgb_array'))
 state, _ = env.reset()
 plt.imshow(env.render())
 plt.xticks([])
 plt.yticks([])
-
+plt.subplot(1, 2, 2)
+state, _ = env.reset()
+plt.imshow(env.render())
+plt.xticks([])
+plt.yticks([])
 
 fig, ax = plt.subplots(1, 2)
 
@@ -42,7 +46,21 @@ values = pd.DataFrame(data=values, columns=['dropout (%)', 'action', 'value'])
 print(values)
 
 plt.sca(ax[1])
-sns.barplot(data=values, x='dropout (%)', y='value', hue='action')
+p = sns.barplot(data=values, x='dropout (%)', y='value', hue='action', color='grey', edgecolor=".5")
+p.patches[0].set_facecolor('skyblue')
+p.patches[2].set_facecolor('skyblue')
+p.patches[4].set_facecolor('skyblue')
+p.patches[1].set_facecolor('salmon')
+p.patches[3].set_facecolor('salmon')
+p.patches[5].set_facecolor('salmon')
+plt.legend([],[], frameon=False)
+plt.text(x=p.patches[0].get_center()[0], y=0.2, s='↶', fontsize='x-large', fontweight='heavy', ha='center')
+plt.text(x=p.patches[2].get_center()[0], y=0.2, s='↑', fontsize='x-large', fontweight='heavy', ha='center')
+plt.text(x=p.patches[4].get_center()[0], y=0.2, s='↷', fontsize='x-large', fontweight='heavy', ha='center')
+plt.text(x=p.patches[1].get_center()[0], y=0.2, s='↶', fontsize='x-large', fontweight='heavy', ha='center')
+plt.text(x=p.patches[3].get_center()[0], y=0.2, s='↑', fontsize='x-large', fontweight='heavy', ha='center')
+plt.text(x=p.patches[5].get_center()[0], y=0.2, s='↷', fontsize='x-large', fontweight='heavy', ha='center')
+
 plt.xlabel('')
 plt.ylabel('value perceived by agent')
 plt.xticks(ticks=[0, 1], labels=['0% dropout\nhealthy', '50% dropout\ndepressed'])
