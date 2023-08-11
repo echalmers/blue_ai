@@ -7,6 +7,16 @@ from minigrid.core.world_object import Wall
 import numpy as np
 import imageio
 import os
+from enum import IntEnum
+
+
+class Actions(IntEnum):
+    # Turn left, turn right, move forward
+    left = 0
+    right = 1
+    forward = 2
+    # Done completing task
+    done = 3
 
 
 class TransientGoals(MiniGridEnv):
@@ -20,7 +30,7 @@ class TransientGoals(MiniGridEnv):
         n_transient_goals=3,
         img_filename='env1.png',
         transient_locations=None,
-        replace_transient_goals=True,
+        replace_transient_goals=False,
         **kwargs
     ):
 
@@ -48,6 +58,7 @@ class TransientGoals(MiniGridEnv):
             max_steps=max_steps,
             **kwargs
         )
+        self.actions = Actions
 
     def step(self, action):
         self.step_count += 1
@@ -95,36 +106,9 @@ class TransientGoals(MiniGridEnv):
             if fwd_cell is not None and fwd_cell.type == "lava":
                 terminated = True
 
-        # Pick up an object
-        elif action == self.actions.pickup:
-            if fwd_cell and fwd_cell.can_pickup() and fwd_cell.type == "keyReward":
-                # if self.carrying is None:
-                reward = self._reward()
-                self.carrying = fwd_cell
-                self.carrying.cur_pos = np.array([-1, -1])
-                self.grid.set(fwd_pos[0], fwd_pos[1], None)
-            elif fwd_cell and fwd_cell.can_pickup():
-                # if self.carrying is None:
-                self.carrying = fwd_cell
-                self.carrying.cur_pos = np.array([-1, -1])
-                self.grid.set(fwd_pos[0], fwd_pos[1], None)
-
-
-        # Drop an object
-        elif action == self.actions.drop:
-            if not fwd_cell and self.carrying:
-                self.grid.set(fwd_pos[0], fwd_pos[1], self.carrying)
-                self.carrying.cur_pos = fwd_pos
-                self.carrying = None
-
-        # Toggle/activate an object
-        elif action == self.actions.toggle:
-            if fwd_cell:
-                fwd_cell.toggle(self, fwd_pos)
-
-        # Done action (not used by default)
+        # Done action
         elif action == self.actions.done:
-            pass
+            terminated = True
 
         else:
             raise ValueError(f"Unknown action: {action}")

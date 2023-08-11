@@ -5,11 +5,10 @@ import os
 import numpy as np
 
 
-filename = os.path.join('.', 'data', '0.25_1_0-0.pkl')
-_, agent = load_trial(filename)
+filename = os.path.join('.', 'data', 'highterminal_50_0.pkl')
+_, agent, env = load_trial(filename)
 
-# create the environment
-env = Image2VecWrapper(TransientGoals(tile_size=32, render_mode='human'))
+# setup the environment
 state, _ = env.reset()
 
 steps_this_episode = 0
