@@ -8,12 +8,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 plt.subplot(1,2,1)
-env = Image2VecWrapper(TransientGoals(img_filename='env1.png', render_mode='rgb_array'))
+env = Image2VecWrapper(TransientGoals(img_filename='env1.png', render_mode='rgb_array', transient_locations=[(2, 3), (4, 1), (5, 4)]))
 state, _ = env.reset()
 plt.imshow(env.render())
 plt.xticks([])
 plt.yticks([])
 plt.subplot(1, 2, 2)
+env = Image2VecWrapper(TransientGoals(img_filename='env1.png', render_mode='rgb_array', transient_locations=[(4, 1), (5, 4)], agent_start_pos=(2, 3), agent_start_dir=1))
 state, _ = env.reset()
 plt.imshow(env.render())
 plt.xticks([])
@@ -21,7 +22,7 @@ plt.yticks([])
 
 fig, ax = plt.subplots(1, 2)
 
-env = Image2VecWrapper(TransientGoals(img_filename='env1.png', transient_locations=[(5, 6)], agent_start_pos=(5, 5), agent_start_dir=0, render_mode='rgb_array'))
+env = Image2VecWrapper(TransientGoals(img_filename='env1.png', transient_locations=[(4, 5)], agent_start_pos=(4, 4), agent_start_dir=0, render_mode='rgb_array'))
 state, _ = env.reset()
 ax[0].imshow(env.render())
 ax[0].set_xticks([])
@@ -46,7 +47,7 @@ values = pd.DataFrame(data=values, columns=['dropout (%)', 'action', 'value'])
 print(values)
 
 plt.sca(ax[1])
-p = sns.barplot(data=values, x='dropout (%)', y='value', hue='action', color='grey', edgecolor=".5")
+p = sns.barplot(data=values, x='dropout (%)', y='value', hue='action', edgecolor=".5", hue_order=['turn left', 'forward', 'turn right'])
 p.patches[0].set_facecolor('skyblue')
 p.patches[2].set_facecolor('skyblue')
 p.patches[4].set_facecolor('skyblue')

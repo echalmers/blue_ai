@@ -5,8 +5,9 @@ import os
 import numpy as np
 
 
-filename = os.path.join('.', 'data', 'highterminal_50_0.pkl')
+filename = os.path.join('.', 'data', 'highterminal_0_0_.pkl')
 _, agent, env = load_trial(filename)
+env.env.render_mode = 'human'
 
 # setup the environment
 state, _ = env.reset()
