@@ -64,7 +64,7 @@ plt.text(x=p.patches[5].get_center()[0], y=0.2, s='↷', fontsize='x-large', fon
 
 plt.xlabel('')
 plt.ylabel('value perceived by agent')
-plt.xticks(ticks=[0, 1], labels=['0% dropout\nhealthy', '50% dropout\ndepressed'])
+plt.xticks(ticks=[0, 1], labels=['0% dropout\n(healthy)', '50% dropout\n(depressed)'])
 
-fig.suptitle('anhedonia')
+fig.suptitle('anhedonia or fear generalization')
 plt.show()
