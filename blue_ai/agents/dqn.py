@@ -7,6 +7,13 @@ import torch
 from torch import nn
 
 
+def softmax_selection(values, t=1.0):
+    values = np.array(values)
+    e_x = np.exp(values / t - np.max(values / t))  # Subtracting the maximum value for numerical stability (thanks ChatGPT!)
+    p = e_x / e_x.sum(axis=0)
+    return np.random.choice(len(values), p=p)
+
+
 class TransitionMemory:
     """
     A memory of state transitions
@@ -145,3 +152,26 @@ class DQN:
             self.optimizer.step()
 
             return loss.item()
+
+    def update_single(self, state, action, reward, new_state, done):
+
+        state = torch.tensor(np.expand_dims(state, 0).astype(np.float32), device=self.device)
+        new_state = torch.tensor(np.expand_dims(new_state, 0).astype(np.float32), device=self.device)
+
+        # get policy network's current value estimates
+        state_action_values = self.policy_net(state)
+
+        # get target value estimates, based on actual rewards and value net's predictions of next-state value
+        with torch.no_grad():
+            new_state_value, _ = self.value_net(new_state).max(1)
+        target_action_value = reward + self.gamma * new_state_value * (1 - done)
+        target_values = state_action_values.clone().detach()
+        target_values[np.arange(target_values.shape[0]), action] = target_action_value
+
+        # optimize loss
+        loss = self.loss_fn(state_action_values, target_values)
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        return loss.item()

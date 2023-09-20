@@ -40,6 +40,8 @@ for dropout in [0, 50]:
     state, _ = env.reset()
 
     weight_changes = []
+    losses = []
+    grads = []
     steps_this_episode = 0
     for step in range(15000):
 
@@ -49,11 +51,24 @@ for dropout in [0, 50]:
 
         # use this experience to update agent
         old_weights = np.concatenate((agent.policy_net[2].weight.detach().flatten().numpy(), agent.policy_net[5].weight.detach().flatten().numpy()))
+        # if reward > 0:
+            # loss = agent.update_single(state, action, reward, new_state, done=False)
+            # losses.append(loss)
+
         agent.update(state, action, reward, new_state, done=False)
+
         new_weights = np.concatenate((agent.policy_net[2].weight.detach().flatten().numpy(), agent.policy_net[5].weight.detach().flatten().numpy()))
         changes = new_weights - old_weights
         if not all(new_weights == old_weights):
             weight_changes.append(np.mean(np.abs(changes)))
+
+        if agent.policy_net[2].weight.grad is not None:
+            grads.append(
+                np.mean(np.abs(
+                    np.concatenate((agent.policy_net[2].weight.grad.detach().flatten().numpy(),
+                                    agent.policy_net[5].weight.grad.detach().flatten().numpy()))
+                ))
+            )
 
         # reset environment if done (ideally env would do this itself)
         if done or steps_this_episode > 500:
@@ -62,10 +77,12 @@ for dropout in [0, 50]:
         else:
             state = new_state
 
+    ax = plt.subplot(2,1,1)
     plt.plot(weight_changes)
-    print(weight_changes)
+    plt.subplot(2,1,2, sharex=ax)
+    plt.plot(losses)
 
 plt.legend(['healthy', 'depressed'])
-plt.ylabel('mean absolute weight change')
+# plt.ylabel('mean absolute weight change')
 plt.xlabel('step #')
 plt.show()
