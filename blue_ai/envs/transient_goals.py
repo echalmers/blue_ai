@@ -2,6 +2,7 @@ from minigrid.core.grid import Grid
 from minigrid.core.mission import MissionSpace
 from minigrid.core.world_object import Goal
 from blue_ai.envs.custom_world_objects import GoalNoTerminate
+from blue_ai.envs.custom_world_objects import ObstacleNoTerminate
 from minigrid.minigrid_env import MiniGridEnv
 from minigrid.core.world_object import Wall
 import numpy as np
@@ -31,6 +32,10 @@ class TransientGoals(MiniGridEnv):
         img_filename='env1.png',
         transient_locations=None,
         replace_transient_goals=False,
+        transient_penalty=-0.25,
+        n_transient_obstacles=3,
+        transient_obstacles=None,
+        replace_transient_obstacles=False,
         **kwargs
     ):
 
@@ -44,6 +49,10 @@ class TransientGoals(MiniGridEnv):
         self.n_transient_goals = n_transient_goals
         self.transient_locations = transient_locations
         self.replace_transient_goals = replace_transient_goals
+        self.transient_penalty = transient_penalty
+        self.n_transient_obstacles = n_transient_obstacles
+        self.transient_obstacles = transient_obstacles
+        self.replace_transient_obstacles = replace_transient_goals
 
         mission_space = MissionSpace(mission_func=self._gen_mission)
 
@@ -102,6 +111,13 @@ class TransientGoals(MiniGridEnv):
                 if self.replace_transient_goals:
                     self.obstacles.append(GoalNoTerminate(reward=self.transient_reward))
                     self.place_obj(self.obstacles[-1], max_tries=100)
+            if fwd_cell is not None and fwd_cell.type == "obstacleNoTerminate":
+                reward = fwd_cell.reward
+                self.grid.set(fwd_pos[0], fwd_pos[1], None)
+
+                if self.replace_transient_obstacles:
+                    self.penalties.append(ObstacleNoTerminate(reward=self.transient_penalty))
+                    self.place_obj(self.penalties[-1], max_tries=100)
 
             if fwd_cell is not None and fwd_cell.type == "lava":
                 terminated = True
@@ -172,6 +188,17 @@ class TransientGoals(MiniGridEnv):
             for i_obst in range(self.n_transient_goals):
                 self.obstacles.append(GoalNoTerminate(reward=self.transient_reward))
                 self.place_obj(self.obstacles[i_obst], max_tries=100)
+
+        # add transient obstacles
+        self.penalties = []
+        if self.transient_obstacles is not None:
+            for location in self.transient_obstacles:
+                self.penalties.append(ObstacleNoTerminate(reward=self.transient_penalty))
+                self.grid.set(location[0], location[1], self.penalties[0])
+        else:
+            for i_obst in range(self.n_transient_obstacles):
+                self.penalties.append(ObstacleNoTerminate(reward=self.transient_penalty))
+                self.place_obj(self.penalties[i_obst], max_tries=100)
 
         # Place a goal square in the bottom-right corner
         if hasGoal is False:

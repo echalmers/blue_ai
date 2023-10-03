@@ -14,5 +14,18 @@ class GoalNoTerminate(WorldObj):
     def render(self, img):
         fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
 
+class ObstacleNoTerminate(WorldObj):
+    def __init__(self, reward=-0.5):
+        super().__init__("obstacleNoTerminate", "red")
+        self.reward = reward
+
+    def can_overlap(self):
+        return True
+
+    def render(self, img):
+        fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
+
+
 
 OBJECT_TO_IDX['goalNoTerminate'] = len(OBJECT_TO_IDX)
+OBJECT_TO_IDX['obstacleNoTerminate'] = len(OBJECT_TO_IDX)
