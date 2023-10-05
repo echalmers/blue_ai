@@ -7,6 +7,11 @@ import torch
 from torch import nn
 
 
+def softmax(x, temperature=1.0):
+    e_x = np.exp(x / temperature - (x / temperature).max())  # Subtracting the maximum value for numerical stability (thanks ChatGPT!)
+    return e_x / e_x.sum(axis=0)
+
+
 class TransitionMemory:
     """
     A memory of state transitions
@@ -53,9 +58,7 @@ class TransitionMemory:
 
 class DQN:
     """
-    A deep Q network that optionally implements the rule from our paper:
-     Brain-Inspired modulation of reward-prediction error improves reinforcement learning adaptation to environmental
-     change
+    A deep Q network
     """
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -63,7 +66,7 @@ class DQN:
     def __init__(self, network: nn.Sequential, input_shape, batch_size, replay_buffer_size, update_frequency=10,
                  lr=1e-3, sync_frequency=5,
                  gamma=0.95, epsilon=0.1,
-                 softmax_temp=1.0,
+                 softmax_temp=0.05,
                  seed=42):
         """
         :param network: deep network, of type torch.nn.Sequential
@@ -75,7 +78,7 @@ class DQN:
         :param sync_frequency: number of steps to run between syncing the policy and value networks
         :param gamma: discount factor
         :param epsilon: parameter for e-greedy action sampling
-        :param softmax_temp: softmax temperature for use in new RL rule
+        :param softmax_temp: softmax temperature for softmax action selection (if specified, epsilon will be ignored)
         :param seed: random seed
         """
         torch.manual_seed(seed)
@@ -109,11 +112,19 @@ class DQN:
             return self.policy_net(torch.tensor(state.astype(np.float32), device=self.device))[0]
 
     def select_action(self, state):
-        if random.random() < self.epsilon:
+
+        if self.softmax_temp is None and random.random() < self.epsilon:
             return np.random.choice(self.n_outputs)
+
         with torch.no_grad():
-            max_q, index = self.policy_net(torch.tensor(state.astype(np.float32), device=self.device))[0].max(0)
-        return index.item()
+            values = self.policy_net(torch.tensor(state.astype(np.float32), device=self.device))[0]
+
+        if self.softmax_temp is None:
+            max_q, index = values.max(0)
+            return index.item()
+
+        else:
+             return np.random.choice(len(values), p=softmax(values, self.softmax_temp).numpy())
 
     def update(self, state, action, reward, new_state, done):
 
