@@ -84,14 +84,14 @@ def run_trial(dropout, trial_id=None, transient_reward=0.25, termination_reward=
     outputs = 4 if allow_done_action else 3
     multilayer = nn.Sequential(
         nn.Flatten(1, -1),
-        nn.Dropout(p=(dropout / 100)),
-        # LostSpinesLayer(in_features=147, p=dropout / 100),
-        nn.Linear(147, 10),
-        # ConnectionDropout(147, 10, p=dropout / 100),
+        # nn.Dropout(p=(dropout / 100)),
+        # nn.Linear(75, 10),
+        ConnectionDropout(75, 3, p=dropout / 100),
         nn.Tanh(),
-        nn.Dropout(p=(dropout / 100)),
+        # nn.Dropout(p=(dropout / 100)),
         # StaticDropout(in_features=10, p=dropout / 100),
-        nn.Linear(10, outputs)
+        # nn.Linear(10, outputs)
+        ConnectionDropout(3, outputs, p=dropout / 100)
     )
 
     # a convolutional network - seems to give different behavior
@@ -108,7 +108,7 @@ def run_trial(dropout, trial_id=None, transient_reward=0.25, termination_reward=
 
     agent = DQN(
         network=multilayer,  # supply either network here
-        input_shape=(3, 7, 7),
+        input_shape=(3, 5, 5),
         replay_buffer_size=10000,
         update_frequency=5,
         lr=0.005,
@@ -215,8 +215,8 @@ if __name__ == '__main__':
     import random
 
     for dropout in [0, 50]:
-        for trial in range(10):
-            for allow_done in [True, False]:
+        for trial in range(1):
+            for allow_done in [False]:
 
                 TrialRunner(
                     dropout=dropout,
@@ -225,11 +225,11 @@ if __name__ == '__main__':
                     allow_done_action=allow_done
                 )()
 
-                TrialRunner(
-                    dropout=dropout,
-                    filename=os.path.join('.', 'data', f'hightransient_{dropout}_{trial}_{"done_allowed" if allow_done else ""}.pkl'),
-                    trial_id=f'{dropout}-{trial}',
-                    transient_reward=1,
-                    termination_reward=0.25,
-                    allow_done_action=False,
-                )()
+                # TrialRunner(
+                #     dropout=dropout,
+                #     filename=os.path.join('.', 'data', f'hightransient_{dropout}_{trial}_{"done_allowed" if allow_done else ""}.pkl'),
+                #     trial_id=f'{dropout}-{trial}',
+                #     transient_reward=1,
+                #     termination_reward=0.25,
+                #     allow_done_action=False,
+                # )()

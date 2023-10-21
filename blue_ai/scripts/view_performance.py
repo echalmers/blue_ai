@@ -1,4 +1,4 @@
-from blue_ai.scripts.train_dqn import load_trial, Image2VecWrapper, TransientGoals
+from blue_ai.scripts.train_dqn import load_trial, Image2VecWrapper, TransientGoals, ConnectionDropout
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -37,7 +37,6 @@ def aggregate_goals(type, data):
 
 if __name__ == '__main__':
     high_terminal_results = load_dataset('highterminal*_.pkl')
-    high_transient_results = load_dataset('hightransient*_.pkl')
 
     # plot cumulative reward
     fig = plt.figure()
@@ -80,6 +79,12 @@ if __name__ == '__main__':
     plt.xticks(ticks=[0, 1], labels=['0% dropout\n(healthy)', '50% dropout\n(depressed)'])
 
     #goals reached per episode compared with high transient goals
+    try:
+        high_transient_results = load_dataset('hightransient*_.pkl')
+    except:
+        plt.show()
+        exit()
+
     plt.figure()
     p = plt.subplot(1,2,1)
     high_terminal_goals = aggregate_goals(type='episode', data=high_terminal_results)
