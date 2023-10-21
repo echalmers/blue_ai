@@ -1,4 +1,4 @@
-from blue_ai.scripts.train_dqn import load_trial, Image2VecWrapper, TransientGoals
+from blue_ai.scripts.train_dqn import load_trial, Image2VecWrapper, TransientGoals, ConnectionDropout
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -19,32 +19,37 @@ def load_dataset(filename_pattern):
 
 def aggregate_goals(type, data):
     if type == 'total':
-        goals = data.groupby(by=['trial_id', 'dropout'])[['terminal_goal', 'transient_goal']].sum().reset_index()
+        goals = data.groupby(by=['trial_id', 'dropout'])[['terminal_goal', 'transient_goal', 'lava']].sum().reset_index()
     elif type == 'episode':
-        goals = data.groupby(by=['trial_id', 'episode', 'dropout'])[['terminal_goal', 'transient_goal']].sum().reset_index()
-        goals = goals.groupby(by=['trial_id', 'dropout'])[['terminal_goal', 'transient_goal']].mean().reset_index()
+        goals = data.groupby(by=['trial_id', 'episode', 'dropout'])[['terminal_goal', 'transient_goal', 'lava']].sum().reset_index()
+        goals = goals.groupby(by=['trial_id', 'dropout'])[['terminal_goal', 'transient_goal', 'lava']].mean().reset_index()
 
     goals_transient = goals[['trial_id', 'dropout', 'transient_goal']]
     goals_transient['goal type'] = 'optional'
     goals_transient.rename({'transient_goal': 'count'}, axis=1, inplace=True)
+
     goals_terminal = goals[['trial_id', 'dropout', 'terminal_goal']]
     goals_terminal['goal type'] = 'required'
     goals_terminal.rename({'terminal_goal': 'count'}, axis=1, inplace=True)
-    goals = pd.concat((goals_terminal, goals_transient), ignore_index=True)
+
+    lava = goals[['trial_id', 'dropout', 'lava']]
+    lava['goal type'] = 'lava'
+    lava.rename({'lava': 'count'}, axis=1, inplace=True)
+
+    goals = pd.concat((goals_terminal, goals_transient, lava), ignore_index=True)
     goals['goal type'].replace({'terminal': 'required'}, inplace=True)
     return goals
 
 
 if __name__ == '__main__':
-    high_terminal_results = load_dataset('highterminal*_.pkl')
-    high_transient_results = load_dataset('hightransient*_.pkl')
+    high_terminal_results = load_dataset('highterminal*.pkl')
 
     # plot cumulative reward
     fig = plt.figure()
     fig.suptitle('depressed agent shows simpler, less-rewarding behavior')
 
     plt.subplot(1,2,1)
-    sns.lineplot(data=high_terminal_results, x='step', y='cumulative_reward', hue='dropout', n_boot=100, palette=['skyblue', 'salmon'])
+    sns.lineplot(data=high_terminal_results, x='step', y='cumulative_reward', hue='dropout', n_boot=100, palette=['skyblue', 'salmon', 'red'])
     plt.ylabel('cumulative reward obtained')
     plt.xlabel('time (steps in environment)')
     plt.xticks([0, 30000])
@@ -72,7 +77,7 @@ if __name__ == '__main__':
     plt.subplot(1,2,2)
     high_terminal_goals = aggregate_goals(type='episode', data=high_terminal_results)
     sns.barplot(data=high_terminal_goals, x='dropout', y='count', hue='goal type', n_boot=100,
-                palette=['tab:green', 'tab:blue'])
+                palette=['tab:green', 'tab:blue', 'tab:red'])
     plt.ylabel('goals obtained per episode')
     # sns.move_legend(plt.gca(), "upper left")
     plt.xlabel('type of goal')
@@ -80,6 +85,12 @@ if __name__ == '__main__':
     plt.xticks(ticks=[0, 1], labels=['0% dropout\n(healthy)', '50% dropout\n(depressed)'])
 
     #goals reached per episode compared with high transient goals
+    try:
+        high_transient_results = load_dataset('hightransient*.pkl')
+    except:
+        plt.show()
+        exit()
+
     plt.figure()
     p = plt.subplot(1,2,1)
     high_terminal_goals = aggregate_goals(type='episode', data=high_terminal_results)

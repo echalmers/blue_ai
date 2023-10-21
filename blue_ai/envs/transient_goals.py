@@ -32,8 +32,8 @@ class TransientGoals(MiniGridEnv):
         img_filename='env1.png',
         transient_locations=None,
         replace_transient_goals=False,
-        transient_penalty=-0.25,
-        n_transient_obstacles=3,
+        transient_penalty=-1,
+        n_transient_obstacles=1,
         transient_obstacles=None,
         replace_transient_obstacles=False,
         **kwargs
@@ -65,6 +65,7 @@ class TransientGoals(MiniGridEnv):
             # Set this to True for maximum speed
             see_through_walls=True,
             max_steps=max_steps,
+            agent_view_size=5,
             **kwargs
         )
         self.actions = Actions

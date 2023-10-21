@@ -16,9 +16,10 @@ import pandas as pd
 
 from minigrid.core.constants import OBJECT_TO_IDX
 object_vector_map = {
-    OBJECT_TO_IDX['wall']: [1, 0, 0],
-    OBJECT_TO_IDX['goal']: [0, 1, 0],
-    OBJECT_TO_IDX['goalNoTerminate']: [0, 0, 1],
+    OBJECT_TO_IDX['wall']: [1, 0, 0, 0],
+    OBJECT_TO_IDX['goal']: [0, 1, 0, 0],
+    OBJECT_TO_IDX['goalNoTerminate']: [0, 0, 1, 0],
+    OBJECT_TO_IDX['obstacleNoTerminate']: [0, 0, 0, 1],
 }
 
 
@@ -36,10 +37,10 @@ class Image2VecWrapper(gym.ObservationWrapper):
         :return: a new vector as described above
         """
         image = observation['image']
-        vec = np.zeros(image.shape)
+        vec = np.zeros((image.shape[0], image.shape[1], 4))
         for i in range(image.shape[0]):
             for j in range(image.shape[1]):
-                vec[i, j, :] = object_vector_map.get(image[i, j, 0], [0, 0, 0])
+                vec[i, j, :] = object_vector_map.get(image[i, j, 0], [0, 0, 0, 0])
         return np.moveaxis(vec, (2, 0, 1), (0, 1, 2))
 
 
@@ -79,36 +80,38 @@ def run_trial(dropout, trial_id=None, transient_reward=0.25, termination_reward=
 
     # instantiate environment
     env = Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=transient_reward, termination_reward=termination_reward))
+    outputs = 4 if allow_done_action else 3
 
     # a multi-layer network
-    outputs = 4 if allow_done_action else 3
     multilayer = nn.Sequential(
         nn.Flatten(1, -1),
-        nn.Dropout(p=(dropout / 100)),
+        # nn.Dropout(p=(dropout / 100)),
         # LostSpinesLayer(in_features=147, p=dropout / 100),
-        nn.Linear(147, 10),
-        # ConnectionDropout(147, 10, p=dropout / 100),
+        # nn.Linear(100, 10),
+        ConnectionDropout(100, 10, p=dropout / 100),
         nn.Tanh(),
-        nn.Dropout(p=(dropout / 100)),
+        # nn.Dropout(p=(dropout / 100)),
         # StaticDropout(in_features=10, p=dropout / 100),
-        nn.Linear(10, outputs)
+        # nn.Linear(10, outputs)
+        ConnectionDropout(10, outputs, p=dropout / 100)
     )
 
     # a convolutional network - seems to give different behavior
-    # conv = nn.Sequential(
-    #     nn.Conv2d(3, 2, kernel_size=3, stride=1, padding=1),
-    #     nn.ReLU(inplace=True),
-    #     nn.BatchNorm2d(2),
-    #     # nn.AvgPool2d(kernel_size=3, stride=2),
-    #     # nn.MaxPool2d(kernel_size=3, stride=2),
-    #     nn.Flatten(1, -1),
-    #     nn.Dropout(p=(dropout / 100)),
-    #     nn.Linear(98, 3),
-    # )
+    conv = nn.Sequential(
+        nn.Dropout(p=(dropout / 100)),
+        nn.Conv2d(4, 2, kernel_size=3, stride=1, padding=1),
+        # nn.ReLU(inplace=True),
+        # nn.BatchNorm2d(2),
+        nn.AvgPool2d(kernel_size=3, stride=2),
+        # nn.MaxPool2d(kernel_size=3, stride=2),
+        nn.Flatten(1, -1),
+        nn.Dropout(p=(dropout / 100)),
+        nn.Linear(8, outputs),
+    )
 
     agent = DQN(
         network=multilayer,  # supply either network here
-        input_shape=(3, 7, 7),
+        input_shape=(4, 5, 5),
         replay_buffer_size=10000,
         update_frequency=5,
         lr=0.005,
@@ -117,7 +120,7 @@ def run_trial(dropout, trial_id=None, transient_reward=0.25, termination_reward=
         batch_size=1500
     )
 
-    # run a number of steps in the environment
+    # initialize variables for steps/episodes/reward
     steps_this_episode = 0
     episode_num = 0
     cumulative_reward = 0
@@ -153,6 +156,7 @@ def run_trial(dropout, trial_id=None, transient_reward=0.25, termination_reward=
         # add results to the history
         transient_goal = reward == env.transient_reward
         terminal_goal = reward == env.termination_reward
+        lava = reward < 0
         cumulative_reward += reward
         results = pd.concat(
             (
@@ -166,7 +170,8 @@ def run_trial(dropout, trial_id=None, transient_reward=0.25, termination_reward=
                         'reward': reward,
                         'cumulative_reward': cumulative_reward,
                         'terminal_goal': terminal_goal,
-                        'transient_goal': transient_goal
+                        'transient_goal': transient_goal,
+                        'lava': lava,
                     }])
             ),
             ignore_index=True
@@ -177,7 +182,7 @@ def run_trial(dropout, trial_id=None, transient_reward=0.25, termination_reward=
 
 class TrialRunner:
 
-    def __init__(self, dropout, filename, trial_id=None, termination_reward=1.0, transient_reward=0.25, allow_done_action=True, callbacks=None, steps=30000):
+    def __init__(self, dropout, filename, trial_id=None, termination_reward=1.0, transient_reward=0.25, allow_done_action=False, callbacks=None, steps=30000):
         self.dropout = dropout
         self.filename = filename
         self.trial_id = trial_id
@@ -215,21 +220,18 @@ if __name__ == '__main__':
     import random
 
     for dropout in [0, 50]:
-        for trial in range(10):
-            for allow_done in [True, False]:
+        for trial in range(1):
 
-                TrialRunner(
-                    dropout=dropout,
-                    filename=os.path.join('.', 'data', f'highterminal_{dropout}_{trial}_{"done_allowed" if allow_done else ""}.pkl'),
-                    trial_id=f'{dropout}-{trial}',
-                    allow_done_action=allow_done
-                )()
+            TrialRunner(
+                dropout=dropout,
+                filename=os.path.join('.', 'data', f'highterminal_{dropout}_{trial}.pkl'),
+                trial_id=f'{dropout}-{trial}',
+            )()
 
-                TrialRunner(
-                    dropout=dropout,
-                    filename=os.path.join('.', 'data', f'hightransient_{dropout}_{trial}_{"done_allowed" if allow_done else ""}.pkl'),
-                    trial_id=f'{dropout}-{trial}',
-                    transient_reward=1,
-                    termination_reward=0.25,
-                    allow_done_action=False,
-                )()
+            # TrialRunner(
+            #     dropout=dropout,
+            #     filename=os.path.join('.', 'data', f'hightransient_{dropout}_{trial}.pkl'),
+            #     trial_id=f'{dropout}-{trial}',
+            #     transient_reward=1,
+            #     termination_reward=0.25,
+            # )()
