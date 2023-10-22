@@ -71,7 +71,8 @@ class DQN:
                  lr=1e-3, sync_frequency=5,
                  gamma=0.95, epsilon=0.1,
                  softmax_temp=1.0,
-                 seed=42):
+                 seed=42,
+                 weight_decay=0):
         """
         :param network: deep network, of type torch.nn.Sequential
         :param input_shape: shape of input vectors for the network
@@ -94,7 +95,8 @@ class DQN:
 
         # instantiate loss and optimizer
         self.loss_fn = torch.nn.MSELoss()
-        self.optimizer = torch.optim.Adam(self.policy_net.parameters(), lr=lr)
+        self.lr = lr
+        self.optimizer = torch.optim.Adam(self.policy_net.parameters(), lr=lr, weight_decay=weight_decay)
 
         # instantiate experience memory
         self.transition_memory = TransitionMemory(capacity=replay_buffer_size, state_size=input_shape, device=self.device)

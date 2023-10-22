@@ -36,6 +36,7 @@ def aggregate_goals(type, data):
 
 
 if __name__ == '__main__':
+    n_boot = 10
     high_terminal_results = load_dataset('highterminal*_.pkl')
 
     # plot cumulative reward
@@ -43,7 +44,7 @@ if __name__ == '__main__':
     fig.suptitle('depressed agent shows simpler, less-rewarding behavior')
 
     plt.subplot(1,2,1)
-    sns.lineplot(data=high_terminal_results, x='step', y='cumulative_reward', hue='dropout', n_boot=100, palette=['skyblue', 'salmon'])
+    sns.lineplot(data=high_terminal_results, x='step', y='cumulative_reward', hue='dropout', n_boot=n_boot, palette=['skyblue', 'salmon'])
     plt.ylabel('cumulative reward obtained')
     plt.xlabel('time (steps in environment)')
     plt.xticks([0, 30000])
@@ -70,7 +71,7 @@ if __name__ == '__main__':
     # goals reached per episode
     plt.subplot(1,2,2)
     high_terminal_goals = aggregate_goals(type='episode', data=high_terminal_results)
-    sns.barplot(data=high_terminal_goals, x='dropout', y='count', hue='goal type', n_boot=100,
+    sns.barplot(data=high_terminal_goals, x='dropout', y='count', hue='goal type', n_boot=n_boot,
                 palette=['tab:green', 'tab:blue'])
     plt.ylabel('goals obtained per episode')
     # sns.move_legend(plt.gca(), "upper left")
@@ -88,7 +89,7 @@ if __name__ == '__main__':
     plt.figure()
     p = plt.subplot(1,2,1)
     high_terminal_goals = aggregate_goals(type='episode', data=high_terminal_results)
-    sns.barplot(data=high_terminal_goals, x='dropout', y='count', hue='goal type', n_boot=100, palette=['tab:green', 'tab:blue'])
+    sns.barplot(data=high_terminal_goals, x='dropout', y='count', hue='goal type', n_boot=n_boot, palette=['tab:green', 'tab:blue'])
     plt.ylabel('goals obtained per episode')
     plt.title('normal reward scheme')
     # sns.move_legend(p, "upper left")
@@ -98,7 +99,7 @@ if __name__ == '__main__':
 
     ax = plt.subplot(1,2,2, sharey=p)
     high_transient_goals = aggregate_goals(type='episode', data=high_transient_results)
-    sns.barplot(data=high_transient_goals, x='dropout', y='count', hue='goal type', n_boot=100, palette=['tab:green', 'tab:blue'])
+    sns.barplot(data=high_transient_goals, x='dropout', y='count', hue='goal type', n_boot=n_boot, palette=['tab:green', 'tab:blue'])
     plt.title('high reward for optional goals')
     plt.ylabel('')
     ax.yaxis.tick_right()
