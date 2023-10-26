@@ -112,7 +112,7 @@ def run_trial(dropout, trial_id=None, transient_reward=0.25, termination_reward=
         input_shape=(4, 5, 5),
         replay_buffer_size=10000,
         update_frequency=5,
-        lr=0.005,
+        lr=0.01,
         sync_frequency=25,
         gamma=0.9, epsilon=0.05,
         batch_size=1500,
@@ -130,11 +130,17 @@ def run_trial(dropout, trial_id=None, transient_reward=0.25, termination_reward=
     # create the environment
     state, _ = env.reset()
 
+    # track agent positions to see if they get stuck
+    pos = {}
+
     for step in range(steps):
         steps_this_episode += 1
 
         for callback in callbacks:
             callback(agent=agent, step=step)
+
+        # record position
+        pos[env.unwrapped.agent_pos] = pos.get(env.unwrapped.agent_pos, 0) + 1
 
         # get & execute action
         action = agent.select_action(np.expand_dims(state, 0))
@@ -155,6 +161,8 @@ def run_trial(dropout, trial_id=None, transient_reward=0.25, termination_reward=
         # add results to the history
         transient_goal = reward == env.unwrapped.transient_reward
         terminal_goal = reward == env.unwrapped.termination_reward
+        lava = reward < 0
+        stuck = max(pos.values()) > 2000
         cumulative_reward += reward
         results = pd.concat(
             (
@@ -168,7 +176,9 @@ def run_trial(dropout, trial_id=None, transient_reward=0.25, termination_reward=
                         'reward': reward,
                         'cumulative_reward': cumulative_reward,
                         'terminal_goal': terminal_goal,
-                        'transient_goal': transient_goal
+                        'transient_goal': transient_goal,
+                        'lava': lava,
+                        'stuck': stuck,
                     }])
             ),
             ignore_index=True
@@ -179,7 +189,7 @@ def run_trial(dropout, trial_id=None, transient_reward=0.25, termination_reward=
 
 class TrialRunner:
 
-    def __init__(self, dropout, filename, trial_id=None, termination_reward=1.0, transient_reward=0.25, allow_done_action=True, callbacks=None, steps=30000):
+    def __init__(self, dropout, filename, trial_id=None, termination_reward=1.0, transient_reward=0.25, allow_done_action=False, callbacks=None, steps=30000):
         self.dropout = dropout
         self.filename = filename
         self.trial_id = trial_id
@@ -217,21 +227,18 @@ if __name__ == '__main__':
     import random
 
     for dropout in [0, 50]:
-        for trial in range(10):
-            for allow_done in [False]:
+        for trial in range(1):
 
-                TrialRunner(
-                    dropout=dropout,
-                    filename=os.path.join('.', 'data', f'highterminal_{dropout}_{trial}_{"done_allowed" if allow_done else ""}.pkl'),
-                    trial_id=f'{dropout}-{trial}',
-                    allow_done_action=allow_done
-                )()
+            # TrialRunner(
+            #     dropout=dropout,
+            #     filename=os.path.join('.', 'data', f'highterminal_{dropout}_{trial}.pkl'),
+            #     trial_id=f'{dropout}-{trial}',
+            # )()
 
-                TrialRunner(
-                    dropout=dropout,
-                    filename=os.path.join('.', 'data', f'hightransient_{dropout}_{trial}_{"done_allowed" if allow_done else ""}.pkl'),
-                    trial_id=f'{dropout}-{trial}',
-                    transient_reward=1,
-                    termination_reward=0.25,
-                    allow_done_action=False,
-                )()
+            TrialRunner(
+                dropout=dropout,
+                filename=os.path.join('.', 'data', f'hightransient_{dropout}_{trial}.pkl'),
+                trial_id=f'{dropout}-{trial}',
+                transient_reward=1,
+                termination_reward=0.25,
+            )()
