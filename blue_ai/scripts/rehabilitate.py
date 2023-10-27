@@ -1,39 +1,41 @@
-from blue_ai.scripts.train_dqn import TrialRunner, load_trial, Image2VecWrapper, StaticDropout
+from blue_ai.scripts.train_agents import run_trial, save_trial
+from blue_ai.agents.agent_classes import HealthyAgent
+from blue_ai.envs.transient_goals import TransientGoals
+from blue_ai.envs.custom_wrappers import Image2VecWrapper
 import torch
 import os
 import matplotlib.pyplot as plt
-
-dropout = []
-
-def set_dropout(**kwargs):
-    current_p = None
-    # for net in [kwargs['agent'].value_net, kwargs['agent'].policy_net]:
-    #     for layer in net:
-    #         if isinstance(layer, torch.nn.modules.dropout.Dropout) or isinstance(layer, StaticDropout):
-    #             if kwargs['step'] == 15000:
-    #                 layer.p = 0.5
-    #             elif kwargs['step'] == 25000:
-    #                 layer.p = 0
-    #             current_p = layer.p
-    if kwargs['step'] == 20000:
-        kwargs['agent'].optimizer = torch.optim.Adam(kwargs['agent'].policy_net.parameters(), lr=kwargs['agent'].lr, weight_decay=5e-3)
-    elif kwargs['step'] == 30000:
-        kwargs['agent'].optimizer = torch.optim.Adam(kwargs['agent'].policy_net.parameters(), lr=kwargs['agent'].lr, weight_decay=0)
-    dropout.append(current_p)
+import pandas as pd
+import numpy as np
 
 
-for trial in range(10):
-    results, agent = TrialRunner(
-        dropout=0,
-        filename=os.path.join('.', 'data', f'rehabilitate_{trial}.pkl'),
-        trial_id=1,
-        allow_done_action=False,
-        callbacks=[set_dropout],
-        steps=50000
-    )()
+for rep in range(1):
+    results1, agent, env = run_trial(
+        agent=HealthyAgent(),
+        env=Image2VecWrapper(TransientGoals(render_mode='none')),
+        steps=20_000,
+    )
 
-plt.figure()
-ax = plt.gca()
-ax.plot(results['cumulative_reward'])
+    agent.optimizer = torch.optim.Adam(agent.policy_net.parameters(), lr=agent.lr, weight_decay=5e-3)
 
+    results2, agent, env = run_trial(
+        agent=agent,
+        env=env,
+        steps=20_000,
+    )
+
+    agent.optimizer = torch.optim.Adam(agent.policy_net.parameters(), lr=agent.lr, weight_decay=0)
+
+    results3, agent, env = run_trial(
+        agent=agent,
+        env=env,
+        steps=20_000,
+    )
+
+    results = pd.concat([results1, results2, results3], ignore_index=True)
+    results['cumulative_reward'] = results['reward'].cumsum()
+    results['step'] = np.arange(results.shape[0])
+    save_trial(results, agent, env, filename=os.path.join('.', 'data', f'rehabilitate_{rep}.pkl'))
+
+plt.plot(results['cumulative_reward'])
 plt.show()

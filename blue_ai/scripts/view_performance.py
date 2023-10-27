@@ -6,33 +6,36 @@ import glob
 import os
 
 
-def load_dataset(filename_pattern):
+def load_dataset(filename_patterns):
+    if isinstance(filename_patterns, str):
+        filename_patterns = [filename_patterns]
     results = []
-    for filename in glob.glob(os.path.join('.', 'data', filename_pattern)):
-        print(filename)
-        this_result, _, _ = load_trial(filename)
-        results.append(this_result)
+    for pattern in filename_patterns:
+        for filename in glob.glob(os.path.join('.', 'data', pattern)):
+            print(filename)
+            this_result, agent, _ = load_trial(filename)
+            this_result['agent'] = agent.display_name
+            results.append(this_result)
     results = pd.concat(results, ignore_index=True)
-    results['dropout'].replace({0: '0% (healthy)', 50: '50% (depressed)'}, inplace=True)
     return results
 
 
 def aggregate_goals(type, data, include_lava=True):
     if type == 'total':
-        goals = data.groupby(by=['trial_id', 'dropout'])[['terminal_goal', 'transient_goal', 'lava', 'stuck']].sum().reset_index()
+        goals = data.groupby(by=['trial_id', 'agent'])[['terminal_goal', 'transient_goal', 'lava', 'stuck']].sum().reset_index()
     elif type == 'episode':
-        goals = data.groupby(by=['trial_id', 'episode', 'dropout'])[['terminal_goal', 'transient_goal', 'lava', 'stuck']].sum().reset_index()
-        goals = goals.groupby(by=['trial_id', 'dropout'])[['terminal_goal', 'transient_goal', 'lava', 'stuck']].mean().reset_index()
+        goals = data.groupby(by=['trial_id', 'episode', 'agent'])[['terminal_goal', 'transient_goal', 'lava', 'stuck']].sum().reset_index()
+        goals = goals.groupby(by=['trial_id', 'agent'])[['terminal_goal', 'transient_goal', 'lava', 'stuck']].mean().reset_index()
 
-    goals_transient = goals[['trial_id', 'dropout', 'transient_goal']]
+    goals_transient = goals[['trial_id', 'agent', 'transient_goal']]
     goals_transient['event'] = 'optional goal found'
     goals_transient.rename({'transient_goal': 'count'}, axis=1, inplace=True)
 
-    goals_terminal = goals[['trial_id', 'dropout', 'terminal_goal']]
+    goals_terminal = goals[['trial_id', 'agent', 'terminal_goal']]
     goals_terminal['event'] = 'required goal found'
     goals_terminal.rename({'terminal_goal': 'count'}, axis=1, inplace=True)
 
-    lava = goals[['trial_id', 'dropout', 'lava']]
+    lava = goals[['trial_id', 'agent', 'lava']]
     lava['event'] = 'lava found'
     lava.rename({'lava': 'count'}, axis=1, inplace=True)
 
@@ -49,14 +52,14 @@ def aggregate_goals(type, data, include_lava=True):
 if __name__ == '__main__':
     n_boot = 1
 
-    high_terminal_results = load_dataset('highterminal*.pkl')
+    high_terminal_results = load_dataset(['HealthyAgent_?.pkl', 'SpineLossDepression_?.pkl', 'ContextDependentLearningRate_?.pkl'])
 
     # plot cumulative reward
     fig = plt.figure()
     fig.suptitle('depressed agent shows simpler, less-rewarding behavior')
 
     plt.subplot(1,2,1)
-    sns.lineplot(data=high_terminal_results, x='step', y='cumulative_reward', hue='dropout', n_boot=n_boot, palette=['skyblue', 'salmon', 'red'])
+    sns.lineplot(data=high_terminal_results, x='step', y='cumulative_reward', hue='agent', n_boot=n_boot, palette=['skyblue', 'salmon', 'red'])
     plt.ylabel('cumulative reward obtained')
     plt.xlabel('time (steps in environment)')
     plt.xticks([0, 30000])
@@ -83,12 +86,12 @@ if __name__ == '__main__':
     # goals reached per episode
     plt.subplot(1,2,2)
     high_terminal_goals = aggregate_goals(type='episode', data=high_terminal_results)
-    sns.barplot(data=high_terminal_goals, x='dropout', y='count', hue='event', n_boot=n_boot,
+    sns.barplot(data=high_terminal_goals, x='agent', y='count', hue='event', n_boot=n_boot,
                 palette=['tab:green', 'tab:blue', 'tab:red'])
     plt.ylabel('goals obtained per episode')
     # sns.move_legend(plt.gca(), "upper left")
     plt.xlabel('type of goal')
     plt.xlabel('')
-    plt.xticks(ticks=[0, 1], labels=['0% dropout\n(healthy)', '50% dropout\n(depressed)'])
+    # plt.xticks(ticks=[0, 1], labels=['0% dropout\n(healthy)', '50% dropout\n(depressed)'])
 
     plt.show()

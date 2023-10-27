@@ -7,6 +7,8 @@ import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from blue_ai.agents.agent_classes import HealthyAgent, SpineLossDepression
+
 plt.subplot(1,2,1)
 env = Image2VecWrapper(TransientGoals(img_filename='env1.png', render_mode='rgb_array', transient_locations=[(2, 3), (4, 1), (5, 4)]))
 state, _ = env.reset()
@@ -29,25 +31,25 @@ ax[0].set_xticks([])
 ax[0].set_yticks([])
 
 values = []
-for trial in range(10):
-    results_healthy, agent_healthy, _ = load_trial(os.path.join('.', 'data', f'highterminal_0_{trial}_.pkl'))
-    results_dep, agent_dep, _ = load_trial(os.path.join('.', 'data', f'highterminal_50_{trial}_.pkl'))
+for trial in range(1):
+    results_healthy, agent_healthy, _ = load_trial(os.path.join('.', 'data', f'HealthyAgent_{trial}.pkl'))
+    results_dep, agent_dep, _ = load_trial(os.path.join('.', 'data', f'SpineLossDepression_{trial}.pkl'))
 
     healthy_values = agent_healthy.get_action_values(np.expand_dims(state, 0)).numpy()
-    values.append([0, 'turn left', healthy_values[0]])
-    values.append([0, 'turn right', healthy_values[1]])
-    values.append([0, 'forward', healthy_values[2]])
+    values.append([HealthyAgent.display_name, 'turn left', healthy_values[0]])
+    values.append([HealthyAgent.display_name, 'turn right', healthy_values[1]])
+    values.append([HealthyAgent.display_name, 'forward', healthy_values[2]])
 
     dep_values = agent_dep.get_action_values(np.expand_dims(state, 0)).numpy()
-    values.append([50, 'turn left', dep_values[0]])
-    values.append([50, 'turn right', dep_values[1]])
-    values.append([50, 'forward', dep_values[2]])
+    values.append([SpineLossDepression.display_name, 'turn left', dep_values[0]])
+    values.append([SpineLossDepression.display_name, 'turn right', dep_values[1]])
+    values.append([SpineLossDepression.display_name, 'forward', dep_values[2]])
 
-values = pd.DataFrame(data=values, columns=['dropout (%)', 'action', 'value'])
+values = pd.DataFrame(data=values, columns=['agent', 'action', 'value'])
 print(values)
 
 plt.sca(ax[1])
-p = sns.barplot(data=values, x='dropout (%)', y='value', hue='action', edgecolor=".5", hue_order=['turn left', 'forward', 'turn right'])
+p = sns.barplot(data=values, x='agent', y='value', hue='action', edgecolor=".5", hue_order=['turn left', 'forward', 'turn right'])
 p.patches[0].set_facecolor('skyblue')
 p.patches[2].set_facecolor('skyblue')
 p.patches[4].set_facecolor('skyblue')
@@ -64,7 +66,7 @@ plt.text(x=p.patches[5].get_center()[0], y=0.2, s='↷', fontsize='x-large', fon
 
 plt.xlabel('')
 plt.ylabel('value perceived by agent')
-plt.xticks(ticks=[0, 1], labels=['0% dropout\n(healthy)', '50% dropout\n(depressed)'])
+# plt.xticks(ticks=[0, 1], labels=['0% dropout\n(healthy)', '50% dropout\n(depressed)'])
 
 fig.suptitle('anhedonia or fear generalization')
 plt.show()
