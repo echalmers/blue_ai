@@ -1,23 +1,10 @@
-from blue_ai.scripts.train_dqn import load_trial, Image2VecWrapper, TransientGoals, ConnectionDropout
+from blue_ai.scripts.train_agents import load_trial
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import glob
 import os
-
-
-def load_dataset(filename_patterns):
-    if isinstance(filename_patterns, str):
-        filename_patterns = [filename_patterns]
-    results = []
-    for pattern in filename_patterns:
-        for filename in glob.glob(os.path.join('.', 'data', pattern)):
-            print(filename)
-            this_result, agent, _ = load_trial(filename)
-            this_result['agent'] = agent.display_name
-            results.append(this_result)
-    results = pd.concat(results, ignore_index=True)
-    return results
+from train_agents import load_dataset
 
 
 def aggregate_goals(type, data, include_lava=True):

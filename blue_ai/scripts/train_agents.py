@@ -1,6 +1,8 @@
 import pandas as pd
 import pickle
 import numpy as np
+import glob
+import os
 
 
 def run_trial(agent, env, steps=30000, trial_id=''):
@@ -78,6 +80,19 @@ def load_trial(filename):
     return data['results'], data['agent'], data['env']
 
 
+def load_dataset(filename_patterns):
+    if isinstance(filename_patterns, str):
+        filename_patterns = [filename_patterns]
+    results = []
+    for pattern in filename_patterns:
+        for filename in glob.glob(os.path.join('.', 'data', pattern)):
+            print(filename)
+            this_result, agent, _ = load_trial(filename)
+            this_result['agent'] = agent.display_name
+            results.append(this_result)
+    results = pd.concat(results, ignore_index=True)
+    return results
+
 
 if __name__ == '__main__':
 
@@ -88,11 +103,11 @@ if __name__ == '__main__':
 
     trial_num = 0
 
-    for rep in range(1):
+    for rep in range(10):
 
         for env in [
             Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=0.25, termination_reward=1)),
-            Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),
+            # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),  # swapped reward structure
         ]:
 
             for agent in [HealthyAgent(), SpineLossDepression(), ContextDependentLearningRate()]:
