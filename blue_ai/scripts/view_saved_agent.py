@@ -1,11 +1,11 @@
-from blue_ai.scripts.train_dqn import load_trial, Image2VecWrapper
+from blue_ai.scripts.train_agents import load_trial
 from blue_ai.envs.transient_goals import TransientGoals
 
 import os
 import numpy as np
 
 
-filename = os.path.join('.', 'data', 'highterminal_0_0.pkl')
+filename = os.path.join('.', 'data', 'SpineLossDepression_0.pkl')
 _, agent, env = load_trial(filename)
 env.env.render_mode = 'human'
 
