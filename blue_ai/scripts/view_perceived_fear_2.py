@@ -50,7 +50,7 @@ all_values['value'] = all_values['value'] / all_values['initial']
 print(all_values)
 
 plt.sca(ax[1])
-sns.lineplot(all_values, x='position', y='value', hue='agent')
+sns.lineplot(all_values, x='position', y='value', hue='agent', n_boot=10)
 plt.xticks([1, 2, 3, 4])
 plt.ylabel('perceived value of moving forward\n(normalized to position 1 value)')
 

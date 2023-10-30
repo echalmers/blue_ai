@@ -50,9 +50,9 @@ all_values = pd.DataFrame(data=all_values, columns=['agent', 'position', 'value'
 initial_final_values['estimated discount factor'] = (initial_final_values[2] / initial_final_values[5]) ** 0.25
 
 plt.sca(ax[1])
-sns.lineplot(all_values, x='position', y='value', hue='agent')
+sns.lineplot(all_values, x='position', y='value', hue='agent', n_boot=10)
 
 plt.sca(ax[2])
-sns.barplot(initial_final_values, x='agent', y='estimated discount factor')
+sns.barplot(initial_final_values, x='agent', y='estimated discount factor', n_boot=10)
 
 plt.show()
