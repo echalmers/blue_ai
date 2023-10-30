@@ -224,16 +224,15 @@ def load_trial(filename):
 
 
 if __name__ == '__main__':
-    import random
 
     for dropout in [0, 50]:
         for trial in range(1):
 
-            # TrialRunner(
-            #     dropout=dropout,
-            #     filename=os.path.join('.', 'data', f'highterminal_{dropout}_{trial}.pkl'),
-            #     trial_id=f'{dropout}-{trial}',
-            # )()
+            TrialRunner(
+                dropout=dropout,
+                filename=os.path.join('.', 'data', f'highterminal_{dropout}_{trial}.pkl'),
+                trial_id=f'{dropout}-{trial}',
+            )()
 
             TrialRunner(
                 dropout=dropout,

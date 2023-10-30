@@ -1,7 +1,7 @@
 from torch import nn
 from blue_ai.agents.dqn import DQN
 from blue_ai.envs.transient_goals import TransientGoals
-from train_dqn import Image2VecWrapper
+from blue_ai.envs.custom_wrappers import Image2VecWrapper
 import matplotlib.pyplot as plt
 import numpy as np
 
