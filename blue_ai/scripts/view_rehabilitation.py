@@ -6,6 +6,8 @@ import numpy as np
 
 data = load_dataset('rehabilitate_*.pkl')
 
+avg_results = data.groupby('step')['cumulative_reward'].mean().reset_index()  # avg_results is a dataframe that has the average cumulative reward curve
+
 plt.figure()
 ax = plt.gca()
 x = data['step'].unique()
