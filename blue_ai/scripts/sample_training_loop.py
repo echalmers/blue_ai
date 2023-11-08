@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import pandas as pd
+from time import time as epochtime
 
 
 rewards_table = pd.DataFrame(columns=['step', 'cumulative reward'])
@@ -54,7 +55,8 @@ for _ in range(10):
 
     # training loop
     for step in range(STEPS):
-        print(step)
+        if step % (STEPS/10) == 0:
+             print(f"\r{step}", end="")
 
         # get & execute action
         action = agent.select_action(np.expand_dims(state, 0))
@@ -73,6 +75,6 @@ for _ in range(10):
     goals_table = pd.concat((goals_table, pd.DataFrame({'goal type': ['required', 'optional', 'lava'], 'count': [num_required_goals, num_optional_goals, num_lava]})))
 
 sns.lineplot(rewards_table, x='step', y='cumulative reward', n_boot=5)
-plt.figure()
+plt.savefig(f"data\\plot-{int(epochtime())}.png")
 sns.barplot(goals_table, x='goal type', y='count', n_boot=5)
-plt.show()
+plt.savefig(f"data\\graph-{int(epochtime())}.png")
