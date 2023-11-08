@@ -12,7 +12,7 @@ from time import time as epochtime
 rewards_table = pd.DataFrame(columns=['step', 'cumulative reward'])
 goals_table = pd.DataFrame(columns=['goal type', 'count'])
 
-for _ in range(10):
+for _ in range(1):
     # a multi-layer network
     multilayer = nn.Sequential(
         nn.Flatten(1, -1),
@@ -46,7 +46,7 @@ for _ in range(10):
     state, _ = env.reset()
 
     # set up an array and other variables to store results
-    STEPS = 30_000
+    STEPS = 1_000
     rewards = np.zeros(STEPS)
     num_required_goals = 0
     num_optional_goals = 0
