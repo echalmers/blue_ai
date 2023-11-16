@@ -96,7 +96,7 @@ def load_dataset(filename_patterns):
 
 if __name__ == '__main__':
 
-    from blue_ai.agents.agent_classes import HealthyAgent, SpineLossDepression, ContextDependentLearningRate
+    from blue_ai.agents.agent_classes import HealthyAgent, SpineLossDepression, ContextDependentLearningRate, HighDiscountRate, ScaledTargets, ShiftedTargets
     from blue_ai.envs.transient_goals import TransientGoals
     from blue_ai.envs.custom_wrappers import Image2VecWrapper
     import os
@@ -110,7 +110,7 @@ if __name__ == '__main__':
             # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),  # swapped reward structure
         ]:
 
-            for agent in [HealthyAgent(), SpineLossDepression(), ContextDependentLearningRate()]:
+            for agent in [HealthyAgent(), SpineLossDepression(), ContextDependentLearningRate(), HighDiscountRate(), ScaledTargets(), ShiftedTargets()]:
                 results, agent, env = run_trial(agent, env, steps=30_000, trial_id=trial_num)
                 save_trial(
                     results, agent, env,
