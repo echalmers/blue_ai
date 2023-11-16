@@ -46,6 +46,7 @@ for _ in range(10):
 
     # set up an array and other variables to store results
     STEPS = 30_000
+    steps_this_episode = 0
     rewards = np.zeros(STEPS)
     num_required_goals = 0
     num_optional_goals = 0
@@ -55,6 +56,7 @@ for _ in range(10):
     # training loop
     for step in range(STEPS):
         print(step)
+        steps_this_episode += 1
 
         # get & execute action
         action = agent.select_action(np.expand_dims(state, 0))
@@ -68,6 +70,13 @@ for _ in range(10):
 
         # update the agent
         agent.update(state=state, new_state=new_state, reward=reward, done=done, action=action)
+
+        # reset the environment if goal reached
+        if done or steps_this_episode > 500:
+            state, _ = env.reset()
+            steps_this_episode = 0
+        else:
+            state = new_state
 
     rewards_table = pd.concat((rewards_table, pd.DataFrame({'step': np.arange(STEPS), 'cumulative reward': rewards.cumsum()})), ignore_index=True)
     goals_table = pd.concat((goals_table, pd.DataFrame({'goal type': ['required', 'optional', 'lava'], 'count': [num_required_goals, num_optional_goals, num_lava]})))
