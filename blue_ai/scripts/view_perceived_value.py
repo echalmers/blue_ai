@@ -26,7 +26,7 @@ plt.yticks([])
 
 fig, ax = plt.subplots(1, 2)
 
-env = Image2VecWrapper(TransientGoals(img_filename='env1.png', transient_locations=[(4, 5)], agent_start_pos=(4, 4), agent_start_dir=0, render_mode='rgb_array'))
+env = Image2VecWrapper(TransientGoals(img_filename='env1.png', n_transient_obstacles=0, transient_locations=[(4, 5)], agent_start_pos=(4, 4), agent_start_dir=0, render_mode='rgb_array'))
 state, _ = env.reset()
 ax[0].imshow(env.render())
 ax[0].set_xticks([])
@@ -34,8 +34,8 @@ ax[0].set_yticks([])
 
 all_values = []
 
-for trial in range(1):
-    for dataset in [f'HealthyAgent_{trial}.pkl', f'SpineLossDepression_{trial}.pkl', f'ContextDependentLearningRate_{trial}.pkl']:
+for trial in range(20):
+    for dataset in [f'HealthyAgent_{trial}.pkl', f'SpineLossDepression_{trial}.pkl', f'ContextDependentLearningRate_{trial}.pkl', f'HighDiscountRate_{trial}.pkl', f'ScaledTargets_{trial}.pkl']:
         results, agent, _ = load_trial(os.path.join('.', 'data', dataset))
 
         this_agent_values = agent.get_action_values(np.expand_dims(state, 0)).numpy()

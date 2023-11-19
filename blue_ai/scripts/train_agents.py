@@ -103,14 +103,21 @@ if __name__ == '__main__':
 
     trial_num = 0
 
-    for rep in range(10):
+    for rep in range(20):
 
         for env in [
             Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=0.25, termination_reward=1)),
             # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),  # swapped reward structure
         ]:
 
-            for agent in [HealthyAgent(), SpineLossDepression(), ContextDependentLearningRate(), HighDiscountRate(), ScaledTargets(), ShiftedTargets()]:
+            for agent in [
+                HealthyAgent(),
+                SpineLossDepression(),
+                ContextDependentLearningRate(),
+                HighDiscountRate(),
+                ScaledTargets(),
+                ShiftedTargets()
+            ]:
                 results, agent, env = run_trial(agent, env, steps=30_000, trial_id=trial_num)
                 save_trial(
                     results, agent, env,

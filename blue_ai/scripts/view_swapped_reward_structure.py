@@ -6,8 +6,8 @@ from blue_ai.agents.agent_classes import HealthyAgent, SpineLossDepression
 
 n_boot = 1
 
-high_terminal_results = load_dataset(['HealthyAgent_?.pkl', 'SpineLossDepression_?.pkl'])
-high_transient_results = load_dataset(['HealthyAgent_swapped_?.pkl', 'SpineLossDepression_swapped_?.pkl'])
+high_terminal_results = load_dataset(['HealthyAgent_[!s]*.pkl', 'SpineLossDepression_[!s]*.pkl', 'HighDiscountRate_[!s]*.pkl', 'ScaledTargets_[!s]*.pkl'])
+high_transient_results = load_dataset(['HealthyAgent_swapped_*.pkl', 'SpineLossDepression_swapped_*.pkl', 'HighDiscountRate_swapped*.pkl', 'ScaledTargets_swapped*.pkl'])
 
 plt.figure()
 p = plt.subplot(1,2,1)

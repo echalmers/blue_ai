@@ -39,14 +39,14 @@ def aggregate_goals(type, data, include_lava=True):
 if __name__ == '__main__':
     n_boot = 1
 
-    high_terminal_results = load_dataset(['HealthyAgent_?.pkl', 'SpineLossDepression_?.pkl', 'ContextDependentLearningRate_?.pkl'])
+    high_terminal_results = load_dataset(['HealthyAgent_[!s]*.pkl', 'SpineLossDepression_[!s]*.pkl', 'ContextDependentLearningRate_[!s]*.pkl', 'HighDiscountRate_[!s]*.pkl', 'ScaledTargets_[!s]*.pkl'])
 
     # plot cumulative reward
     fig = plt.figure()
     fig.suptitle('depressed agent shows simpler, less-rewarding behavior')
 
     plt.subplot(1,2,1)
-    sns.lineplot(data=high_terminal_results, x='step', y='cumulative_reward', hue='agent', n_boot=n_boot, palette=['skyblue', 'salmon', 'red'])
+    sns.lineplot(data=high_terminal_results, x='step', y='cumulative_reward', hue='agent', n_boot=n_boot)  #, palette=['skyblue', 'salmon', 'red'])
     plt.ylabel('cumulative reward obtained')
     plt.xlabel('time (steps in environment)')
     plt.xticks([0, 30000])

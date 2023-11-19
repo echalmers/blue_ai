@@ -30,11 +30,13 @@ for agent_pos in range(1, 5):
     # plt.figure()
     # plt.imshow(env.render())
 
-    for trial in range(10):
+    for trial in range(20):
         for dataset in [
             f'HealthyAgent_{trial}.pkl',
             f'SpineLossDepression_{trial}.pkl',
-            f'ContextDependentLearningRate_{trial}.pkl'
+            f'ContextDependentLearningRate_{trial}.pkl',
+            # f'HighDiscountRate_{trial}.pkl',
+            # f'ShiftedTargets_{trial}.pkl',
         ]:
             results, agent, _ = load_trial(os.path.join('.', 'data', dataset))
 

@@ -58,7 +58,7 @@ class SpineLossDepression(BaseAgent):
     display_name = 'simulated spine loss'
 
     def __init__(self):
-        super().__init__(weight_decay=2.5e-3)
+        super().__init__(weight_decay=3e-3)
 
 
 class ContextDependentLearningRate(BaseAgent):
@@ -81,7 +81,7 @@ class HighDiscountRate(BaseAgent):
     display_name = 'high discounting'
 
     def __init__(self):
-        super().__init__(weight_decay=0, gamma=0.1)
+        super().__init__(weight_decay=0, gamma=0.5)
 
 
 class ScaledTargets(BaseAgent):
