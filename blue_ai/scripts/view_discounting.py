@@ -21,6 +21,10 @@ state, _ = env.reset()
 ax[0].imshow(env.render())
 ax[0].set_xticks([])
 ax[0].set_yticks([])
+ax[0].text(x=65, y=215, s='1', c='white', size='xx-large')
+ax[0].text(x=100, y=215, s='2', c='white', size='xx-large')
+ax[0].text(x=130, y=215, s='3', c='white', size='xx-large')
+ax[0].text(x=165, y=215, s='4', c='white', size='xx-large')
 
 all_values = []
 initial_final_values = pd.DataFrame()
@@ -32,27 +36,33 @@ for agent_pos in range(2, 6):
     # plt.figure()
     # plt.imshow(env.render())
 
-    for trial in range(10):
-        for dataset in [f'HealthyAgent_{trial}.pkl', f'SpineLossDepression_{trial}.pkl', f'ContextDependentLearningRate_{trial}.pkl', f'HighDiscountRate_{trial}.pkl']:
+    for trial in range(20):
+        for dataset in [
+            f'HealthyAgent_{trial}.pkl',
+            f'SpineLossDepression_{trial}.pkl',
+            # f'ContextDependentLearningRate_{trial}.pkl',
+            # f'HighDiscountRate_{trial}.pkl'
+        ]:
             results, agent, _ = load_trial(os.path.join('.', 'data', dataset))
 
             if agent_pos == 2:
                 initial_final_values = pd.concat((initial_final_values, pd.DataFrame([{'trial': trial, 'agent': agent.display_name}])), ignore_index=True)
 
             this_agent_value = agent.get_action_values(np.expand_dims(state, 0)).numpy().max()
-            all_values.append([agent.display_name, agent_pos, this_agent_value])
+            all_values.append([trial, agent.display_name, agent_pos, this_agent_value])
 
-            if agent_pos in (2, 5):
-                initial_final_values.loc[(initial_final_values['trial'] == trial) & (initial_final_values['agent'] == agent.display_name), agent_pos] = this_agent_value
-
-
-all_values = pd.DataFrame(data=all_values, columns=['agent', 'position', 'value'])
-initial_final_values['estimated discount factor'] = (initial_final_values[2] / initial_final_values[5]) ** 0.25
+all_values = pd.DataFrame(data=all_values, columns=['trial', 'agent', 'position', 'value'])
+final_values = all_values.groupby(['trial', 'agent']).last()['value'].reset_index().rename({'value': 'final'}, axis=1)
+all_values = pd.merge(all_values, final_values, on=['trial', 'agent'])
+all_values['normalized_value'] = all_values['value'] / all_values['final']
+all_values['estimated discount factor'] = all_values['normalized_value'] ** (1 / (5 - all_values['position']))
 
 plt.sca(ax[1])
-sns.lineplot(all_values, x='position', y='value', hue='agent', n_boot=10)
+sns.lineplot(all_values, x='position', y='normalized_value', hue='agent', n_boot=10, palette=['skyblue', 'salmon'])
+plt.ylabel('perceived value of moving forward\n(normalized to position 4 value)')
+plt.xticks([1, 2, 3, 4])
 
 plt.sca(ax[2])
-sns.barplot(initial_final_values, x='agent', y='estimated discount factor', n_boot=10)
+sns.barplot(all_values[all_values['position'] != 5], x='agent', y='estimated discount factor', n_boot=10, palette=['skyblue', 'salmon'])
 
 plt.show()

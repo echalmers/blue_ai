@@ -47,7 +47,7 @@ class BaseAgent(DQN):
 
 class HealthyAgent(BaseAgent):
 
-    display_name = 'control'
+    display_name = 'healthy'
 
     def __init__(self):
         super().__init__(weight_decay=0)

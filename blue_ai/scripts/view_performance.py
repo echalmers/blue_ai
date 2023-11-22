@@ -39,7 +39,13 @@ def aggregate_goals(type, data, include_lava=True):
 if __name__ == '__main__':
     n_boot = 1
 
-    high_terminal_results = load_dataset(['HealthyAgent_[!s]*.pkl', 'SpineLossDepression_[!s]*.pkl', 'ContextDependentLearningRate_[!s]*.pkl', 'HighDiscountRate_[!s]*.pkl', 'ScaledTargets_[!s]*.pkl'])
+    high_terminal_results = load_dataset([
+        'HealthyAgent_[!s]*.pkl',
+        'SpineLossDepression_[!s]*.pkl',
+        # 'ContextDependentLearningRate_[!s]*.pkl',
+        # 'HighDiscountRate_[!s]*.pkl',
+        # 'ScaledTargets_[!s]*.pkl'
+    ])
 
     # plot cumulative reward
     fig = plt.figure()

@@ -35,7 +35,13 @@ ax[0].set_yticks([])
 all_values = []
 
 for trial in range(20):
-    for dataset in [f'HealthyAgent_{trial}.pkl', f'SpineLossDepression_{trial}.pkl', f'ContextDependentLearningRate_{trial}.pkl', f'HighDiscountRate_{trial}.pkl', f'ScaledTargets_{trial}.pkl']:
+    for dataset in [
+        f'HealthyAgent_{trial}.pkl',
+        f'SpineLossDepression_{trial}.pkl',
+        # f'ContextDependentLearningRate_{trial}.pkl',
+        # f'HighDiscountRate_{trial}.pkl',
+        # f'ScaledTargets_{trial}.pkl'
+    ]:
         results, agent, _ = load_trial(os.path.join('.', 'data', dataset))
 
         this_agent_values = agent.get_action_values(np.expand_dims(state, 0)).numpy()
@@ -48,19 +54,19 @@ print(all_values)
 
 plt.sca(ax[1])
 p = sns.barplot(data=all_values, x='agent', y='value', hue='action', edgecolor=".5", hue_order=['turn left', 'forward', 'turn right'])
-# p.patches[0].set_facecolor('skyblue')
-# p.patches[2].set_facecolor('skyblue')
-# p.patches[4].set_facecolor('skyblue')
-# p.patches[1].set_facecolor('salmon')
-# p.patches[3].set_facecolor('salmon')
-# p.patches[5].set_facecolor('salmon')
-# plt.legend([],[], frameon=False)
-# plt.text(x=p.patches[0].get_center()[0], y=0.2, s='↶', fontsize='x-large', fontweight='heavy', ha='center')
-# plt.text(x=p.patches[2].get_center()[0], y=0.2, s='↑', fontsize='x-large', fontweight='heavy', ha='center')
-# plt.text(x=p.patches[4].get_center()[0], y=0.2, s='↷', fontsize='x-large', fontweight='heavy', ha='center')
-# plt.text(x=p.patches[1].get_center()[0], y=0.2, s='↶', fontsize='x-large', fontweight='heavy', ha='center')
-# plt.text(x=p.patches[3].get_center()[0], y=0.2, s='↑', fontsize='x-large', fontweight='heavy', ha='center')
-# plt.text(x=p.patches[5].get_center()[0], y=0.2, s='↷', fontsize='x-large', fontweight='heavy', ha='center')
+p.patches[0].set_facecolor('skyblue')
+p.patches[2].set_facecolor('skyblue')
+p.patches[4].set_facecolor('skyblue')
+p.patches[1].set_facecolor('salmon')
+p.patches[3].set_facecolor('salmon')
+p.patches[5].set_facecolor('salmon')
+plt.legend([],[], frameon=False)
+plt.text(x=p.patches[0].get_center()[0], y=0.1, s='↶', fontsize='x-large', fontweight='heavy', ha='center')
+plt.text(x=p.patches[2].get_center()[0], y=0.1, s='↑', fontsize='x-large', fontweight='heavy', ha='center')
+plt.text(x=p.patches[4].get_center()[0], y=0.1, s='↷', fontsize='x-large', fontweight='heavy', ha='center')
+plt.text(x=p.patches[1].get_center()[0], y=0.1, s='↶', fontsize='x-large', fontweight='heavy', ha='center')
+plt.text(x=p.patches[3].get_center()[0], y=0.1, s='↑', fontsize='x-large', fontweight='heavy', ha='center')
+plt.text(x=p.patches[5].get_center()[0], y=0.1, s='↷', fontsize='x-large', fontweight='heavy', ha='center')
 
 plt.xlabel('')
 plt.ylabel('value perceived by agent')
