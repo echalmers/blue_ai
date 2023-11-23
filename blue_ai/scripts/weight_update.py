@@ -1,68 +1,99 @@
+import pandas as pd
+
 from blue_ai.scripts.train_agents import save_trial
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.agents.agent_classes import HealthyAgent, SpineLossDepression
 from torch import nn
 import matplotlib.pyplot as plt
+import pickle
+import seaborn as sns
 
 import os
 import numpy as np
 
 
-for agent in [HealthyAgent(), SpineLossDepression()]:
+def plot_results():
+    with open(os.path.join('.', 'data', 'weight_updates.pkl'), 'rb') as f:
+        df = pd.DataFrame(pickle.load(f))
+    print(df)
 
-    env = Image2VecWrapper(TransientGoals(render_mode='none'))
-    state, _ = env.reset()
+    df['cumulative reward'] = df.groupby(['rep', 'agent'])['reward'].transform(pd.Series.cumsum)
+    df['smoothed loss'] = df.groupby(['rep', 'agent'])['loss'].transform(lambda x: x.rolling(8).mean())
+    df['weight change per unit loss'] = df['weight_change'] / df['smoothed loss']
 
-    steps = 15000
-    steps_this_episode = 0
-    weight_changes = []
-    losses = []
-    reward_accumulator = 0
-    reward_history = []
-    change_per_loss = []
+    ax = plt.subplot(2, 1, 1)
+    sns.lineplot(data=df, x='step', y='cumulative reward', hue='agent', n_boot=1)
+    plt.xlabel('')
 
-    for step in range(steps):
-        steps_this_episode += 1
+    plt.subplot(2, 1, 2, sharex=ax)
+    sns.lineplot(data=df, x='step', y='weight_change', hue='agent', n_boot=1)
+    plt.ylabel('weight change per unit loss')
+    plt.legend([], [], frameon=False)
 
-        # get & execute action
-        action = agent.select_action(np.expand_dims(state, 0))
-        new_state, reward, done, _, _ = env.step(action)
-        reward_accumulator += reward
+    plt.show()
 
-        # use this experience to update agent
-        old_weights = np.concatenate(
-            (agent.policy_net[1].weight.detach().flatten().numpy(), agent.policy_net[3].weight.detach().flatten().numpy())
-        )
 
-        loss = agent.update(state, action, reward, new_state, done=False)
+if os.path.exists(os.path.join('.', 'data', 'weight_updates.pkl')):
+    plot_results()
 
-        if loss is not None:
-            new_weights = np.concatenate(
-                (agent.policy_net[1].weight.detach().flatten().numpy(), agent.policy_net[3].weight.detach().flatten().numpy())
-            )
-            changes = new_weights - old_weights
-            weight_changes.append(np.mean(np.abs(changes)))
-            losses.append(loss)
-            change_per_loss.append(weight_changes[-1] / losses[-1])
-            reward_history.append(reward_accumulator)
+else:
+    results = []
+    for rep in range(5):
+        print(rep)
+        for agent in [HealthyAgent(), SpineLossDepression()]:
+
+            env = Image2VecWrapper(TransientGoals(render_mode='none'))
+            state, _ = env.reset()
+
+            steps = 30_000
+            steps_this_episode = 0
             reward_accumulator = 0
 
-        # reset environment if done (ideally env would do this itself)
-        if done or steps_this_episode > 500:
-            state, _ = env.reset()
-            steps_this_episode = 0
-        else:
-            state = new_state
+            for step in range(steps):
+                steps_this_episode += 1
 
-    plt.subplot(3, 1, 1)
-    plt.plot(weight_changes)
-    plt.subplot(3, 1, 2)
-    plt.plot(change_per_loss)
-    plt.subplot(3, 1, 3)
-    plt.plot(np.array(reward_history).cumsum())
+                # get & execute action
+                action = agent.select_action(np.expand_dims(state, 0))
+                new_state, reward, done, _, _ = env.step(action)
+                reward_accumulator += reward
 
-plt.show()
+                # use this experience to update agent
+                old_weights = np.concatenate(
+                    (agent.policy_net[1].weight.detach().flatten().numpy(), agent.policy_net[3].weight.detach().flatten().numpy())
+                )
+
+                loss = agent.update(state, action, reward, new_state, done=False)
+
+                if loss is not None:
+                    new_weights = np.concatenate(
+                        (agent.policy_net[1].weight.detach().flatten().numpy(), agent.policy_net[3].weight.detach().flatten().numpy())
+                    )
+                    changes = new_weights - old_weights
+                    results.append({
+                        'rep': rep,
+                        'agent': agent.display_name,
+                        'step': step,
+                        'weight_change': np.mean(np.abs(changes)),
+                        'loss': loss,
+                        'reward': reward_accumulator
+                    })
+                    reward_accumulator = 0
+
+                # reset environment if done (ideally env would do this itself)
+                if done or steps_this_episode > 500:
+                    state, _ = env.reset()
+                    steps_this_episode = 0
+                else:
+                    state = new_state
+
+    with open(os.path.join('.', 'data', 'weight_updates.pkl'), 'wb') as f:
+        pickle.dump(
+            pd.DataFrame(results).to_dict(orient='list'),
+            f
+        )
+    plot_results()
+
 
 
 

@@ -34,9 +34,9 @@ for agent_pos in range(1, 5):
         for dataset in [
             f'HealthyAgent_{trial}.pkl',
             f'SpineLossDepression_{trial}.pkl',
-            # f'ContextDependentLearningRate_{trial}.pkl',
-            # f'HighDiscountRate_{trial}.pkl',
-            # f'ShiftedTargets_{trial}.pkl',
+            f'ContextDependentLearningRate_{trial}.pkl',
+            f'HighDiscountRate_{trial}.pkl',
+            f'ShiftedTargets_{trial}.pkl',
         ]:
             results, agent, _ = load_trial(os.path.join('.', 'data', dataset))
 

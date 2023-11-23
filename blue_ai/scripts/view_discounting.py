@@ -40,8 +40,9 @@ for agent_pos in range(2, 6):
         for dataset in [
             f'HealthyAgent_{trial}.pkl',
             f'SpineLossDepression_{trial}.pkl',
-            # f'ContextDependentLearningRate_{trial}.pkl',
-            # f'HighDiscountRate_{trial}.pkl'
+            f'ContextDependentLearningRate_{trial}.pkl',
+            f'HighDiscountRate_{trial}.pkl',
+            f'ShiftedTargets_{trial}.pkl',
         ]:
             results, agent, _ = load_trial(os.path.join('.', 'data', dataset))
 
@@ -58,11 +59,11 @@ all_values['normalized_value'] = all_values['value'] / all_values['final']
 all_values['estimated discount factor'] = all_values['normalized_value'] ** (1 / (5 - all_values['position']))
 
 plt.sca(ax[1])
-sns.lineplot(all_values, x='position', y='normalized_value', hue='agent', n_boot=10, palette=['skyblue', 'salmon'])
+sns.lineplot(all_values, x='position', y='normalized_value', hue='agent', n_boot=10)  #, palette=['skyblue', 'salmon'])
 plt.ylabel('perceived value of moving forward\n(normalized to position 4 value)')
 plt.xticks([1, 2, 3, 4])
 
 plt.sca(ax[2])
-sns.barplot(all_values[all_values['position'] != 5], x='agent', y='estimated discount factor', n_boot=10, palette=['skyblue', 'salmon'])
+sns.barplot(all_values[all_values['position'] != 5], x='agent', y='estimated discount factor', n_boot=10)  #, palette=['skyblue', 'salmon'])
 
 plt.show()
