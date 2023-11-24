@@ -26,6 +26,18 @@ class ObstacleNoTerminate(WorldObj):
         fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
 
 
+class Library(WorldObj):
+
+    def __init__(self):
+        super().__init__("library", 'purple')
+
+    def can_overlap(self) -> bool:
+        return True
+
+    def render(self, img):
+        fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
+
 
 OBJECT_TO_IDX['goalNoTerminate'] = len(OBJECT_TO_IDX)
 OBJECT_TO_IDX['obstacleNoTerminate'] = len(OBJECT_TO_IDX)
+OBJECT_TO_IDX['library'] = len(OBJECT_TO_IDX)

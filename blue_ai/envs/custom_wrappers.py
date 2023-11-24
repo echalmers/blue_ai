@@ -11,6 +11,12 @@ object_vector_map = {
 }
 
 
+class AbsolutePositionWrapper(gym.ObservationWrapper):
+
+    def observation(self, observation):
+        return (observation['direction'], *observation['position'])
+
+
 class Image2VecWrapper(gym.ObservationWrapper):
     def __init__(self, env):
         super().__init__(env)

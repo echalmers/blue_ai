@@ -1,8 +1,7 @@
 from minigrid.core.grid import Grid
 from minigrid.core.mission import MissionSpace
 from minigrid.core.world_object import Goal
-from blue_ai.envs.custom_world_objects import GoalNoTerminate
-from blue_ai.envs.custom_world_objects import ObstacleNoTerminate
+from blue_ai.envs.custom_world_objects import GoalNoTerminate, ObstacleNoTerminate, Library
 from minigrid.minigrid_env import MiniGridEnv
 from minigrid.core.world_object import Wall
 import numpy as np
@@ -36,6 +35,8 @@ class TransientGoals(MiniGridEnv):
         n_transient_obstacles=1,
         transient_obstacles=None,
         replace_transient_obstacles=False,
+        library=None,
+        goal=True,
         **kwargs
     ):
 
@@ -53,6 +54,8 @@ class TransientGoals(MiniGridEnv):
         self.n_transient_obstacles = n_transient_obstacles
         self.transient_obstacles = transient_obstacles
         self.replace_transient_obstacles = replace_transient_goals
+        self.library = library
+        self.goal = goal
 
         mission_space = MissionSpace(mission_func=self._gen_mission)
 
@@ -78,6 +81,7 @@ class TransientGoals(MiniGridEnv):
         reward = 0
         terminated = False
         truncated = False
+        info = dict()
 
         # Get the position in front of the agent
         fwd_pos = self.front_pos
@@ -104,6 +108,7 @@ class TransientGoals(MiniGridEnv):
                 terminated = True
                 reward = self._reward()
                 mandatory += 1
+                info['goal_reached']
             if fwd_cell is not None and fwd_cell.type == "goalNoTerminate":
                 reward = fwd_cell.reward
                 optional += 1
@@ -123,6 +128,9 @@ class TransientGoals(MiniGridEnv):
             if fwd_cell is not None and fwd_cell.type == "lava":
                 terminated = True
 
+            if fwd_cell is not None and fwd_cell.type == "library":
+                info['library'] = True
+
         # Done action
         elif action == self.actions.done:
             terminated = True
@@ -138,7 +146,12 @@ class TransientGoals(MiniGridEnv):
 
         obs = self.gen_obs()
 
-        return obs, reward, terminated, truncated, {}
+        return obs, reward, terminated, truncated, info
+
+    def gen_obs(self):
+        obs = super().gen_obs()
+        obs['position'] = self.agent_pos
+        return obs
 
     @staticmethod
     def _gen_mission():
@@ -149,28 +162,12 @@ class TransientGoals(MiniGridEnv):
         im = self.im
 
         self.grid = Grid(width, height)
-        obj_type = Wall
-
-        hasGoal = False
-        hasStart = False
 
         # Generate the surrounding walls
         for x in range(0, width):
             for y in range(0, height):
                 if np.sum(im[y][x]) == 255:
-                    self.grid.set(x, y, obj_type())
-                # goal 101 - 254
-                if np.sum(im[y][x]) > 255 and np.sum(im[y][x]) < 510:
-                    self.put_obj(Goal(), x, y)
-                    hasGoal = True
-                # start 1 - 100
-                # if np.sum(im[y][x]) > 511 and np.sum(im[y][x]) < 1020 and np.sum(im[y][x]) != 594:
-                # if np.sum(im[y][x]) > 511 and np.sum(im[y][x]) < 1020:
-                #     # print("set start pos")
-                #     self.agent_start_pos = (x, y)
-                #     hasStart = True
-                # if np.sum(im[y][x]) == 594:
-                #     self.put_obj(KeyReward(), x, y)
+                    self.grid.set(x, y, Wall())
 
         # Place the agent
         if self.agent_start_pos is not None:
@@ -202,15 +199,15 @@ class TransientGoals(MiniGridEnv):
                 self.place_obj(self.penalties[i_obst], max_tries=100)
 
         # Place a goal square in the bottom-right corner
-        if hasGoal is False:
+        if self.goal is True:
             self.put_obj(Goal(), width - 2, height - 2)
+        elif self.goal:
+            for goal in self.goal:
+                self.put_obj(Goal(), *goal)
 
-        # # Place the agent
-        # if self.agent_start_pos is not None:
-        #     self.agent_pos = self.agent_start_pos
-        #     self.agent_dir = self.agent_start_dir
-        # else:
-        #     self.place_agent()
+        # place a library
+        if self.library:
+            self.put_obj(Library(), *self.library)
 
         self.mission = ""
 
