@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 
 
-for rep in range(5):
+for rep in range(10):
     results1, agent, env = run_trial(
         agent=HealthyAgent(),
         env=Image2VecWrapper(TransientGoals(render_mode='none')),

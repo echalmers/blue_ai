@@ -31,8 +31,8 @@ plt.text(x=10_000, y=avg_results[-1], s='healthy', c='blue', ha='center')
 plt.text(x=30_000, y=avg_results[-1], s='simulated spine loss', c='red', ha='center')
 plt.text(x=50_000, y=avg_results[-1], s='spines restored', c='blue', ha='center')
 
-for slope_pt, xytext in {19_000: (1_000, 1000), 30_000: (30_000, 250), 59_000: (45_000, 800)}.items():
-    slope = slope_calc(avg_results, slope_pt, 500)
+for slope_pt, xytext in {19_000: (1_000, 1000), 30_000: (30_000, 250), 57_000: (45_000, 800), 41_000: (45_000, 400), 21_000: (10_000, 1250)}.items():
+    slope = slope_calc(avg_results, slope_pt, 250)
     plt.annotate(f'slope={slope * 100:.0f}', xy=(slope_pt, avg_results[slope_pt]), xytext=xytext, arrowprops={'width': 1})
 
 plt.show()
