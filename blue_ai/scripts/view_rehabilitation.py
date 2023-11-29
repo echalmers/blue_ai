@@ -6,7 +6,13 @@ import numpy as np
 
 data = load_dataset('rehabilitate_*.pkl')
 
-avg_results = data.groupby('step')['cumulative_reward'].mean().reset_index()  # avg_results is a dataframe that has the average cumulative reward curve
+
+def slope_calc(rewards, a, b):
+    return (rewards[a] - rewards[a - b]) / b
+
+
+avg_results = data.groupby('step')['cumulative_reward'].mean().reset_index()['cumulative_reward'].to_numpy()  # avg_results is a dataframe that has the average cumulative reward curve
+
 
 plt.figure()
 ax = plt.gca()
@@ -21,8 +27,12 @@ plt.ylabel('cumulative reward')
 plt.xlabel('time (steps in environment)')
 plt.title('spine dropout modulates depression-like behaviors')
 
-plt.text(x=10_000, y=2000, s='healthy', c='blue', ha='center')
-plt.text(x=30_000, y=2000, s='simulated spine loss', c='red', ha='center')
-plt.text(x=50_000, y=2000, s='spines restored', c='blue', ha='center')
+plt.text(x=10_000, y=avg_results[-1], s='healthy', c='blue', ha='center')
+plt.text(x=30_000, y=avg_results[-1], s='simulated spine loss', c='red', ha='center')
+plt.text(x=50_000, y=avg_results[-1], s='spines restored', c='blue', ha='center')
+
+for slope_pt, xytext in {19_000: (1_000, 1000), 30_000: (30_000, 250), 59_000: (45_000, 800)}.items():
+    slope = slope_calc(avg_results, slope_pt, 500)
+    plt.annotate(f'slope={slope * 100:.0f}', xy=(slope_pt, avg_results[slope_pt]), xytext=xytext, arrowprops={'width': 1})
 
 plt.show()
