@@ -23,26 +23,26 @@ class ActivationRecorder:
         self.rows.append([])
 
 
-fig, ax = plt.subplots(1, 3)
-fig2, ax2 = plt.subplots(1, 2)
+def plot_env_locations(ax):
+    env = Image2VecWrapper(
+        TransientGoals(img_filename='env1.png', n_transient_goals=0, n_transient_obstacles=0, agent_start_pos=(2, 6),
+                       agent_start_dir=0, render_mode='rgb_array'))
+    state, _ = env.reset()
+    ax.imshow(env.render())
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.text(x=65, y=215, s='1', c='white', size='xx-large')
+    ax.text(x=100, y=215, s='2', c='white', size='xx-large')
+    ax.text(x=130, y=215, s='3', c='white', size='xx-large')
+    ax.text(x=165, y=215, s='4', c='white', size='xx-large')
 
-env = Image2VecWrapper(TransientGoals(img_filename='env1.png', n_transient_goals=0, n_transient_obstacles=0, agent_start_pos=(2, 6), agent_start_dir=0, render_mode='rgb_array'))
-state, _ = env.reset()
-for a in [ax, ax2]:
-    a[0].imshow(env.render())
-    a[0].set_xticks([])
-    a[0].set_yticks([])
-    a[0].text(x=65, y=215, s='1', c='white', size='xx-large')
-    a[0].text(x=100, y=215, s='2', c='white', size='xx-large')
-    a[0].text(x=130, y=215, s='3', c='white', size='xx-large')
-    a[0].text(x=165, y=215, s='4', c='white', size='xx-large')
 
 all_values = []
 task_correlations = []
 
 for trial in range(20):
     for dataset in [
-        # f'HealthyAgent_{trial}.pkl',
+        f'HealthyAgent_{trial}.pkl',
         f'SpineLossDepression_{trial}.pkl',
         # f'ContextDependentLearningRate_{trial}.pkl',
         # f'HighDiscountRate_{trial}.pkl',
@@ -75,18 +75,40 @@ all_values = pd.merge(all_values, final_values, on=['trial', 'agent'])
 all_values['normalized_value'] = all_values['value'] / all_values['final']
 all_values['estimated discount factor'] = all_values['normalized_value'] ** (1 / (5 - all_values['position']))
 
-plt.sca(ax[1])
-sns.lineplot(all_values, x='position', y='normalized_value', hue='agent', n_boot=10)  #, palette=['skyblue', 'salmon'])
-plt.ylabel('perceived value of moving forward\n(normalized to position 4 value)')
-plt.xticks([1, 2, 3, 4])
 
-plt.sca(ax[2])
-sns.barplot(all_values[all_values['position'] != 5], x='agent', y='estimated discount factor', n_boot=10)  #, palette=['skyblue', 'salmon'])
-
-plt.sca(ax2[1])
-task_correlations = pd.DataFrame(data=task_correlations, columns=['trial', 'agent', 'correlation'])
-sns.boxplot(data=task_correlations, x='agent', y='correlation')
-plt.ylabel('correlation of individual neuron activation\nwith position')
+def plot_value_of_forward(ax):
+    plt.sca(ax)
+    sns.lineplot(all_values, x='position', y='normalized_value', hue='agent', n_boot=10)  #, palette=['skyblue', 'salmon'])
+    plt.ylabel('perceived value of moving forward\n(normalized to position 4 value)')
+    plt.xticks([1, 2, 3, 4])
 
 
-plt.show()
+def plot_inferred_discount(ax):
+    plt.sca(ax)
+    sns.barplot(all_values[all_values['position'] != 5], x='agent', y='estimated discount factor', n_boot=10, palette=['skyblue', 'salmon'])
+    plt.ylabel('inferred discount factor\n(lower means more discounting)')
+    plt.xlabel('')
+
+
+def plot_neuron_correlations(ax):
+    plt.sca(ax)
+    global task_correlations
+    task_correlations = pd.DataFrame(data=task_correlations, columns=['trial', 'agent', 'correlation'])
+    sns.boxplot(data=task_correlations, x='agent', y='correlation')
+    plt.ylabel('correlation of individual neuron activation\nwith position')
+
+
+if __name__ == '__main__':
+    fig, ax = plt.subplots(1, 3)
+    fig2, ax2 = plt.subplots(1, 2)
+
+    plot_env_locations(ax[0])
+    plot_env_locations(ax2[0])
+
+    plot_value_of_forward(ax[1])
+
+    plot_inferred_discount(ax[2])
+
+    plot_neuron_correlations(ax2[1])
+
+    plt.show()

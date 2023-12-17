@@ -9,17 +9,17 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-fig, ax = plt.subplots(1, 2)
+def plot_env_locations(ax):
+    env = Image2VecWrapper(TransientGoals(img_filename='env1.png', n_transient_goals=0, transient_obstacles=[(5, 5)], agent_start_pos=(1, 5), agent_start_dir=0, render_mode='rgb_array'))
+    state, _ = env.reset()
+    ax.imshow(env.render())
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.text(x=35, y=185, s='1', c='white', size='xx-large')
+    ax.text(x=70, y=185, s='2', c='white', size='xx-large')
+    ax.text(x=100, y=185, s='3', c='white', size='xx-large')
+    ax.text(x=135, y=185, s='4', c='white', size='xx-large')
 
-env = Image2VecWrapper(TransientGoals(img_filename='env1.png', n_transient_goals=0, transient_obstacles=[(5, 5)], agent_start_pos=(1, 5), agent_start_dir=0, render_mode='rgb_array'))
-state, _ = env.reset()
-ax[0].imshow(env.render())
-ax[0].set_xticks([])
-ax[0].set_yticks([])
-ax[0].text(x=35, y=185, s='1', c='white', size='xx-large')
-ax[0].text(x=70, y=185, s='2', c='white', size='xx-large')
-ax[0].text(x=100, y=185, s='3', c='white', size='xx-large')
-ax[0].text(x=135, y=185, s='4', c='white', size='xx-large')
 
 all_values = []
 
@@ -34,9 +34,9 @@ for agent_pos in range(1, 5):
         for dataset in [
             f'HealthyAgent_{trial}.pkl',
             f'SpineLossDepression_{trial}.pkl',
-            f'ContextDependentLearningRate_{trial}.pkl',
-            f'HighDiscountRate_{trial}.pkl',
-            f'ShiftedTargets_{trial}.pkl',
+            # f'ContextDependentLearningRate_{trial}.pkl',
+            # f'HighDiscountRate_{trial}.pkl',
+            # f'ShiftedTargets_{trial}.pkl',
         ]:
             results, agent, _ = load_trial(os.path.join('.', 'data', dataset))
 
@@ -49,11 +49,17 @@ all_values = pd.DataFrame(data=all_values, columns=['trial', 'agent', 'position'
 initial_values = all_values.groupby(['trial', 'agent']).first()['value'].reset_index().rename({'value': 'initial'}, axis=1)
 all_values = pd.merge(all_values, initial_values, on=['trial', 'agent'])
 all_values['value'] = all_values['value'] / all_values['initial']
-print(all_values)
 
-plt.sca(ax[1])
-sns.lineplot(all_values, x='position', y='value', hue='agent', n_boot=10, palette=['skyblue', 'salmon'])
-plt.xticks([1, 2, 3, 4])
-plt.ylabel('perceived value of moving forward\n(normalized to position 1 value)')
+def plot_value_of_forward(ax):
+    plt.sca(ax)
+    sns.lineplot(all_values, x='position', y='value', hue='agent', n_boot=10, palette=['skyblue', 'salmon'])
+    plt.xticks([1, 2, 3, 4])
+    plt.ylabel('perceived value of moving forward\n(normalized to position 1 value)')
 
-plt.show()
+
+if __name__ == '__main__':
+    fig, ax = plt.subplots(1, 2)
+
+
+
+    plt.show()

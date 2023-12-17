@@ -14,7 +14,7 @@ def slope_calc(rewards, a, b):
 avg_results = data.groupby('step')['cumulative_reward'].mean().reset_index()['cumulative_reward'].to_numpy()  # avg_results is a dataframe that has the average cumulative reward curve
 
 
-plt.figure()
+plt.figure(figsize=(7, 4))
 ax = plt.gca()
 x = data['step'].unique()
 ax.fill_between(x, -1000, 100000, where=x < 20000, color='skyblue', alpha=0.25, linewidth=0)
@@ -31,7 +31,13 @@ plt.text(x=10_000, y=avg_results[-1], s='healthy', c='blue', ha='center')
 plt.text(x=30_000, y=avg_results[-1], s='simulated spine loss', c='red', ha='center')
 plt.text(x=50_000, y=avg_results[-1], s='spines restored', c='blue', ha='center')
 
-for slope_pt, xytext in {19_000: (1_000, 1000), 30_000: (30_000, 250), 57_000: (45_000, 800), 41_000: (45_000, 400), 21_000: (10_000, 1250)}.items():
+for slope_pt, xytext in {
+    19_000: (1_000, 1000),
+    # 21_000: (10_000, 1250),
+    30_000: (30_000, 250),
+    # 41_000: (45_000, 400),
+    57_000: (45_000, 800),
+}.items():
     slope = slope_calc(avg_results, slope_pt, 250)
     plt.annotate(f'slope={slope * 100:.0f}', xy=(slope_pt, avg_results[slope_pt]), xytext=xytext, arrowprops={'width': 1})
 
