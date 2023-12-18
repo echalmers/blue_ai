@@ -54,9 +54,10 @@ def plot_sample_env(ax):
 high_terminal_results = load_dataset([
         'HealthyAgent_[!s]*.pkl',
         'SpineLossDepression_[!s]*.pkl',
-        # 'ContextDependentLearningRate_[!s]*.pkl',
-        # 'HighDiscountRate_[!s]*.pkl',
-        # 'ScaledTargets_[!s]*.pkl'
+        'ContextDependentLearningRate_[!s]*.pkl',
+        'HighDiscountRate_[!s]*.pkl',
+        'ScaledTargets_[!s]*.pkl',
+        'HighExploration_[!s]*.pkl',
     ])
 
 
@@ -66,14 +67,17 @@ def plot_learning_curves(ax, n_boot=1):
     # high_terminal_results['avg_reward'] = high_terminal_results.groupby(['trial_id', 'agent'])['reward'].transform(lambda x: x.rolling(250).mean())
 
     # plot cumulative reward
-    sns.lineplot(data=high_terminal_results[high_terminal_results['step'] <= 20_000], x='step', y='cumulative_reward',
-                 hue='agent', n_boot=n_boot, palette=['skyblue', 'salmon', 'red'])
+    sns.lineplot(data=high_terminal_results[(high_terminal_results['step'] <= 20_000) & (high_terminal_results['step'] % 5 == 0)],
+                 x='step', y='cumulative_reward',
+                 hue='agent', n_boot=n_boot,
+                 # palette=['skyblue', 'salmon', 'red']
+                 )
     plt.ylabel('cumulative reward obtained')
     plt.xlabel('time (steps in environment)')
     plt.xticks([0, 20000])
     plt.text(x=11_000, y=475, s='healthy', c='blue')
     plt.text(x=10_000, y=75, s='simulated\nspine loss', c='red')
-    plt.legend([], [], frameon=False)
+    # plt.legend([], [], frameon=False)
 
 
 def plot_goals_per_episode(ax, n_boot=1):
@@ -90,14 +94,14 @@ def plot_goals_per_episode(ax, n_boot=1):
 
 if __name__ == '__main__':
 
-    f, ax = plt.subplots(1, 3, figsize=(9, 3))
+    f, ax = plt.subplots(1, 2, figsize=(9, 3))
     # plot_sample_env(ax[0])
 
-    plt.subplot(1, 3, 2)
-    plot_learning_curves(ax[1])
+    plt.subplot(1, 2, 1)
+    plot_learning_curves(ax[0])
 
-    plt.subplot(1, 3, 3)
-    plot_goals_per_episode(ax[2])
+    plt.subplot(1, 2, 2)
+    plot_goals_per_episode(ax[1])
 
     plt.show()
     exit()

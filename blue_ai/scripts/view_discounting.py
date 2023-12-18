@@ -44,9 +44,10 @@ for trial in range(20):
     for dataset in [
         f'HealthyAgent_{trial}.pkl',
         f'SpineLossDepression_{trial}.pkl',
-        # f'ContextDependentLearningRate_{trial}.pkl',
-        # f'HighDiscountRate_{trial}.pkl',
-        # f'ShiftedTargets_{trial}.pkl',
+        f'ContextDependentLearningRate_{trial}.pkl',
+        f'HighDiscountRate_{trial}.pkl',
+        f'ScaledTargets_{trial}.pkl',
+        f'HighExploration_{trial}.pkl'
     ]:
         results, agent, _ = load_trial(os.path.join('.', 'data', dataset))
         recorder = ActivationRecorder()

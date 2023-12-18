@@ -34,9 +34,10 @@ for agent_pos in range(1, 5):
         for dataset in [
             f'HealthyAgent_{trial}.pkl',
             f'SpineLossDepression_{trial}.pkl',
-            # f'ContextDependentLearningRate_{trial}.pkl',
-            # f'HighDiscountRate_{trial}.pkl',
-            # f'ShiftedTargets_{trial}.pkl',
+            f'ContextDependentLearningRate_{trial}.pkl',
+            f'HighDiscountRate_{trial}.pkl',
+            f'ScaledTargets_{trial}.pkl',
+            f'HighExploration_{trial}.pkl'
         ]:
             results, agent, _ = load_trial(os.path.join('.', 'data', dataset))
 
@@ -48,11 +49,13 @@ for agent_pos in range(1, 5):
 all_values = pd.DataFrame(data=all_values, columns=['trial', 'agent', 'position', 'value'])
 initial_values = all_values.groupby(['trial', 'agent']).first()['value'].reset_index().rename({'value': 'initial'}, axis=1)
 all_values = pd.merge(all_values, initial_values, on=['trial', 'agent'])
-all_values['value'] = all_values['value'] / all_values['initial']
+all_values['value'] = (all_values['value'] + 0.1) / (all_values['initial'] + 0.1)
 
 def plot_value_of_forward(ax):
     plt.sca(ax)
-    sns.lineplot(all_values, x='position', y='value', hue='agent', n_boot=10, palette=['skyblue', 'salmon'])
+    sns.lineplot(all_values, x='position', y='value', hue='agent', n_boot=10,
+                 # palette=['skyblue', 'salmon']
+                 )
     plt.xticks([1, 2, 3, 4])
     plt.ylabel('perceived value of moving forward\n(normalized to position 1 value)')
 
@@ -60,6 +63,6 @@ def plot_value_of_forward(ax):
 if __name__ == '__main__':
     fig, ax = plt.subplots(1, 2)
 
-
+    plot_value_of_forward(ax[1])
 
     plt.show()

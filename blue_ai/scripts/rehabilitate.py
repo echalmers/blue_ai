@@ -11,6 +11,7 @@ import numpy as np
 
 for rep in range(10):
     results1, agent, env = run_trial(
+        trial_id=rep,
         agent=HealthyAgent(),
         env=Image2VecWrapper(TransientGoals(render_mode='none')),
         steps=20_000,
@@ -19,6 +20,7 @@ for rep in range(10):
     agent.optimizer = torch.optim.Adam(agent.policy_net.parameters(), lr=agent.lr, weight_decay=5e-3)
 
     results2, agent, env = run_trial(
+        trial_id=rep,
         agent=agent,
         env=env,
         steps=20_000,
@@ -27,6 +29,7 @@ for rep in range(10):
     agent.optimizer = torch.optim.Adam(agent.policy_net.parameters(), lr=agent.lr, weight_decay=0)
 
     results3, agent, env = run_trial(
+        trial_id=rep,
         agent=agent,
         env=env,
         steps=20_000,

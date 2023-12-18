@@ -5,6 +5,7 @@ import numpy as np
 
 
 data = load_dataset('rehabilitate_*.pkl')
+data['avg_reward'] = data.groupby(['trial_id'])['reward'].transform(lambda s: s.rolling(500).mean())
 
 
 def slope_calc(rewards, a, b):
@@ -20,7 +21,7 @@ x = data['step'].unique()
 ax.fill_between(x, -1000, 100000, where=x < 20000, color='skyblue', alpha=0.25, linewidth=0)
 ax.fill_between(x, -1000, 100000, where=(x >= 20000) & (x <= 40000), color='salmon', alpha=0.25, linewidth=0)
 ax.fill_between(x, -1000, 100000, where=x > 40000, color='skyblue', alpha=0.25, linewidth=0)
-sns.lineplot(data=data, x='step', y='cumulative_reward', n_boot=1, color='black')
+sns.lineplot(data=data[data['step'] % 5 == 0], x='step', y='cumulative_reward', n_boot=1, color='black')
 # plt.xlim((0, 60000))
 plt.ylim((0, data['cumulative_reward'].max()))
 plt.ylabel('cumulative reward')
