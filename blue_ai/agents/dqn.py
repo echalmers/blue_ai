@@ -8,7 +8,6 @@ from torch import nn
 
 
 def softmax_selection(values, t=1.0):
-    values = np.array(values)
     e_x = np.exp(values / t - np.max(values / t))  # Subtracting the maximum value for numerical stability (thanks ChatGPT!)
     p = e_x / e_x.sum(axis=0)
     return np.random.choice(len(values), p=p)
@@ -70,7 +69,7 @@ class DQN:
     def __init__(self, network: nn.Sequential, input_shape, batch_size, replay_buffer_size, update_frequency=10,
                  lr=1e-3, sync_frequency=5,
                  gamma=0.95, epsilon=0.1,
-                 softmax_temp=1.0,
+                 softmax_temp=None,
                  seed=42,
                  weight_decay=0):
         """
@@ -118,10 +117,16 @@ class DQN:
             return self.policy_net(torch.tensor(state.astype(np.float32), device=self.device))[0]
 
     def select_action(self, state):
-        if random.random() < self.epsilon:
+        if self.softmax_temp is None and random.random() < self.epsilon:
             return np.random.choice(self.n_outputs)
+
         with torch.no_grad():
-            max_q, index = self.policy_net(torch.tensor(state.astype(np.float32), device=self.device))[0].max(0)
+            values = self.policy_net(torch.tensor(state.astype(np.float32), device=self.device))[0]
+
+        if self.softmax_temp is not None:
+            return softmax_selection(values.detach().numpy(), self.softmax_temp)
+
+        max_q, index = values.max(0)
         return index.item()
 
     def update(self, state, action, reward, new_state, done):
