@@ -24,7 +24,8 @@ class BaseAgent(DQN):
                  gamma=0.9,
                  epsilon=0.05,
                  batch_size=1500,
-                 weight_decay=0.0
+                 weight_decay=0.0,
+                 softmax_temperature=None,
                  ):
         super().__init__(
             network=nn.Sequential(
@@ -40,6 +41,7 @@ class BaseAgent(DQN):
             sync_frequency=sync_frequency,
             gamma=gamma,
             epsilon=epsilon,
+            softmax_temp=softmax_temperature,
             batch_size=batch_size,
             weight_decay=weight_decay
         )
@@ -84,41 +86,20 @@ class HighDiscountRate(BaseAgent):
         super().__init__(weight_decay=0, gamma=0.5)
 
 
+class HighExploration(BaseAgent):
+
+    display_name = 'high exploration'
+
+    def __init__(self):
+        super().__init__(softmax_temperature=1)
+
+
 class ScaledTargets(BaseAgent):
 
     display_name = 'scaled target value'
-    scale_factor = 0.1
 
-    def update(self, state, action, reward, new_state, done):
-
-        self.transition_memory.add(state, action, reward, new_state, done)
-        self.update_counter += 1
-        if self.update_counter % self.update_frequency == 0:
-
-            # sync value and policy networks
-            self.sync_counter += 1
-            if self.sync_counter % self.sync_frequency == 0:
-                self.value_net.load_state_dict(self.policy_net.state_dict())
-
-            s, a, r, ns, d = self.transition_memory.sample(self.batch_size)
-
-            # get policy network's current value estimates
-            state_action_values = self.policy_net(s)
-
-            # get target value estimates, based on actual rewards and value net's predictions of next-state value
-            with torch.no_grad():
-                new_state_value, _ = self.value_net(ns).max(1)
-            target_action_value = (r + self.gamma * new_state_value * (1 - d)) * self.scale_factor
-            target_values = state_action_values.clone().detach()
-            target_values[np.arange(target_values.shape[0]), a] = target_action_value
-
-            # optimize loss
-            loss = self.loss_fn(state_action_values, target_values)
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
-
-            return loss.item()
+    def __init__(self):
+        super().__init__(lr=0.01)
 
 
 class ShiftedTargets(BaseAgent):
