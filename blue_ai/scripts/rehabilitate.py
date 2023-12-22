@@ -14,16 +14,16 @@ for rep in range(10):
         trial_id=rep,
         agent=HealthyAgent(),
         env=Image2VecWrapper(TransientGoals(render_mode='none')),
-        steps=20_000,
+        steps=40_000,
     )
 
-    agent.optimizer = torch.optim.Adam(agent.policy_net.parameters(), lr=agent.lr, weight_decay=5e-3)
+    agent.optimizer = torch.optim.Adam(agent.policy_net.parameters(), lr=agent.lr, weight_decay=3e-3)
 
     results2, agent, env = run_trial(
         trial_id=rep,
         agent=agent,
         env=env,
-        steps=20_000,
+        steps=40_000,
     )
 
     agent.optimizer = torch.optim.Adam(agent.policy_net.parameters(), lr=agent.lr, weight_decay=0)
@@ -32,7 +32,7 @@ for rep in range(10):
         trial_id=rep,
         agent=agent,
         env=env,
-        steps=20_000,
+        steps=30_000,
     )
 
     results = pd.concat([results1, results2, results3], ignore_index=True)
