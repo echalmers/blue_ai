@@ -14,6 +14,7 @@ class PerformancePlotter:
 
     def __init__(self, agent_classes=(agent_classes.HealthyAgent, agent_classes.SpineLossDepression)):
 
+        self.agent_classes = agent_classes
         self.high_terminal_results = load_dataset([
                 f'{cls.__name__}_[!s]*.pkl' for cls in agent_classes
             ])
@@ -85,7 +86,9 @@ class PerformancePlotter:
 
         high_terminal_goals = self.aggregate_goals(type='episode', data=self.high_terminal_results)
         sns.barplot(data=high_terminal_goals, x='agent', y='count', hue='object', n_boot=n_boot,
-                    palette=['tab:green', 'tab:blue', 'tab:red'])
+                    palette=['tab:green', 'tab:blue', 'tab:red'],
+                    order=[a.display_name for a in self.agent_classes]
+                    )
         plt.title('objects reached per episode')
         plt.ylabel('')
         # sns.move_legend(plt.gca(), "upper left")
@@ -108,49 +111,3 @@ if __name__ == '__main__':
 
     plt.show()
     exit()
-
-
-
-
-    # plot cumulative reward
-
-    plt.subplot(1,3,2)
-    sns.lineplot(data=high_terminal_results[high_terminal_results['step'] <= 20_000], x='step', y='cumulative_reward', hue='agent', n_boot=n_boot, palette=['skyblue', 'salmon', 'red'])
-    plt.ylabel('cumulative reward obtained')
-    plt.xlabel('time (steps in environment)')
-    plt.xticks([0, 20000])
-    plt.text(x=10_000, y=500, s='healthy', c='skyblue')
-    plt.text(x=10_000, y=100, s='simulated spine loss', c='salmon')
-    plt.legend([], [], frameon=False)
-
-    # # steps per goal
-    # plt.figure()
-    # steps = results.groupby(by=['trial_id', 'dropout', 'episode'])['step'].count().reset_index()
-    # steps.rename({'step': 'steps'}, axis=1, inplace=True)
-    # sns.lineplot(data=steps, x='episode', y='steps', hue='dropout', n_boot=100)
-
-    #total goals reached
-    # plt.figure()
-    # p = plt.subplot(1,2,1)
-    # high_terminal_goals = aggregate_goals(type='total', data=high_terminal_results)
-    # sns.barplot(data=high_terminal_goals, x='dropout', y='count', hue='goal_type', n_boot=100, palette=['tab:blue', 'tab:green'])
-    # plt.ylabel('total rewards obtained')
-    # plt.title('normal')
-    #
-    # plt.subplot(1,2,2, sharey=p)
-    # high_transient_goals = aggregate_goals(type='total', data=high_transient_results)
-    # sns.barplot(data=high_transient_goals, x='dropout', y='count', hue='goal_type', n_boot=100, palette=['tab:blue', 'tab:green'])
-    # plt.title('high transient rewards')
-
-    # goals reached per episode
-    plt.subplot(1,3,3)
-    high_terminal_goals = aggregate_goals(type='episode', data=high_terminal_results)
-    sns.barplot(data=high_terminal_goals, x='agent', y='count', hue='event', n_boot=n_boot,
-                palette=['tab:green', 'tab:blue', 'tab:red'])
-    plt.ylabel('goals obtained per episode')
-    # sns.move_legend(plt.gca(), "upper left")
-    plt.xlabel('type of goal')
-    plt.xlabel('')
-    # plt.xticks(ticks=[0, 1], labels=['0% dropout\n(healthy)', '50% dropout\n(depressed)'])
-
-    plt.show()

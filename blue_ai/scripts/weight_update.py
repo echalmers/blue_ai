@@ -22,15 +22,25 @@ def plot_weight_changes():
     df['smoothed loss'] = df.groupby(['rep', 'agent'])['loss'].transform(lambda x: x.rolling(8).mean())
     df['weight change per unit loss'] = df['weight_change'] / df['smoothed loss']
 
+    plt.figure(figsize=(9, 5))
     ax = plt.subplot(2, 1, 1)
-    sns.lineplot(data=df, x='step', y='cumulative reward', hue='agent', n_boot=1)
+    sns.lineplot(data=df[df['step'] <= 20_000], x='step', y='cumulative reward', hue='agent', n_boot=1, palette=['skyblue', 'salmon'])
+    plt.title('cumulative reward')
+    plt.ylabel('')
     plt.xlabel('')
+    plt.legend(loc='upper left')
+    plt.grid(axis='x')
 
     plt.subplot(2, 1, 2, sharex=ax)
-    sns.lineplot(data=df, x='step', y='weight_change', hue='agent', n_boot=1)
-    plt.ylabel('weight change per unit loss')
+    sns.lineplot(data=df[df['step'] <= 20_000], x='step', y='weight_change', hue='agent', n_boot=1, palette=['skyblue', 'salmon'])
+    plt.title('mean absolute weight change per unit loss')
+    plt.ylabel('')
     plt.legend([], [], frameon=False)
+    plt.grid(axis='x')
+    plt.xlabel('time (steps in environment)')
 
+    plt.tight_layout()
+    plt.savefig('img/weight_change.png', dpi=300)
     plt.show()
 
 
