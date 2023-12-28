@@ -13,20 +13,20 @@ performance_plotter = PerformancePlotter()
 discount_plotter = DiscountAndCorrelationPlotter()
 
 mosaic = '''
-a.b.c
-d.e.c
+a.b
+c.d
 '''
 
-fig, axes = plt.subplot_mosaic(mosaic, figsize=(11, 8), width_ratios=[10, 0, 10, 0, 10])  #, height_ratios=[47.5, 5, 47.5])
+fig, axes = plt.subplot_mosaic(mosaic, figsize=(11, 8), width_ratios=[10, 0, 10])  #, height_ratios=[47.5, 5, 47.5])
 performance_plotter.plot_sample_env(axes['a'])
 performance_plotter.plot_goals_per_episode(axes['b'])
 discount_plotter.plot_inferred_discount(axes['d'], palette=['skyblue', 'salmon'])
-discount_plotter.plot_neuron_correlations(axes['e'], palette=['skyblue', 'salmon'])
+# discount_plotter.plot_neuron_correlations(axes['e'], palette=['skyblue', 'salmon'])
 
 performance_plotter.plot_learning_curves(axes['c'], palette=['skyblue', 'salmon'])
 plt.xticks([0, 20000])
-plt.text(x=11_000, y=475, s='healthy', c='blue')
-plt.text(x=10_000, y=75, s='simulated\nspine loss', c='red')
+plt.text(x=12_000, y=375, s='healthy', c='blue')
+plt.text(x=16_000, y=125, s='simulated\nspine loss', c='red')
 plt.legend([], [], frameon=False)
 
 for label, ax in axes.items():
