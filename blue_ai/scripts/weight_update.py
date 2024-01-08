@@ -41,6 +41,9 @@ def plot_weight_changes(ax):
     plt.xticks([0, 20_000])
     plt.xlabel('time (steps in environment)')
 
+    plt.text(x=12_000, y=0, s='simulated spine loss', c='r')
+    plt.text(x=12_000, y=0.003, s='healthy', c='b')
+
     # plt.tight_layout()
     # plt.savefig('img/weight_change.png', dpi=300)
     # plt.show()
