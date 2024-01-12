@@ -30,3 +30,9 @@ class Image2VecWrapper(gym.ObservationWrapper):
             for j in range(image.shape[1]):
                 vec[i, j, :] = object_vector_map.get(image[i, j, 0], [0, 0, 0, 0])
         return np.moveaxis(vec, (2, 0, 1), (0, 1, 2))
+
+
+class Image2FlatVecWrapper(Image2VecWrapper):
+
+    def observation(self, observation):
+        return tuple(super().observation(observation).flatten().astype(int))

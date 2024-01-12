@@ -1,3 +1,5 @@
+from blue_ai.agents.abstract import AbstractAgent
+
 from numbers import Number
 import copy
 import random
@@ -58,7 +60,7 @@ class TransitionMemory:
         return self.states[self.index, :], self.actions[self.index], self.rewards[self.index], self.new_states[self.index], self.done[self.index]
 
 
-class DQN:
+class DQN(AbstractAgent):
     """
     A deep Q network that optionally implements the rule from our paper:
      Brain-Inspired modulation of reward-prediction error improves reinforcement learning adaptation to environmental

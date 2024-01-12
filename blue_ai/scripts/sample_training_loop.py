@@ -1,7 +1,8 @@
 from torch import nn
 from blue_ai.agents.dqn import DQN
+from blue_ai.agents.tabular.mbrl import MBRL
 from blue_ai.envs.transient_goals import TransientGoals
-from blue_ai.envs.custom_wrappers import Image2VecWrapper
+from blue_ai.envs.custom_wrappers import Image2VecWrapper, Image2FlatVecWrapper
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
@@ -21,27 +22,23 @@ for _ in range(10):
     )
 
     # instantiate the agent
-    agent = DQN(
-            network=multilayer,
-            input_shape=(4, 5, 5),
-            replay_buffer_size=10000,
-            update_frequency=5,
-            lr=0.005,
-            sync_frequency=25,
-            gamma=0.2,  # discount factor
-            epsilon=0.05,  # random exploration rate
-            batch_size=1500,
-            weight_decay=0,  # we've been using 2.5e-3 for depression
-    )
-
-    # 3 possible other ways to simulate depression:
-    # - scale down reward-prediction-error (Dopamine) by multiplying line 146 of dqn.py by something less than 1
-    # - shift down reward_prediction_error (also on line 146) by subtracting instead of multiplying
-    # - use a smaller discount factor (this *should* be the same or similar to the downscaling, could try to match the effects)
-
+    # agent = DQN(
+    #         network=multilayer,
+    #         input_shape=(4, 5, 5),
+    #         replay_buffer_size=10000,
+    #         update_frequency=5,
+    #         lr=0.005,
+    #         sync_frequency=25,
+    #         gamma=0.2,  # discount factor
+    #         epsilon=0.05,  # random exploration rate
+    #         batch_size=1500,
+    #         weight_decay=0,  # we've been using 2.5e-3 for depression
+    # )
+    agent = MBRL(actions=[0, 1, 2], max_value_iterations=1000)
 
     # create the environment
-    env = Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=0.25, termination_reward=1))  # set render mode to "human" to see the agent moving around
+    # env = Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=0.25, termination_reward=1))  # set render mode to "human" to see the agent moving around
+    env = Image2FlatVecWrapper(TransientGoals(render_mode='none', transient_reward=0.25, termination_reward=1))  # set render mode to "human" to see the agent moving around
     state, _ = env.reset()
 
     # set up an array and other variables to store results
@@ -59,7 +56,8 @@ for _ in range(10):
         steps_this_episode += 1
 
         # get & execute action
-        action = agent.select_action(np.expand_dims(state, 0))
+        # action = agent.select_action(np.expand_dims(state, 0))
+        action = agent.select_action(state)
         new_state, reward, done, _, _ = env.step(action)
         rewards[step] = reward
 
@@ -73,6 +71,8 @@ for _ in range(10):
 
         # reset the environment if goal reached
         if done or steps_this_episode > 500:
+            if step >= STEPS - 1000:
+                env.render_mode = 'human'
             state, _ = env.reset()
             steps_this_episode = 0
         else:
