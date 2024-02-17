@@ -6,6 +6,7 @@ from view_perceived_value import PerceivedValuePlotter
 from view_discounting import DiscountAndCorrelationPlotter
 from view_performance import PerformancePlotter
 from view_perceived_fear_2 import PerceivedFearPlotter
+from compare_exploration import plot_kl_divergence
 from blue_ai.agents.agent_classes import HealthyAgent, SpineLossDepression, ScaledTargets, ContextDependentLearningRate, HighDiscountRate, HighExploration
 
 
@@ -32,9 +33,13 @@ mosaic = '''
 abbb
 ccdd
 efff
+gg..
 '''
-fig, axes = plt.subplot_mosaic(mosaic, figsize=(15, 9))
+fig, axes = plt.subplot_mosaic(mosaic, figsize=(15, 12))
 
+plot_kl_divergence(axes['g'], palette=all_colors)
+plt.title('KL divergence from healthy probability distribution over actions')
+plt.xlabel('')
 
 plotter = PerceivedValuePlotter(agent_classes=all_agent_classes)
 plotter.plot_perceived_value_env(axes['a'])
@@ -58,6 +63,8 @@ plt.ylim((-0.6, 1.6))
 plt.plot([1, 4], [1, 1], c='grey', linestyle=':')
 plt.title('perceived value of moving forward (normalized to position 1 value)')
 plt.legend(ncol=3)
+
+
 
 for label, ax in axes.items():
     # label physical distance to the left and up:

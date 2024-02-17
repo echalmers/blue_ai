@@ -59,7 +59,7 @@ for _ in range(10):
         steps_this_episode += 1
 
         # get & execute action
-        action = agent.select_action(np.expand_dims(state, 0))
+        action = agent.select_action(state)
         new_state, reward, done, _, _ = env.step(action)
         rewards[step] = reward
 

@@ -28,7 +28,7 @@ def run_trial(agent, env, steps=30000, trial_id=''):
         pos[env.unwrapped.agent_pos] = pos.get(env.unwrapped.agent_pos, 0) + 1
 
         # get & execute action
-        action = agent.select_action(np.expand_dims(state, 0))
+        action = agent.select_action(state)
         new_state, reward, done, _, _ = env.step(action)
 
         # use this experience to update agent

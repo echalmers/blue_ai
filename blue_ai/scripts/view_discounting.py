@@ -47,7 +47,7 @@ class DiscountAndCorrelationPlotter:
                                                                agent_start_pos=(agent_pos, 6), agent_start_dir=0,
                                                                render_mode='rgb_array')).reset()
 
-                    this_agent_value = agent.get_action_values(np.expand_dims(state, 0)).numpy().max()
+                    this_agent_value = agent.get_action_values(state).numpy().max()
                     all_values.append([trial, agent.display_name, agent_pos, this_agent_value])
                     recorder.advance()
 

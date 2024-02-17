@@ -70,7 +70,7 @@ if __name__ == '__main__':
                     steps_this_episode += 1
 
                     # get & execute action
-                    action = agent.select_action(np.expand_dims(state, 0))
+                    action = agent.select_action(state)
                     new_state, reward, done, _, _ = env.step(action)
                     reward_accumulator += reward
 

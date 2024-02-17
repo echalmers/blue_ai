@@ -114,14 +114,14 @@ class DQN:
 
     def get_action_values(self, state):
         with torch.no_grad():
-            return self.policy_net(torch.tensor(state.astype(np.float32), device=self.device))[0]
+            return self.policy_net(torch.tensor(np.expand_dims(state, 0).astype(np.float32), device=self.device))[0]
 
     def select_action(self, state):
         if self.softmax_temp is None and random.random() < self.epsilon:
             return np.random.choice(self.n_outputs)
 
         with torch.no_grad():
-            values = self.policy_net(torch.tensor(state.astype(np.float32), device=self.device))[0]
+            values = self.policy_net(torch.tensor(np.expand_dims(state, 0).astype(np.float32), device=self.device))[0]
 
         if self.softmax_temp is not None:
             return softmax_selection(values.detach().numpy(), self.softmax_temp)

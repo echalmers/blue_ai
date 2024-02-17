@@ -49,7 +49,7 @@ class PerceivedValuePlotter:
             for dataset in [f'{agent_class.__name__}_{trial}.pkl' for agent_class in self.agent_classes]:
                 results, agent, _ = load_trial(os.path.join('.', 'data', dataset))
 
-                this_agent_values = agent.get_action_values(np.expand_dims(self.state, 0)).numpy()
+                this_agent_values = agent.get_action_values(self.state).numpy()
                 all_values.append([agent.display_name, 'turn left', this_agent_values[0]])
                 all_values.append([agent.display_name, 'turn right', this_agent_values[1]])
                 all_values.append([agent.display_name, 'forward', this_agent_values[2]])

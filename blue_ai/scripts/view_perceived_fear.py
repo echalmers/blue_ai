@@ -25,7 +25,7 @@ for trial in range(20):
     for dataset in [f'HealthyAgent_{trial}.pkl', f'SpineLossDepression_{trial}.pkl', f'ContextDependentLearningRate_{trial}.pkl']:
         results, agent, _ = load_trial(os.path.join('.', 'data', dataset))
 
-        this_agent_values = agent.get_action_values(np.expand_dims(state, 0)).numpy()
+        this_agent_values = agent.get_action_values(state).numpy()
         all_values.append([agent.display_name, 'turn left', this_agent_values[0]])
         all_values.append([agent.display_name, 'turn right', this_agent_values[1]])
         all_values.append([agent.display_name, 'forward', this_agent_values[2]])
