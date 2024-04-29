@@ -3,3 +3,5 @@ venv/
 *.pkl
 data/
 __pycache__/
+build/lib/blue_ai
+blue_ai_envs.egg-info
