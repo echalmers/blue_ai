@@ -11,7 +11,7 @@ import pandas as pd
 rewards_table = pd.DataFrame(columns=['step', 'cumulative reward'])
 goals_table = pd.DataFrame(columns=['goal type', 'count'])
 
-for _ in range(10):
+for repetition in range(3):
     # a multi-layer network
     multilayer = nn.Sequential(
         nn.Flatten(1, -1),
@@ -26,19 +26,13 @@ for _ in range(10):
             input_shape=(4, 5, 5),
             replay_buffer_size=10000,
             update_frequency=5,
-            lr=0.005,
+            lr=0.01,
             sync_frequency=25,
-            gamma=0.2,  # discount factor
+            gamma=0.9,  # discount factor
             epsilon=0.05,  # random exploration rate
             batch_size=1500,
-            weight_decay=0,  # we've been using 2.5e-3 for depression
+            weight_decay=0,  # we've been using 3e-3 for depression
     )
-
-    # 3 possible other ways to simulate depression:
-    # - scale down reward-prediction-error (Dopamine) by multiplying line 146 of dqn.py by something less than 1
-    # - shift down reward_prediction_error (also on line 146) by subtracting instead of multiplying
-    # - use a smaller discount factor (this *should* be the same or similar to the downscaling, could try to match the effects)
-
 
     # create the environment
     env = Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=0.25, termination_reward=1))  # set render mode to "human" to see the agent moving around
@@ -51,7 +45,6 @@ for _ in range(10):
     num_required_goals = 0
     num_optional_goals = 0
     num_lava = 0
-
 
     # training loop
     for step in range(STEPS):
