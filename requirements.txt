@@ -1,4 +1,7 @@
-minigrid
 imageio
-torch
+matplotlib
+minigrid
 pandas
+scipy
+seaborn
+torch
