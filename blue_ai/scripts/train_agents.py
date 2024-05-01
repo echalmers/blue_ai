@@ -111,10 +111,10 @@ if __name__ == '__main__':
         ]:
 
             for agent in [
-                # HealthyAgent(),
-                # SpineLossDepression(),
+                HealthyAgent(),
+                SpineLossDepression(),
                 # ContextDependentLearningRate(),
-                HighDiscountRate(),
+                # HighDiscountRate(),
                 # ScaledTargets(),
                 # HighExploration(),
 
