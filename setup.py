@@ -5,5 +5,5 @@ setup(
     version="0.0.1",
     install_requires=["minigrid", "imageio", "gymnasium"],
     include_package_data=True,
-    package_data={'': ['*.png']}
+    package_data={"": ["*.png"]},
 )

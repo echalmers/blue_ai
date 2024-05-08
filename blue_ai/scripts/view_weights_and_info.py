@@ -4,22 +4,30 @@ import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
 
 
-mosaic = '''
+mosaic = """
 ab
-'''
+"""
 fig, axes = plt.subplot_mosaic(mosaic, figsize=(9, 4))
 
-plot_weight_changes(axes['a'])
+plot_weight_changes(axes["a"])
 
 plotter = DiscountAndCorrelationPlotter()
-plotter.plot_neuron_correlations(axes['b'], palette=['skyblue', 'salmon'])
+plotter.plot_neuron_correlations(axes["b"], palette=["skyblue", "salmon"])
 
 for label, ax in axes.items():
     # label physical distance to the left and up:
-    trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
-    ax.text(0.0, 1.0, label, transform=ax.transAxes + trans,
-            fontsize='large', weight='bold', va='bottom', fontfamily='serif')
+    trans = mtransforms.ScaledTranslation(-20 / 72, 7 / 72, fig.dpi_scale_trans)
+    ax.text(
+        0.0,
+        1.0,
+        label,
+        transform=ax.transAxes + trans,
+        fontsize="large",
+        weight="bold",
+        va="bottom",
+        fontfamily="serif",
+    )
 
 plt.tight_layout()
-plt.savefig('img/weight_changes.png', dpi=300)
+plt.savefig("img/weight_changes.png", dpi=300)
 plt.show()

@@ -1,5 +1,5 @@
 from minigrid.core.world_object import WorldObj
-from minigrid.utils.rendering import (fill_coords, point_in_rect)
+from minigrid.utils.rendering import fill_coords, point_in_rect
 from minigrid.core.constants import COLORS, OBJECT_TO_IDX
 
 
@@ -14,6 +14,7 @@ class GoalNoTerminate(WorldObj):
     def render(self, img):
         fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
 
+
 class ObstacleNoTerminate(WorldObj):
     def __init__(self, reward=-0.5):
         super().__init__("obstacleNoTerminate", "red")
@@ -26,6 +27,5 @@ class ObstacleNoTerminate(WorldObj):
         fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
 
 
-
-OBJECT_TO_IDX['goalNoTerminate'] = len(OBJECT_TO_IDX)
-OBJECT_TO_IDX['obstacleNoTerminate'] = len(OBJECT_TO_IDX)
+OBJECT_TO_IDX["goalNoTerminate"] = len(OBJECT_TO_IDX)
+OBJECT_TO_IDX["obstacleNoTerminate"] = len(OBJECT_TO_IDX)

@@ -5,9 +5,9 @@ import os
 import numpy as np
 
 
-filename = os.path.join('.', 'data', 'SpineLossDepression_2.pkl')
+filename = os.path.join(".", "data", "SpineLossDepression_2.pkl")
 _, agent, env = load_trial(filename)
-env.env.render_mode = 'rgb_array'
+env.env.render_mode = "rgb_array"
 
 # setup the environment
 state, _ = env.reset()
@@ -37,4 +37,4 @@ for step in range(1000):
     else:
         state = new_state
 
-imageio.mimsave(os.path.join('.', 'data', 'agent_run.gif'), images)
+imageio.mimsave(os.path.join(".", "data", "agent_run.gif"), images)

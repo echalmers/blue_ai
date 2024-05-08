@@ -6,33 +6,28 @@ import torch
 
 # a basic multi-layer network
 common_network = nn.Sequential(
-    nn.Flatten(1, -1),
-    nn.Linear(100, 10),
-    nn.Tanh(),
-    nn.Linear(10, 3)
+    nn.Flatten(1, -1), nn.Linear(100, 10), nn.Tanh(), nn.Linear(10, 3)
 )
 
 
 class BaseAgent(DQN):
 
-    def __init__(self,
-                 input_shape=(4, 5, 5),
-                 replay_buffer_size=10000,
-                 update_frequency=5,
-                 lr=0.01,
-                 sync_frequency=25,
-                 gamma=0.9,
-                 epsilon=0.05,
-                 batch_size=1500,
-                 weight_decay=0.0,
-                 softmax_temperature=None,
-                 ):
+    def __init__(
+        self,
+        input_shape=(4, 5, 5),
+        replay_buffer_size=10000,
+        update_frequency=5,
+        lr=0.01,
+        sync_frequency=25,
+        gamma=0.9,
+        epsilon=0.05,
+        batch_size=1500,
+        weight_decay=0.0,
+        softmax_temperature=None,
+    ):
         super().__init__(
             network=nn.Sequential(
-                nn.Flatten(1, -1),
-                nn.Linear(100, 10),
-                nn.Tanh(),
-                nn.Linear(10, 3)
+                nn.Flatten(1, -1), nn.Linear(100, 10), nn.Tanh(), nn.Linear(10, 3)
             ),
             input_shape=input_shape,
             replay_buffer_size=replay_buffer_size,
@@ -43,13 +38,13 @@ class BaseAgent(DQN):
             epsilon=epsilon,
             softmax_temp=softmax_temperature,
             batch_size=batch_size,
-            weight_decay=weight_decay
+            weight_decay=weight_decay,
         )
 
 
 class HealthyAgent(BaseAgent):
 
-    display_name = 'healthy'
+    display_name = "healthy"
 
     def __init__(self):
         super().__init__(weight_decay=0)
@@ -57,7 +52,7 @@ class HealthyAgent(BaseAgent):
 
 class SpineLossDepression(BaseAgent):
 
-    display_name = 'simulated spine loss'
+    display_name = "simulated spine loss"
 
     def __init__(self):
         super().__init__(weight_decay=3e-3)
@@ -65,7 +60,7 @@ class SpineLossDepression(BaseAgent):
 
 class ContextDependentLearningRate(BaseAgent):
 
-    display_name = 'context-dependent learning rate'
+    display_name = "context-dependent learning rate"
     positive_scale = 0.5
     negative_scale = 2
 
@@ -80,7 +75,7 @@ class ContextDependentLearningRate(BaseAgent):
 
 class HighDiscountRate(BaseAgent):
 
-    display_name = 'high discounting'
+    display_name = "high discounting"
 
     def __init__(self):
         super().__init__(weight_decay=0, gamma=0.5)
@@ -88,7 +83,7 @@ class HighDiscountRate(BaseAgent):
 
 class HighExploration(BaseAgent):
 
-    display_name = 'high exploration'
+    display_name = "high exploration"
 
     def __init__(self):
         super().__init__(softmax_temperature=1)
@@ -96,14 +91,14 @@ class HighExploration(BaseAgent):
 
 class ScaledTargets(BaseAgent):
 
-    display_name = 'scaled target value'
+    display_name = "scaled target value"
 
     def __init__(self):
         super().__init__(lr=0.01)
 
 
 class ShiftedTargets(BaseAgent):
-    display_name = 'shifted target value'
+    display_name = "shifted target value"
     offset = 1
 
     def update(self, state, action, reward, new_state, done):
@@ -125,7 +120,9 @@ class ShiftedTargets(BaseAgent):
             # get target value estimates, based on actual rewards and value net's predictions of next-state value
             with torch.no_grad():
                 new_state_value, _ = self.value_net(ns).max(1)
-            target_action_value = (r + self.gamma * new_state_value * (1 - d)) - self.offset
+            target_action_value = (
+                r + self.gamma * new_state_value * (1 - d)
+            ) - self.offset
             target_values = state_action_values.clone().detach()
             target_values[np.arange(target_values.shape[0]), a] = target_action_value
 

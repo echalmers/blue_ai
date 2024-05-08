@@ -29,14 +29,14 @@ class TransientGoals(MiniGridEnv):
         termination_reward=1,
         transient_reward=0.25,
         n_transient_goals=3,
-        img_filename='env1.png',
+        img_filename="env1.png",
         transient_locations=None,
         replace_transient_goals=False,
         transient_penalty=-1,
         n_transient_obstacles=1,
         transient_obstacles=None,
         replace_transient_obstacles=False,
-        **kwargs
+        **kwargs,
     ):
 
         self.im = imageio.imread(os.path.join(os.path.dirname(__file__), img_filename))
@@ -56,7 +56,7 @@ class TransientGoals(MiniGridEnv):
 
         mission_space = MissionSpace(mission_func=self._gen_mission)
 
-        max_steps = 4 * width ** 2
+        max_steps = 4 * width**2
 
         super().__init__(
             mission_space=mission_space,
@@ -66,7 +66,7 @@ class TransientGoals(MiniGridEnv):
             see_through_walls=True,
             max_steps=max_steps,
             agent_view_size=5,
-            **kwargs
+            **kwargs,
         )
         self.actions = Actions
 
@@ -117,7 +117,9 @@ class TransientGoals(MiniGridEnv):
                 self.grid.set(fwd_pos[0], fwd_pos[1], None)
 
                 if self.replace_transient_obstacles:
-                    self.penalties.append(ObstacleNoTerminate(reward=self.transient_penalty))
+                    self.penalties.append(
+                        ObstacleNoTerminate(reward=self.transient_penalty)
+                    )
                     self.place_obj(self.penalties[-1], max_tries=100)
 
             if fwd_cell is not None and fwd_cell.type == "lava":
@@ -194,11 +196,15 @@ class TransientGoals(MiniGridEnv):
         self.penalties = []
         if self.transient_obstacles is not None:
             for location in self.transient_obstacles:
-                self.penalties.append(ObstacleNoTerminate(reward=self.transient_penalty))
+                self.penalties.append(
+                    ObstacleNoTerminate(reward=self.transient_penalty)
+                )
                 self.grid.set(location[0], location[1], self.penalties[0])
         else:
             for i_obst in range(self.n_transient_obstacles):
-                self.penalties.append(ObstacleNoTerminate(reward=self.transient_penalty))
+                self.penalties.append(
+                    ObstacleNoTerminate(reward=self.transient_penalty)
+                )
                 self.place_obj(self.penalties[i_obst], max_tries=100)
 
         # Place a goal square in the bottom-right corner

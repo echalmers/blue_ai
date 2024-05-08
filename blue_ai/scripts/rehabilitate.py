@@ -13,11 +13,13 @@ for rep in range(10):
     results1, agent, env = run_trial(
         trial_id=rep,
         agent=HealthyAgent(),
-        env=Image2VecWrapper(TransientGoals(render_mode='none')),
+        env=Image2VecWrapper(TransientGoals(render_mode="none")),
         steps=40_000,
     )
 
-    agent.optimizer = torch.optim.Adam(agent.policy_net.parameters(), lr=agent.lr, weight_decay=3e-3)
+    agent.optimizer = torch.optim.Adam(
+        agent.policy_net.parameters(), lr=agent.lr, weight_decay=3e-3
+    )
 
     results2, agent, env = run_trial(
         trial_id=rep,
@@ -26,7 +28,9 @@ for rep in range(10):
         steps=40_000,
     )
 
-    agent.optimizer = torch.optim.Adam(agent.policy_net.parameters(), lr=agent.lr, weight_decay=0)
+    agent.optimizer = torch.optim.Adam(
+        agent.policy_net.parameters(), lr=agent.lr, weight_decay=0
+    )
 
     results3, agent, env = run_trial(
         trial_id=rep,
@@ -36,9 +40,14 @@ for rep in range(10):
     )
 
     results = pd.concat([results1, results2, results3], ignore_index=True)
-    results['cumulative_reward'] = results['reward'].cumsum()
-    results['step'] = np.arange(results.shape[0])
-    save_trial(results, agent, env, filename=os.path.join('.', 'data', f'rehabilitate_{rep}.pkl'))
+    results["cumulative_reward"] = results["reward"].cumsum()
+    results["step"] = np.arange(results.shape[0])
+    save_trial(
+        results,
+        agent,
+        env,
+        filename=os.path.join(".", "data", f"rehabilitate_{rep}.pkl"),
+    )
 
-plt.plot(results['cumulative_reward'])
+plt.plot(results["cumulative_reward"])
 plt.show()
