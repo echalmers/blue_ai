@@ -1,3 +1,4 @@
+black
 imageio
 matplotlib
 minigrid
