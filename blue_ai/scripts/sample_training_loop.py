@@ -8,34 +8,33 @@ import numpy as np
 import pandas as pd
 
 
-rewards_table = pd.DataFrame(columns=['step', 'cumulative reward'])
-goals_table = pd.DataFrame(columns=['goal type', 'count'])
+rewards_table = pd.DataFrame(columns=["step", "cumulative reward"])
+goals_table = pd.DataFrame(columns=["goal type", "count"])
 
 for repetition in range(3):
     # a multi-layer network
     multilayer = nn.Sequential(
-        nn.Flatten(1, -1),
-        nn.Linear(100, 10),
-        nn.Tanh(),
-        nn.Linear(10, 3)
+        nn.Flatten(1, -1), nn.Linear(100, 10), nn.Tanh(), nn.Linear(10, 3)
     )
 
     # instantiate the agent
     agent = DQN(
-            network=multilayer,
-            input_shape=(4, 5, 5),
-            replay_buffer_size=10000,
-            update_frequency=5,
-            lr=0.01,
-            sync_frequency=25,
-            gamma=0.9,  # discount factor
-            epsilon=0.05,  # random exploration rate
-            batch_size=1500,
-            weight_decay=0,  # we've been using 3e-3 for depression
+        network=multilayer,
+        input_shape=(4, 5, 5),
+        replay_buffer_size=10000,
+        update_frequency=5,
+        lr=0.01,
+        sync_frequency=25,
+        gamma=0.9,  # discount factor
+        epsilon=0.05,  # random exploration rate
+        batch_size=1500,
+        weight_decay=0,  # we've been using 3e-3 for depression
     )
 
     # create the environment
-    env = Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=0.25, termination_reward=1))  # set render mode to "human" to see the agent moving around
+    env = Image2VecWrapper(
+        TransientGoals(render_mode="none", transient_reward=0.25, termination_reward=1)
+    )  # set render mode to "human" to see the agent moving around
     state, _ = env.reset()
 
     # set up an array and other variables to store results
@@ -62,7 +61,9 @@ for repetition in range(3):
         num_lava += reward < 0
 
         # update the agent
-        agent.update(state=state, new_state=new_state, reward=reward, done=done, action=action)
+        agent.update(
+            state=state, new_state=new_state, reward=reward, done=done, action=action
+        )
 
         # reset the environment if goal reached
         if done or steps_this_episode > 500:
@@ -71,10 +72,28 @@ for repetition in range(3):
         else:
             state = new_state
 
-    rewards_table = pd.concat((rewards_table, pd.DataFrame({'step': np.arange(STEPS), 'cumulative reward': rewards.cumsum()})), ignore_index=True)
-    goals_table = pd.concat((goals_table, pd.DataFrame({'goal type': ['required', 'optional', 'lava'], 'count': [num_required_goals, num_optional_goals, num_lava]})))
+    rewards_table = pd.concat(
+        (
+            rewards_table,
+            pd.DataFrame(
+                {"step": np.arange(STEPS), "cumulative reward": rewards.cumsum()}
+            ),
+        ),
+        ignore_index=True,
+    )
+    goals_table = pd.concat(
+        (
+            goals_table,
+            pd.DataFrame(
+                {
+                    "goal type": ["required", "optional", "lava"],
+                    "count": [num_required_goals, num_optional_goals, num_lava],
+                }
+            ),
+        )
+    )
 
-sns.lineplot(rewards_table, x='step', y='cumulative reward', n_boot=5)
+sns.lineplot(rewards_table, x="step", y="cumulative reward", n_boot=5)
 plt.figure()
-sns.barplot(goals_table, x='goal type', y='count', n_boot=5)
+sns.barplot(goals_table, x="goal type", y="count", n_boot=5)
 plt.show()

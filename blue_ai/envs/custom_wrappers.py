@@ -3,11 +3,12 @@ import numpy as np
 
 
 from minigrid.core.constants import OBJECT_TO_IDX
+
 object_vector_map = {
-    OBJECT_TO_IDX['wall']: [1, 0, 0, 0],
-    OBJECT_TO_IDX['goal']: [0, 1, 0, 0],
-    OBJECT_TO_IDX['goalNoTerminate']: [0, 0, 1, 0],
-    OBJECT_TO_IDX['obstacleNoTerminate']: [0, 0, 0, 1],
+    OBJECT_TO_IDX["wall"]: [1, 0, 0, 0],
+    OBJECT_TO_IDX["goal"]: [0, 1, 0, 0],
+    OBJECT_TO_IDX["goalNoTerminate"]: [0, 0, 1, 0],
+    OBJECT_TO_IDX["obstacleNoTerminate"]: [0, 0, 0, 1],
 }
 
 
@@ -24,7 +25,7 @@ class Image2VecWrapper(gym.ObservationWrapper):
         :param image: image array supplied by the TransientGoals env
         :return: a new vector as described above
         """
-        image = observation['image']
+        image = observation["image"]
         vec = np.zeros((image.shape[0], image.shape[1], 4))
         for i in range(image.shape[0]):
             for j in range(image.shape[1]):

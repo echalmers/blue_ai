@@ -14,13 +14,17 @@ import numpy as np
 
 
 def plot_weight_changes(ax):
-    with open(os.path.join('.', 'data', 'weight_updates.pkl'), 'rb') as f:
+    with open(os.path.join(".", "data", "weight_updates.pkl"), "rb") as f:
         df = pd.DataFrame(pickle.load(f))
     print(df)
 
-    df['cumulative reward'] = df.groupby(['rep', 'agent'])['reward'].transform(pd.Series.cumsum)
-    df['smoothed loss'] = df.groupby(['rep', 'agent'])['loss'].transform(lambda x: x.rolling(8).mean())
-    df['weight change per unit loss'] = df['weight_change'] / df['smoothed loss']
+    df["cumulative reward"] = df.groupby(["rep", "agent"])["reward"].transform(
+        pd.Series.cumsum
+    )
+    df["smoothed loss"] = df.groupby(["rep", "agent"])["loss"].transform(
+        lambda x: x.rolling(8).mean()
+    )
+    df["weight change per unit loss"] = df["weight_change"] / df["smoothed loss"]
 
     # plt.figure(figsize=(9, 5))
     # ax = plt.subplot(2, 1, 1)
@@ -33,24 +37,31 @@ def plot_weight_changes(ax):
 
     # plt.subplot(2, 1, 2, sharex=ax)
     plt.sca(ax)
-    sns.lineplot(data=df[df['step'] <= 20_000], x='step', y='weight_change', hue='agent', n_boot=1, palette=['skyblue', 'salmon'])
-    plt.title('mean absolute weight change per unit loss')
-    plt.ylabel('')
+    sns.lineplot(
+        data=df[df["step"] <= 20_000],
+        x="step",
+        y="weight_change",
+        hue="agent",
+        n_boot=1,
+        palette=["skyblue", "salmon"],
+    )
+    plt.title("mean absolute weight change per unit loss")
+    plt.ylabel("")
     plt.legend([], [], frameon=False)
     # plt.grid(axis='x')
     plt.xticks([0, 20_000])
-    plt.xlabel('time (steps in environment)')
+    plt.xlabel("time (steps in environment)")
 
-    plt.text(x=12_000, y=0, s='simulated spine loss', c='r')
-    plt.text(x=12_000, y=0.003, s='healthy', c='b')
+    plt.text(x=12_000, y=0, s="simulated spine loss", c="r")
+    plt.text(x=12_000, y=0.003, s="healthy", c="b")
 
     # plt.tight_layout()
     # plt.savefig('img/weight_change.png', dpi=300)
     # plt.show()
 
 
-if __name__ == '__main__':
-    if os.path.exists(os.path.join('.', 'data', 'weight_updates.pkl')):
+if __name__ == "__main__":
+    if os.path.exists(os.path.join(".", "data", "weight_updates.pkl")):
         plot_weight_changes()
 
     else:
@@ -59,7 +70,7 @@ if __name__ == '__main__':
             print(rep)
             for agent in [HealthyAgent(), SpineLossDepression()]:
 
-                env = Image2VecWrapper(TransientGoals(render_mode='none'))
+                env = Image2VecWrapper(TransientGoals(render_mode="none"))
                 state, _ = env.reset()
 
                 steps = 30_000
@@ -76,24 +87,32 @@ if __name__ == '__main__':
 
                     # use this experience to update agent
                     old_weights = np.concatenate(
-                        (agent.policy_net[1].weight.detach().flatten().numpy(), agent.policy_net[3].weight.detach().flatten().numpy())
+                        (
+                            agent.policy_net[1].weight.detach().flatten().numpy(),
+                            agent.policy_net[3].weight.detach().flatten().numpy(),
+                        )
                     )
 
                     loss = agent.update(state, action, reward, new_state, done=False)
 
                     if loss is not None:
                         new_weights = np.concatenate(
-                            (agent.policy_net[1].weight.detach().flatten().numpy(), agent.policy_net[3].weight.detach().flatten().numpy())
+                            (
+                                agent.policy_net[1].weight.detach().flatten().numpy(),
+                                agent.policy_net[3].weight.detach().flatten().numpy(),
+                            )
                         )
                         changes = new_weights - old_weights
-                        results.append({
-                            'rep': rep,
-                            'agent': agent.display_name,
-                            'step': step,
-                            'weight_change': np.mean(np.abs(changes)),
-                            'loss': loss,
-                            'reward': reward_accumulator
-                        })
+                        results.append(
+                            {
+                                "rep": rep,
+                                "agent": agent.display_name,
+                                "step": step,
+                                "weight_change": np.mean(np.abs(changes)),
+                                "loss": loss,
+                                "reward": reward_accumulator,
+                            }
+                        )
                         reward_accumulator = 0
 
                     # reset environment if done (ideally env would do this itself)
@@ -103,17 +122,11 @@ if __name__ == '__main__':
                     else:
                         state = new_state
 
-        with open(os.path.join('.', 'data', 'weight_updates.pkl'), 'wb') as f:
-            pickle.dump(
-                pd.DataFrame(results).to_dict(orient='list'),
-                f
-            )
+        with open(os.path.join(".", "data", "weight_updates.pkl"), "wb") as f:
+            pickle.dump(pd.DataFrame(results).to_dict(orient="list"), f)
         plot_weight_changes()
 
     exit()
-
-
-
 
 
 # for dropout in [0, 50]:

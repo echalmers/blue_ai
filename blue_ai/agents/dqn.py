@@ -8,7 +8,9 @@ from torch import nn
 
 
 def softmax_selection(values, t=1.0):
-    e_x = np.exp(values / t - np.max(values / t))  # Subtracting the maximum value for numerical stability (thanks ChatGPT!)
+    e_x = np.exp(
+        values / t - np.max(values / t)
+    )  # Subtracting the maximum value for numerical stability (thanks ChatGPT!)
     p = e_x / e_x.sum(axis=0)
     return np.random.choice(len(values), p=p)
 
@@ -51,10 +53,22 @@ class TransitionMemory:
         n = min(n, self.size)
 
         idx = np.random.choice(self.size, n, replace=False)
-        return self.states[idx, :], self.actions[idx], self.rewards[idx], self.new_states[idx, :], self.done[idx]
+        return (
+            self.states[idx, :],
+            self.actions[idx],
+            self.rewards[idx],
+            self.new_states[idx, :],
+            self.done[idx],
+        )
 
     def last(self):
-        return self.states[self.index, :], self.actions[self.index], self.rewards[self.index], self.new_states[self.index], self.done[self.index]
+        return (
+            self.states[self.index, :],
+            self.actions[self.index],
+            self.rewards[self.index],
+            self.new_states[self.index],
+            self.done[self.index],
+        )
 
 
 class DQN:
@@ -66,12 +80,21 @@ class DQN:
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    def __init__(self, network: nn.Sequential, input_shape, batch_size, replay_buffer_size, update_frequency=10,
-                 lr=1e-3, sync_frequency=5,
-                 gamma=0.95, epsilon=0.1,
-                 softmax_temp=None,
-                 seed=42,
-                 weight_decay=0):
+    def __init__(
+        self,
+        network: nn.Sequential,
+        input_shape,
+        batch_size,
+        replay_buffer_size,
+        update_frequency=10,
+        lr=1e-3,
+        sync_frequency=5,
+        gamma=0.95,
+        epsilon=0.1,
+        softmax_temp=None,
+        seed=42,
+        weight_decay=0,
+    ):
         """
         :param network: deep network, of type torch.nn.Sequential
         :param input_shape: shape of input vectors for the network
@@ -95,10 +118,14 @@ class DQN:
         # instantiate loss and optimizer
         self.loss_fn = torch.nn.MSELoss()
         self.lr = lr
-        self.optimizer = torch.optim.Adam(self.policy_net.parameters(), lr=lr, weight_decay=weight_decay)
+        self.optimizer = torch.optim.Adam(
+            self.policy_net.parameters(), lr=lr, weight_decay=weight_decay
+        )
 
         # instantiate experience memory
-        self.transition_memory = TransitionMemory(capacity=replay_buffer_size, state_size=input_shape, device=self.device)
+        self.transition_memory = TransitionMemory(
+            capacity=replay_buffer_size, state_size=input_shape, device=self.device
+        )
 
         # store other params
         self.batch_size = batch_size
@@ -111,17 +138,24 @@ class DQN:
         self.update_counter = 0
         self.softmax_temp = softmax_temp
 
-
     def get_action_values(self, state):
         with torch.no_grad():
-            return self.policy_net(torch.tensor(np.expand_dims(state, 0).astype(np.float32), device=self.device))[0]
+            return self.policy_net(
+                torch.tensor(
+                    np.expand_dims(state, 0).astype(np.float32), device=self.device
+                )
+            )[0]
 
     def select_action(self, state):
         if self.softmax_temp is None and random.random() < self.epsilon:
             return np.random.choice(self.n_outputs)
 
         with torch.no_grad():
-            values = self.policy_net(torch.tensor(np.expand_dims(state, 0).astype(np.float32), device=self.device))[0]
+            values = self.policy_net(
+                torch.tensor(
+                    np.expand_dims(state, 0).astype(np.float32), device=self.device
+                )
+            )[0]
 
         if self.softmax_temp is not None:
             return softmax_selection(values.detach().numpy(), self.softmax_temp)
@@ -162,8 +196,12 @@ class DQN:
 
     def update_single(self, state, action, reward, new_state, done):
 
-        state = torch.tensor(np.expand_dims(state, 0).astype(np.float32), device=self.device)
-        new_state = torch.tensor(np.expand_dims(new_state, 0).astype(np.float32), device=self.device)
+        state = torch.tensor(
+            np.expand_dims(state, 0).astype(np.float32), device=self.device
+        )
+        new_state = torch.tensor(
+            np.expand_dims(new_state, 0).astype(np.float32), device=self.device
+        )
 
         # get policy network's current value estimates
         state_action_values = self.policy_net(state)
