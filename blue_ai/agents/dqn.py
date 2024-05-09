@@ -158,7 +158,7 @@ class DQN:
             )[0]
 
         if self.softmax_temp is not None:
-            return softmax_selection(values.detach().numpy(), self.softmax_temp)
+            return softmax_selection(values.detach().cpu().numpy(), self.softmax_temp)
 
         max_q, index = values.max(0)
         return index.item()

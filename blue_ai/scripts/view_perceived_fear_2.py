@@ -41,7 +41,7 @@ class PerceivedFearPlotter:
                 ]:
                     results, agent, _ = load_trial(os.path.join(".", "data", dataset))
 
-                    this_agent_values = agent.get_action_values(state).numpy()
+                    this_agent_values = agent.get_action_values(state).cpu().numpy()
 
                     self.all_values.append(
                         [trial, agent.display_name, agent_pos, this_agent_values[2]]
