@@ -11,8 +11,6 @@ import numpy as np
 import imageio
 from enum import IntEnum
 
-from dataclasses import dataclass
-
 
 class Actions(IntEnum):
     left = 0
@@ -23,7 +21,6 @@ class Actions(IntEnum):
     done = 3
 
 
-@dataclass
 class TransientGoals(MiniGridEnv):
     def __init__(
         self,
