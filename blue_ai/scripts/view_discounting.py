@@ -26,7 +26,7 @@ class DiscountAndCorrelationPlotter:
                 self.rows = [[]]
 
             def __call__(self, layer, intput, output):
-                self.rows[-1].extend(output.numpy().flatten())
+                self.rows[-1].extend(output.cpu().numpy().flatten())
 
             def advance(self):
                 self.rows.append([])
@@ -57,7 +57,9 @@ class DiscountAndCorrelationPlotter:
                         )
                     ).reset()
 
-                    this_agent_value = agent.get_action_values(state).numpy().max()
+                    this_agent_value = (
+                        agent.get_action_values(state).cpu().numpy().max()
+                    )
                     all_values.append(
                         [trial, agent.display_name, agent_pos, this_agent_value]
                     )

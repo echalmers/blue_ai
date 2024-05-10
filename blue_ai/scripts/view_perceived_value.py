@@ -76,7 +76,7 @@ class PerceivedValuePlotter:
             ]:
                 results, agent, _ = load_trial(os.path.join(".", "data", dataset))
 
-                this_agent_values = agent.get_action_values(self.state).numpy()
+                this_agent_values = agent.get_action_values(self.state).cpu().numpy()
                 all_values.append(
                     [agent.display_name, "turn left", this_agent_values[0]]
                 )
