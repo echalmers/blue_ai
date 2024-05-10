@@ -19,6 +19,7 @@ from random import randint
 import numpy as np
 import pandas as pd
 import pickle
+import torch
 
 
 all_agent_classes = [
@@ -43,17 +44,11 @@ if os.path.exists(os.path.join(".", "data", "compare_exploration.pkl")):
 
 else:
 
-    def softmax(values, t=0.1):
-        e_x = np.exp(
-            values / t - np.max(values / t)
-        )  # Subtracting the maximum value for numerical stability (thanks ChatGPT!)
-        p = e_x / e_x.sum(axis=0)
-        return p
+    from blue_ai.agents.dqn import softmax_selection as softmax
 
     results = []
 
     for i in range(20):
-        print(i)
         _, ref_agent, _ = load_trial(os.path.join(".", "data", f"HealthyAgent_{i}.pkl"))
 
         for j in range(4):
@@ -86,12 +81,13 @@ else:
                         )
                         state, _ = env.reset()
 
-                    p1 = softmax(ref_agent.get_action_values(state).numpy())
-                    p2 = softmax(agent.get_action_values(state).numpy())
+                    p1 = softmax(ref_agent.get_action_values(state), t=0.1)
+                    p2 = softmax(agent.get_action_values(state), t=0.1)
+
                     results.append(
                         {
                             "agent": agent_class.display_name,
-                            "entropy": entropy(p1, p2),
+                            "entropy": entropy(p1.cpu(), p2.cpu()),
                             "dot": p1.dot(p2),
                             "max_agree": p1.argmax() == p2.argmax(),
                         }
