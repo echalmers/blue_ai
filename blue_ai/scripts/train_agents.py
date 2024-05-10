@@ -131,15 +131,15 @@ def worker(trial_data):
 def main():
     trial_num = 0
 
-    reps = 1
+    reps = 20
     agents = [
-        # HealthyAgent(),
-        # SpineLossDepression(),
-        # ContextDependentLearningRate(),
-        # HighDiscountRate(),
-        # ScaledTargets(),
+        HealthyAgent(),
+        SpineLossDepression(),
+        ContextDependentLearningRate(),
+        HighDiscountRate(),
+        ScaledTargets(),
         HighExploration(),
-        # ShiftedTargets(),
+        ShiftedTargets(),
     ]
     envs = [
         Image2VecWrapper(
