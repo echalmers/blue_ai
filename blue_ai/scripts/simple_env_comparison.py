@@ -9,6 +9,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import os
 
+from constants import DATA_PATH
 
 results = []
 for rep in range(10):
@@ -32,7 +33,7 @@ for rep in range(10):
                 }
             )
 results = pd.DataFrame(results)
-results.to_csv(os.path.join(".", "data", "simple_env_comparison.csv"))
+results.to_csv(DATA_PATH / "simple_env_comparison.csv")
 print(results)
 sns.catplot(data=results, kind="bar", x="env", y="reward", hue="agent")
 plt.show()

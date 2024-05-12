@@ -3,11 +3,13 @@ from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.agents.agent_classes import BaseAgent, HealthyAgent, SpineLossDepression
 import pandas as pd
-
-pd.options.display.width = 0
 import seaborn as sns
 import matplotlib.pyplot as plt
 import os
+
+from constants import DATA_PATH
+
+pd.options.display.width = 0
 
 
 results = []
@@ -31,7 +33,7 @@ for rep in range(10):
             }
         )
 results = pd.DataFrame(results)
-results.to_csv(os.path.join(".", "data", "decay_sweep.csv"))
+results.to_csv(DATA_PATH / "decay_sweep.csv")
 print(results)
 # sns.barplot(results, hue='decay', y='reward')
 sns.lineplot(results, x="decay", y="reward")

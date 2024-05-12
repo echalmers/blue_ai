@@ -3,6 +3,7 @@ from view_discounting import DiscountAndCorrelationPlotter
 import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
 
+from constants import FIGURE_PATH
 
 mosaic = """
 ab
@@ -29,5 +30,5 @@ for label, ax in axes.items():
     )
 
 plt.tight_layout()
-plt.savefig("img/weight_changes.png", dpi=300)
+plt.savefig(FIGURE_PATH / "weight_changes.png", dpi=300)
 plt.show()

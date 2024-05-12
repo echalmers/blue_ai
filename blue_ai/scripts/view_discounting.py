@@ -4,13 +4,14 @@ from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.train_agents import load_trial
 import blue_ai.agents.agent_classes as agent_classes
-import numpy as np
 import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 from torch import nn
 
 from blue_ai.agents.agent_classes import HealthyAgent, SpineLossDepression
+
+from constants import DATA_PATH, N_TRIALS
 
 
 class DiscountAndCorrelationPlotter:
@@ -34,11 +35,11 @@ class DiscountAndCorrelationPlotter:
         all_values = []
         self.task_correlations = []
 
-        for trial in range(20):
+        for trial in range(N_TRIALS):
             for dataset in [
                 f"{agent_class.__name__}_{trial}.pkl" for agent_class in agent_classes
             ]:
-                results, agent, _ = load_trial(os.path.join(".", "data", dataset))
+                results, agent, _ = load_trial(DATA_PATH / dataset)
                 recorder = ActivationRecorder()
                 for layer in agent.policy_net:
                     if isinstance(layer, nn.Linear):

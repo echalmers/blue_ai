@@ -16,6 +16,8 @@ from blue_ai.agents.agent_classes import (
     HighExploration,
 )
 
+from constants import FIGURE_PATH
+
 
 SpineLossDepression.display_name = "simulated\nspine loss"
 ScaledTargets.display_name = "reduced RPE"
@@ -86,6 +88,7 @@ for label, ax in axes.items():
         fontfamily="serif",
     )
 
+
 plt.tight_layout()
-plt.savefig("img/alternatives.png", dpi=300)
+plt.savefig(FIGURE_PATH / "alternatives.png", dpi=300)
 plt.show()

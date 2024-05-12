@@ -1,12 +1,11 @@
-from blue_ai.scripts.train_agents import load_trial
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-import glob
-import os
 from train_agents import load_dataset
 from blue_ai.envs.transient_goals import TransientGoals
 import blue_ai.agents.agent_classes as agent_classes
+
+from constants import FIGURE_PATH
 
 
 class PerformancePlotter:
@@ -20,6 +19,8 @@ class PerformancePlotter:
         self.high_terminal_results = load_dataset(
             [f"{cls.__name__}_[!s]*.pkl" for cls in agent_classes]
         )
+
+        print(self.high_terminal_results)
 
     @staticmethod
     def plot_sample_env(ax):
@@ -133,7 +134,6 @@ class PerformancePlotter:
 
 
 if __name__ == "__main__":
-
     plotter = PerformancePlotter()
 
     f, ax = plt.subplots(1, 2, figsize=(9, 3))
@@ -146,4 +146,5 @@ if __name__ == "__main__":
     plotter.plot_goals_per_episode(ax[1])
 
     plt.show()
+    plt.savefig(FIGURE_PATH / "performance.png")
     exit()

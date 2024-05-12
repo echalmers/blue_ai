@@ -14,12 +14,11 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from scipy.stats import entropy
 
-import os
 from random import randint
-import numpy as np
 import pandas as pd
 import pickle
-import torch
+
+from constants import DATA_PATH, N_TRIALS
 
 
 all_agent_classes = [
@@ -38,28 +37,28 @@ HighDiscountRate.display_name = "high\ndiscounting"
 HighExploration.display_name = "high\nexploration"
 
 
-if os.path.exists(os.path.join(".", "data", "compare_exploration.pkl")):
-    with open(os.path.join(".", "data", "compare_exploration.pkl"), "rb") as f:
+if (DATA_PATH / "compare_exploration.pkl").exists():
+    with open(DATA_PATH / "compare_exploration.pkl", "rb") as f:
         results = pickle.load(f)
 
 else:
 
-    from blue_ai.agents.dqn import softmax_selection as softmax
+    from blue_ai.agents.dqn import softmax
 
     results = []
 
-    for i in range(20):
-        _, ref_agent, _ = load_trial(os.path.join(".", "data", f"HealthyAgent_{i}.pkl"))
+    for i in range(N_TRIALS):
+        _, ref_agent, _ = load_trial(DATA_PATH / f"HealthyAgent_{i}.pkl")
 
-        for j in range(4):
+        # this was previously set too 4, probably for performance reasons
+        for j in range(N_TRIALS):
             for agent_class in all_agent_classes:
 
+                # We don't want to compare the agent to itself
                 if agent_class == HealthyAgent and i == j:
                     continue
 
-                _, agent, _ = load_trial(
-                    os.path.join(".", "data", f"{agent_class.__name__}_{j}.pkl")
-                )
+                _, agent, _ = load_trial(DATA_PATH / f"{agent_class.__name__}_{j}.pkl")
 
                 env = Image2VecWrapper(
                     TransientGoals(
@@ -94,7 +93,7 @@ else:
                     )
 
     results = pd.DataFrame(results)
-    with open(os.path.join(".", "data", "compare_exploration.pkl"), "wb") as f:
+    with open(DATA_PATH / "compare_exploration.pkl", "wb") as f:
         pickle.dump(results, f)
 
 

@@ -1,11 +1,12 @@
 import pandas as pd
 import pickle
-import glob
-import os
+import argparse
 
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from tqdm import tqdm
+
+from constants import DATA_PATH, N_TRIALS
 
 if __name__ == "__main__":
     from blue_ai.agents.agent_classes import (
@@ -19,7 +20,7 @@ if __name__ == "__main__":
     )
 
 
-def run_trial(agent, env, steps=30000, trial_id=""):
+def run_trial(agent, env, steps=30000, trial_id="", tbar=None):
     state, _ = env.reset()
 
     # setup variables to track progress
@@ -32,15 +33,12 @@ def run_trial(agent, env, steps=30000, trial_id=""):
 
     # track agent positions to see if they get stuck
     pos = {}
-    pbpar = tqdm(
-        total=steps,
-        mininterval=0.3,
-        position=1,  # mp.current_process()._identity[0],
-        desc=agent.__class__.__name__,
-        leave=False,
+    steps_iter = tqdm(range(steps), leave=False)
+    steps_iter.set_postfix(
+        agent=agent.__class__.__name__, env=env.__class__.__name__, trial=trial_id
     )
 
-    for step in range(steps):
+    for step in steps_iter:
         steps_this_episode += 1
 
         # record position
@@ -80,10 +78,11 @@ def run_trial(agent, env, steps=30000, trial_id=""):
             "stuck": stuck,
         }
 
-        pbpar.update(1)
+        if tbar is not None:
+            tbar.update()
 
     results = pd.DataFrame(results)
-    pbpar.close()
+    steps_iter.close()
     return results, agent, env
 
 
@@ -103,8 +102,8 @@ def load_dataset(filename_patterns):
         filename_patterns = [filename_patterns]
     results = []
     for pattern in filename_patterns:
-        for filename in glob.glob(os.path.join(".", "data", pattern)):
-            print(filename)
+        print(len(list(DATA_PATH.glob(pattern))))
+        for filename in DATA_PATH.glob(pattern):
             this_result, agent, _ = load_trial(filename)
             this_result["agent"] = agent.display_name
             results.append(this_result)
@@ -112,34 +111,34 @@ def load_dataset(filename_patterns):
     return results
 
 
-def trial(agent, env, rep, trial_num):
-    results, agent, env = run_trial(agent, env, steps=30_000, trial_id=trial_num)
-    filename = os.path.join(
-        ".",
-        "data",
-        f'{agent.__class__.__name__}_{"swapped_" if env.unwrapped.transient_reward > 0.25 else ""}{rep}.pkl',
+def trial(agent, env, rep, trial_num, tbar=None):
+    results, agent, env = run_trial(
+        agent, env, steps=30_000, trial_id=trial_num, tbar=tbar
+    )
+
+    filename = (
+        DATA_PATH
+        / f'{agent.__class__.__name__}_{"swapped_" if env.unwrapped.transient_reward > 0.25 else ""}{rep}.pkl'
     )
     save_trial(results, agent, env, filename)
     return trial_num
 
 
-def worker(trial_data):
-    agent, env, rep, trial_num = trial_data
-    return trial(agent, env, rep, trial_num)
-
-
 def main():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("retrain_all")
+
     trial_num = 0
 
-    reps = 20
     agents = [
         HealthyAgent(),
         SpineLossDepression(),
-        ContextDependentLearningRate(),
-        HighDiscountRate(),
-        ScaledTargets(),
-        HighExploration(),
-        ShiftedTargets(),
+        # ContextDependentLearningRate(),
+        # HighDiscountRate(),
+        # ScaledTargets(),
+        # HighExploration(),
+        # ShiftedTargets(),
     ]
     envs = [
         Image2VecWrapper(
@@ -147,15 +146,17 @@ def main():
                 render_mode="none", transient_reward=0.25, termination_reward=1
             )
         ),
-        # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),  # swapped reward structure
+        # swapped reward structure
+        # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),
     ]
 
-    pbar = tqdm(total=(len(agents) * len(envs) * reps), initial=0, position=0)
+    pbar = tqdm(total=(len(agents) * len(envs) * N_TRIALS), initial=0)
+    tbar = tqdm(total=(len(agents) * len(envs) * N_TRIALS) * 30_000, initial=0)
 
-    for rep in range(reps):
+    for rep in range(N_TRIALS):
         for env in envs:
             for agent in agents:
-                trial(agent, env, rep, trial_num)
+                trial(agent, env, rep, trial_num, tbar=tbar)
                 pbar.update()
                 trial_num += 1
 

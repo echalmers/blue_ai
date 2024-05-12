@@ -3,11 +3,11 @@ import pandas as pd
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.train_agents import load_trial
-import numpy as np
-import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 import blue_ai.agents.agent_classes as agent_classes
+
+from constants import DATA_PATH, N_TRIALS
 
 
 class PerceivedFearPlotter:
@@ -34,12 +34,12 @@ class PerceivedFearPlotter:
             # plt.figure()
             # plt.imshow(env.render())
 
-            for trial in range(20):
+            for trial in range(N_TRIALS):
                 for dataset in [
                     f"{agent_class.__name__}_{trial}.pkl"
                     for agent_class in agent_classes
                 ]:
-                    results, agent, _ = load_trial(os.path.join(".", "data", dataset))
+                    results, agent, _ = load_trial(DATA_PATH / dataset)
 
                     this_agent_values = agent.get_action_values(state).cpu().numpy()
 

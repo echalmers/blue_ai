@@ -3,10 +3,10 @@ import pandas as pd
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.train_agents import load_trial
-import numpy as np
-import os
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+from constants import DATA_PATH, N_TRIALS
 
 from blue_ai.agents.agent_classes import HealthyAgent, SpineLossDepression
 
@@ -30,13 +30,13 @@ ax[0].set_yticks([])
 
 all_values = []
 
-for trial in range(20):
+for trial in range(N_TRIALS):
     for dataset in [
         f"HealthyAgent_{trial}.pkl",
         f"SpineLossDepression_{trial}.pkl",
         f"ContextDependentLearningRate_{trial}.pkl",
     ]:
-        results, agent, _ = load_trial(os.path.join(".", "data", dataset))
+        results, agent, _ = load_trial(DATA_PATH / dataset)
 
         this_agent_values = agent.get_action_values(state).numpy()
         all_values.append([agent.display_name, "turn left", this_agent_values[0]])

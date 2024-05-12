@@ -1,11 +1,9 @@
 from blue_ai.scripts.train_agents import load_trial
-from blue_ai.envs.transient_goals import TransientGoals
 import imageio
-import os
-import numpy as np
 
+from constants import DATA_PATH, FIGURE_PATH
 
-filename = os.path.join(".", "data", "SpineLossDepression_2.pkl")
+filename = DATA_PATH / "SpineLossDepression_19.pkl"
 _, agent, env = load_trial(filename)
 env.env.render_mode = "rgb_array"
 
@@ -37,4 +35,4 @@ for step in range(1000):
     else:
         state = new_state
 
-imageio.mimsave(os.path.join(".", "data", "agent_run.gif"), images)
+imageio.mimsave(FIGURE_PATH / "agent_run.gif", images)

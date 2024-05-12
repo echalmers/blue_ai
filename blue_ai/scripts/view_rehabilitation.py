@@ -2,7 +2,7 @@ from view_performance import load_dataset
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
-
+from constants import FIGURE_PATH
 
 data = load_dataset("rehabilitate_*.pkl")
 data["avg_reward"] = data.groupby(["trial_id"])["reward"].transform(
@@ -50,7 +50,7 @@ plt.ylabel("average reward per step")
 plt.xlabel("time (steps in environment, x1000)")
 
 plt.tight_layout()
-plt.savefig("img/rehabilitate.png", dpi=300)
+plt.savefig(FIGURE_PATH / "rehabilitate.png", dpi=300)
 plt.show()
 exit()
 
