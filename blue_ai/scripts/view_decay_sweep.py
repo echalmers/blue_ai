@@ -1,9 +1,8 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-import os
 
-from constants import FIGURE_PATH, DATA_PATH
+from blue_ai.scripts.constants import FIGURE_PATH, DATA_PATH
 
 results = pd.read_csv(DATA_PATH / "decay_sweep.csv")
 results["reward"] *= 100

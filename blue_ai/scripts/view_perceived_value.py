@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import blue_ai.agents.agent_classes as agent_classes
 
-from constants import DATA_PATH, N_TRIALS
+from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 
 
 class PerceivedValuePlotter:

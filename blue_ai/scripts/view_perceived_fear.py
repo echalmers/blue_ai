@@ -6,7 +6,7 @@ from blue_ai.scripts.train_agents import load_trial
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from constants import DATA_PATH, N_TRIALS
+from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 
 from blue_ai.agents.agent_classes import HealthyAgent, SpineLossDepression
 

@@ -7,7 +7,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import os
 
-from constants import DATA_PATH
+from blue_ai.scripts.constants import DATA_PATH
 
 pd.options.display.width = 0
 

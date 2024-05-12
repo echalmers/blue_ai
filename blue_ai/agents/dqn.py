@@ -7,8 +7,12 @@ import torch
 from torch import nn
 
 
-def softmax_selection(values, t=1.0):
+def softmax(values, t=1.0):
     return torch.softmax(values / t, dim=0)
+
+
+def softmax_selection(values, t=1.0):
+    return torch.multinomial(softmax(values, t=t), 1).item()
 
 
 class TransitionMemory:

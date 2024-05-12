@@ -5,7 +5,7 @@ from train_agents import load_dataset
 from blue_ai.envs.transient_goals import TransientGoals
 import blue_ai.agents.agent_classes as agent_classes
 
-from constants import FIGURE_PATH
+from blue_ai.scripts.constants import FIGURE_PATH
 
 
 class PerformancePlotter:

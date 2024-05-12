@@ -18,7 +18,7 @@ from random import randint
 import pandas as pd
 import pickle
 
-from constants import DATA_PATH, N_TRIALS
+from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 
 
 all_agent_classes = [

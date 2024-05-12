@@ -3,7 +3,7 @@ from view_discounting import DiscountAndCorrelationPlotter
 import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
 
-from constants import FIGURE_PATH
+from blue_ai.scripts.constants import FIGURE_PATH
 
 mosaic = """
 ab

@@ -6,7 +6,7 @@ from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from tqdm import tqdm
 
-from constants import DATA_PATH, N_TRIALS
+from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 
 if __name__ == "__main__":
     from blue_ai.agents.agent_classes import (

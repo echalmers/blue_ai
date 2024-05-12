@@ -1,5 +1,4 @@
 from pathlib import Path
-from sys import stderr
 from minigrid.core.grid import Grid, WorldObj
 from minigrid.core.mission import MissionSpace
 from minigrid.core.world_object import Goal
@@ -58,8 +57,10 @@ class TransientGoals(MiniGridEnv):
 
         mission_space = MissionSpace(mission_func=self._gen_mission)
 
-        ## This seems really arbitrary
-        max_steps = -1
+        # This seems really arbitrary
+        # self.max_steps = 4 * (self.im[0]) ** 2
+
+        self.max_steps = 4 * (self.im[0]) ** 2
 
         super().__init__(
             mission_space=mission_space,
@@ -67,7 +68,7 @@ class TransientGoals(MiniGridEnv):
             height=len(self.im),
             # Set this to True for maximum speed
             see_through_walls=False,
-            max_steps=max_steps,
+            max_steps=self.max_steps,
             agent_view_size=5,
             **kwargs,
         )
@@ -159,8 +160,9 @@ class TransientGoals(MiniGridEnv):
                 self._turn_right()
             case self.actions.forward:
                 terminated, reward = self._handle_forward()
+            case self.actions.done:
+                terminated = True
 
-        terminated |= action == self.actions.done
         truncated = self.step_count >= self.max_steps
 
         if self.render_mode == "human":

@@ -2,7 +2,7 @@ from blue_ai.scripts.train_agents import run_trial, save_trial
 from blue_ai.agents.agent_classes import HealthyAgent
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
-from constants import DATA_PATH
+from blue_ai.scripts.constants import DATA_PATH
 
 import torch
 import matplotlib.pyplot as plt

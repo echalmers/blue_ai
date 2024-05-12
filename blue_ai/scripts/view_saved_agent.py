@@ -1,7 +1,7 @@
 from blue_ai.scripts.train_agents import load_trial
 import imageio
 
-from constants import DATA_PATH, FIGURE_PATH
+from blue_ai.scripts.constants import DATA_PATH, FIGURE_PATH
 
 filename = DATA_PATH / "SpineLossDepression_19.pkl"
 _, agent, env = load_trial(filename)

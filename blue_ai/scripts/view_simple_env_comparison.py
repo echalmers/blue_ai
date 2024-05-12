@@ -2,7 +2,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from constants import FIGURE_PATH, DATA_PATH
+from blue_ai.scripts.constants import FIGURE_PATH, DATA_PATH
 
 results = pd.read_csv(DATA_PATH / "simple_env_comparison.csv")
 results["agent"] = results["agent"].replace(

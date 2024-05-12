@@ -9,9 +9,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from torch import nn
 
-from blue_ai.agents.agent_classes import HealthyAgent, SpineLossDepression
-
-from constants import DATA_PATH, N_TRIALS
+from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 
 
 class DiscountAndCorrelationPlotter:

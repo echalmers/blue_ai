@@ -5,7 +5,7 @@ from view_discounting import DiscountAndCorrelationPlotter
 from view_perceived_fear_2 import PerceivedFearPlotter
 from view_perceived_value import PerceivedValuePlotter
 from blue_ai.agents.agent_classes import SpineLossDepression
-from constants import FIGURE_PATH
+from blue_ai.scripts.constants import FIGURE_PATH
 
 SpineLossDepression.display_name = "simulated\nspine loss"
 

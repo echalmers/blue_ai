@@ -4,12 +4,12 @@ from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.agents.agent_classes import BaseAgent, HealthyAgent, SpineLossDepression
 import pandas as pd
 
-pd.options.display.width = 0
 import seaborn as sns
 import matplotlib.pyplot as plt
-import os
 
-from constants import DATA_PATH
+from blue_ai.scripts.constants import DATA_PATH
+
+pd.options.display.width = 0
 
 results = []
 for rep in range(10):

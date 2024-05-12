@@ -1,8 +1,7 @@
 from view_performance import load_dataset
 import seaborn as sns
 import matplotlib.pyplot as plt
-import numpy as np
-from constants import FIGURE_PATH
+from blue_ai.scripts.constants import FIGURE_PATH
 
 data = load_dataset("rehabilitate_*.pkl")
 data["avg_reward"] = data.groupby(["trial_id"])["reward"].transform(

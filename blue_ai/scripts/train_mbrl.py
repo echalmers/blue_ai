@@ -3,7 +3,7 @@ from blue_ai.agents.tabular.mbrl import MBRL
 from blue_ai.envs.custom_wrappers import Image2FlatVecWrapper
 from blue_ai.envs.transient_goals import TransientGoals
 
-from constants import DATA_PATH
+from blue_ai.scripts.constants import DATA_PATH
 import os
 
 agent_save_path = DATA_PATH / "mbrl.pkl"

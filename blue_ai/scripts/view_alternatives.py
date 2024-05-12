@@ -16,7 +16,7 @@ from blue_ai.agents.agent_classes import (
     HighExploration,
 )
 
-from constants import FIGURE_PATH
+from blue_ai.scripts.constants import FIGURE_PATH
 
 
 SpineLossDepression.display_name = "simulated\nspine loss"

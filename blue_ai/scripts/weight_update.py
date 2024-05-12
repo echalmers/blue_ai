@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import pickle
 import seaborn as sns
 
-from constants import FIGURE_PATH, DATA_PATH
+from blue_ai.scripts.constants import FIGURE_PATH, DATA_PATH
 
 import os
 import numpy as np
