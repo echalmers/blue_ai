@@ -3,7 +3,7 @@ from blue_ai.envs.custom_world_objects import ObstacleNoTerminate
 from enum import IntEnum
 from minigrid.core.grid import Grid, WorldObj
 from minigrid.core.mission import MissionSpace
-from minigrid.core.world_object import Goal, Wall, Lava
+from minigrid.core.world_object import Goal, Wall, Lava, Floor
 
 from minigrid.minigrid_env import MiniGridEnv
 
@@ -62,7 +62,7 @@ class TransientGoals(MiniGridEnv):
         self.replace_transient_obstacles = replace_transient_obstacles
 
         mission_space = MissionSpace(mission_func=self._gen_mission)
-        max_steps = (len(self.im) ** 2) // 2
+        max_steps = 4 * len(self.im) ** 2
 
         super().__init__(
             mission_space=mission_space,
@@ -203,6 +203,8 @@ class TransientGoals(MiniGridEnv):
                         obj_type = ObstacleNoTerminate(reward=self.transient_penalty)
                     case colors.BLUE:
                         obj_type = GoalNoTerminate(reward=self.transient_reward)
+                    case colors.YELLOW:
+                        obj_type = Floor()
 
                 if obj_type is not None:
                     self.put_obj(obj_type, x, y)
