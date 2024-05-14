@@ -46,13 +46,13 @@ def run_trial(agent, env, steps=30000, trial_id="", tbar=None):
 
         # get & execute action
         action = agent.select_action(state)
-        new_state, reward, done, _, _ = env.step(action)
+        new_state, reward, done, truncated, _ = env.step(action)
 
         # use this experience to update agent
         agent.update(state, action, reward, new_state, done=False)
 
         # reset environment if done (ideally env would do this itself)
-        if done or steps_this_episode > 500:
+        if truncated or done:
             state, _ = env.reset()
             episode_num += 1
             steps_this_episode = 0
@@ -111,9 +111,13 @@ def load_dataset(filename_patterns):
     return results
 
 
-def trial(agent, env, rep, trial_num, tbar=None):
+def trial(agent, env, rep, trial_num, tbar=None, steps=30_000):
     results, agent, env = run_trial(
-        agent, env, steps=30_000, trial_id=trial_num, tbar=tbar
+        agent,
+        env,
+        steps=steps,
+        trial_id=trial_num,
+        tbar=tbar,
     )
 
     filename = (
@@ -125,10 +129,7 @@ def trial(agent, env, rep, trial_num, tbar=None):
 
 
 def main():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("retrain_all")
-
+    iterations_per_trial = 30_000
     trial_num = 0
 
     agents = [
@@ -151,12 +152,14 @@ def main():
     ]
 
     pbar = tqdm(total=(len(agents) * len(envs) * N_TRIALS), initial=0)
-    tbar = tqdm(total=(len(agents) * len(envs) * N_TRIALS) * 30_000, initial=0)
+    tbar = tqdm(
+        total=(len(agents) * len(envs) * N_TRIALS * iterations_per_trial), initial=0
+    )
 
     for rep in range(N_TRIALS):
         for env in envs:
             for agent in agents:
-                trial(agent, env, rep, trial_num, tbar=tbar)
+                trial(agent, env, rep, trial_num, tbar=tbar, steps=iterations_per_trial)
                 pbar.update()
                 trial_num += 1
 

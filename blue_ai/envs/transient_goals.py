@@ -1,14 +1,18 @@
-from pathlib import Path
-from minigrid.core.grid import Grid, WorldObj
-from minigrid.core.mission import MissionSpace
-from minigrid.core.world_object import Goal
 from blue_ai.envs.custom_world_objects import GoalNoTerminate
 from blue_ai.envs.custom_world_objects import ObstacleNoTerminate
-from minigrid.minigrid_env import MiniGridEnv
-from minigrid.core.world_object import Wall
-import numpy as np
-import imageio
 from enum import IntEnum
+from minigrid.core.grid import Grid, WorldObj
+from minigrid.core.mission import MissionSpace
+from minigrid.core.world_object import Goal, Wall, Lava
+
+from minigrid.minigrid_env import MiniGridEnv
+
+from pathlib import Path
+from typing import Dict
+import blue_ai.envs.color_classifier as color_classifier
+import imageio.v3 as imageio
+
+environments_cache: Dict[str, Grid] = {}
 
 
 class Actions(IntEnum):
@@ -21,27 +25,29 @@ class Actions(IntEnum):
 
 
 class TransientGoals(MiniGridEnv):
+    gird_cache = None
+
     def __init__(
         self,
         agent_start_pos=(1, 1),
         agent_start_dir=0,
         termination_reward=1,
         transient_reward=0.25,
-        n_transient_goals=3,
+        n_transient_goals=10,
         img_filename="env1.png",
         transient_locations=None,
-        replace_transient_goals=False,
+        replace_transient_goals=True,
         transient_penalty=-1,
         n_transient_obstacles=1,
         transient_obstacles=None,
-        replace_transient_obstacles=False,
+        replace_transient_obstacles=True,
         **kwargs,
     ):
 
         # In order to prevent patthing issues we need to ensure that we path
         # relative to the location of this file rather than the run location
         image_path = Path(__file__).parent / img_filename
-        self.im = imageio.imread(image_path)
+        self.im = imageio.imread(image_path, pilmode="RGB")
 
         self.agent_start_pos = agent_start_pos
         self.agent_start_dir = agent_start_dir
@@ -56,52 +62,48 @@ class TransientGoals(MiniGridEnv):
         self.replace_transient_obstacles = replace_transient_obstacles
 
         mission_space = MissionSpace(mission_func=self._gen_mission)
-
-        # This seems really arbitrary
-        # self.max_steps = 4 * (self.im[0]) ** 2
-
-        self.max_steps = 4 * (self.im[0]) ** 2
+        max_steps = (len(self.im) ** 2) // 2
 
         super().__init__(
             mission_space=mission_space,
             width=len(self.im[0]),
             height=len(self.im),
-            # Set this to True for maximum speed
-            see_through_walls=False,
-            max_steps=self.max_steps,
+            see_through_walls=True,
+            max_steps=max_steps,
             agent_view_size=5,
             **kwargs,
         )
-        self.actions = Actions
 
     def _replace_transient_obstacles(self, reward):
         self.penalties.append(ObstacleNoTerminate(reward=reward))
         self.place_obj(self.penalties[-1], max_tries=100)
 
-    """
-    Turns the agent to the left
-    """
-
     def _turn_left(self):
+        """
+        Turns the agent to the left
+        """
         self.agent_dir = (self.agent_dir - 1) % 4
 
-    """
-    Turns the agent to the right
-    """
-
     def _turn_right(self):
+        """
+        Turns the agent to the right
+        """
         self.agent_dir = (self.agent_dir + 1) % 4
 
-    """
-    Determines if the current state is a end state
-    """
-
     def _check_termination_conditions(self, cell_type: str):
-        return cell_type == "goal" or cell_type == "lava"
+        """
+        Determines if the current state is a end state
+        """
+        termination_conditions = ["goal", "lava"]
+
+        return max([kind == cell_type for kind in termination_conditions])
 
     def _get_reward_amount(
         self, fwd_cell: GoalNoTerminate | ObstacleNoTerminate | WorldObj
     ):
+        """
+        Get's the reward amount of the specified cell
+        """
         kind = fwd_cell.type
         reward = 0.0
 
@@ -114,6 +116,10 @@ class TransientGoals(MiniGridEnv):
         return reward
 
     def _handle_forward(self):
+        """
+        Handles moving forward, including removing and adding obstacles and
+        rewards as needed
+        """
         fwd_pos = self.front_pos
         fwd_cell = self.grid.get(*fwd_pos)
 
@@ -132,7 +138,6 @@ class TransientGoals(MiniGridEnv):
         is_obstacle_no_terminate = fwd_cell.type == "obstacleNoTerminate"
 
         # Create a new obstacle/reward if the current one is "used"
-
         if self.replace_transient_goals and is_goal_no_terminate:
             self.obstacles.append(GoalNoTerminate(self.transient_reward))
             self.place_obj(self.obstacles[-1], max_tries=100)
@@ -152,18 +157,19 @@ class TransientGoals(MiniGridEnv):
 
         reward = 0
         terminated = False
+        truncated = self.step_count >= self.max_steps
 
         match action:
-            case self.actions.left:
+            case Actions.left:
                 self._turn_left()
-            case self.actions.right:
+            case Actions.right:
                 self._turn_right()
-            case self.actions.forward:
+            case Actions.forward:
                 terminated, reward = self._handle_forward()
-            case self.actions.done:
+            case Actions.done:
                 terminated = True
-
-        truncated = self.step_count >= self.max_steps
+            case action:
+                raise ValueError(f"Unknown action {action}")
 
         if self.render_mode == "human":
             self.render()
@@ -179,16 +185,27 @@ class TransientGoals(MiniGridEnv):
     def _gen_grid(self, width, height):
         # Create an empty grid
         self.grid = Grid(width, height)
-
         hasGoal = False
 
         for x in range(0, width):
             for y in range(0, height):
-                if np.sum((self.im)[y][x]) == 255:
-                    self.grid.set(x, y, Wall())
-                if np.sum((self.im)[y][x]) > 255 and np.sum((self.im)[y][x]) < 510:
-                    self.put_obj(Goal(), x, y)
-                    hasGoal = True
+                color = color_classifier.classify_color(self.im[y][x])
+                colors = color_classifier.Colors
+                obj_type = None
+
+                match color:
+                    case colors.BLACK:
+                        obj_type = Wall()
+                    case colors.GREEN:
+                        obj_type = Goal()
+                        hasGoal = True
+                    case colors.RED:
+                        obj_type = ObstacleNoTerminate(reward=self.transient_penalty)
+                    case colors.BLUE:
+                        obj_type = GoalNoTerminate(reward=self.transient_reward)
+
+                if obj_type is not None:
+                    self.put_obj(obj_type, x, y)
 
         # Place the agent
         if self.agent_start_pos is not None:
@@ -226,16 +243,3 @@ class TransientGoals(MiniGridEnv):
         # Place a goal square in the bottom-right corner
         if hasGoal is False:
             self.put_obj(Goal(), width - 2, height - 2)
-
-        # # Place the agent
-        # if self.agent_start_pos is not None:
-        #     self.agent_pos = self.agent_start_pos
-        #     self.agent_dir = self.agent_start_dir
-        # else:
-        #     self.place_agent()
-
-    def _reward(self) -> float:
-        """
-        Compute the reward to be given upon success
-        """
-        return self.termination_reward

@@ -1,36 +1,53 @@
 from typing import Tuple
 import numpy as np
+from enum import Enum
+import functools
 
 
-class ColorClassifier:
-    COLORS = {
-        "Black": (0, 0, 0),
-        "White": (255, 255, 255),
-        "Red": (255, 0, 0),
-        "Green": (0, 255, 0),
-        "Blue": (0, 0, 255),
-        "Yellow": (255, 255, 0),
-        "Cyan": (0, 255, 255),
-        "Magenta": (255, 0, 255),
-    }
-    THRESHOLD = 100
+class Colors(Enum):
+    BLACK = 0
+    WHITE = 1
+    RED = 2
+    GREEN = 3
+    BLUE = 4
+    YELLOW = 5
+    CYAN = 6
+    MAGENTA = 7
 
-    @staticmethod
-    def color_distance(c1: Tuple[int, int, int], c2: Tuple[int, int, int]) -> float:
-        return np.linalg.norm(np.array(c1) - np.array(c2))
 
-    @staticmethod
-    def classify_color(rgb: Tuple[int, int, int]) -> str:
-        distances = {
-            color: ColorClassifier.color_distance(rgb, color_rgb)
-            for color, color_rgb in ColorClassifier.COLORS.items()
-        }
+_COLORS = {
+    (0, 0, 0): Colors.BLACK,
+    (255, 255, 255): Colors.WHITE,
+    (255, 0, 0): Colors.RED,
+    (0, 255, 0): Colors.GREEN,
+    (0, 0, 255): Colors.BLUE,
+    (255, 255, 0): Colors.YELLOW,
+    (0, 255, 255): Colors.CYAN,
+    (255, 0, 255): Colors.MAGENTA,
+}
+COLOR_KEYS = np.array(list(_COLORS.keys()))
+THRESHOLD = 150
 
-        closest_color = min(distances, key=distances.get)
 
-        if distances[closest_color] <= ColorClassifier.THRESHOLD:
-            return closest_color
+_color_cache = {}
 
-        raise ValueError(
-            "Color distance exceeds threshold, classification is not possible."
-        )
+
+def color_distance(c1: np.ndarray, c2: np.ndarray) -> np.ndarray:
+    return np.linalg.norm(c1 - c2, axis=1)
+
+
+def classify_color(rgb: Tuple[int, int, int]) -> Colors:
+    rgb_array = np.array(rgb)
+
+    distances = color_distance(COLOR_KEYS, rgb_array)
+    closest_index = np.argmin(distances)
+    closest_color = _COLORS[tuple(COLOR_KEYS[closest_index])]
+    certainty = distances[closest_index]
+
+    if certainty <= THRESHOLD:
+        return closest_color
+
+    raise ValueError(
+        "Color distance exceeds threshold, classification is not possible."
+        f"Most likely is color {closest_color}, with certainty {certainty}"
+    )

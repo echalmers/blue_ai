@@ -2,6 +2,8 @@ from minigrid.core.world_object import WorldObj
 from minigrid.utils.rendering import fill_coords, point_in_rect
 from minigrid.core.constants import COLORS, OBJECT_TO_IDX
 
+from tqdm import tqdm
+
 
 class GoalNoTerminate(WorldObj):
     def __init__(self, reward=0.5):

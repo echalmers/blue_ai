@@ -18,7 +18,7 @@ from random import randint
 import pandas as pd
 import pickle
 
-from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
+from blue_ai.scripts.constants import DATA_PATH, N_TRIALS, FIGURE_PATH
 
 
 all_agent_classes = [
@@ -58,7 +58,13 @@ else:
                 if agent_class == HealthyAgent and i == j:
                     continue
 
-                _, agent, _ = load_trial(DATA_PATH / f"{agent_class.__name__}_{j}.pkl")
+                try:
+                    _, agent, _ = load_trial(
+                        DATA_PATH / f"{agent_class.__name__}_{j}.pkl"
+                    )
+                except FileNotFoundError as e:
+                    print(f"Failed to open file {e}; Continuing")
+                    continue
 
                 env = Image2VecWrapper(
                     TransientGoals(
@@ -114,3 +120,4 @@ if __name__ == "__main__":
     plt.figure()
     plot_kl_divergence(plt.gca())
     plt.show()
+    plt.savefig(FIGURE_PATH / "compare_exploration.png", dpi=600)

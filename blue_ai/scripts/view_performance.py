@@ -79,10 +79,6 @@ class PerformancePlotter:
         lava["event"] = "hazard"
         lava.rename({"lava": "count"}, axis=1, inplace=True)
 
-        # stuck = goals[['trial_id', 'dropout', 'stuck']]
-        # stuck['goal type'] = 'stuck'
-        # stuck.rename({'stuck': 'count'}, axis=1, inplace=True)
-
         goals = pd.concat(
             [goals_terminal, goals_transient] + ([lava] if include_lava else []),
             ignore_index=True,
@@ -98,8 +94,8 @@ class PerformancePlotter:
         # plot cumulative reward
         sns.lineplot(
             data=self.high_terminal_results[
-                (self.high_terminal_results["step"] <= 20_000)
-                & (self.high_terminal_results["step"] % 5 == 0)
+                # (self.high_terminal_results["step"] <= 20_000)
+                (self.high_terminal_results["step"] % 5 == 0)
             ],
             x="step",
             y="cumulative_reward",
