@@ -33,14 +33,14 @@ class TransientGoals(MiniGridEnv):
         agent_start_dir=0,
         termination_reward=1,
         transient_reward=0.25,
-        n_transient_goals=10,
+        n_transient_goals=3,
         img_filename="env1.png",
         transient_locations=None,
-        replace_transient_goals=True,
+        replace_transient_goals=False,
         transient_penalty=-1,
         n_transient_obstacles=1,
         transient_obstacles=None,
-        replace_transient_obstacles=True,
+        replace_transient_obstacles=False,
         **kwargs,
     ):
 
