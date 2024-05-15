@@ -132,38 +132,54 @@ def main():
     iterations_per_trial = 30_000
     trial_num = 0
 
-    agents = [
-        HealthyAgent(),
-        SpineLossDepression(),
-        # ContextDependentLearningRate(),
-        # HighDiscountRate(),
-        # ScaledTargets(),
-        # HighExploration(),
-        # ShiftedTargets(),
-    ]
-    envs = [
-        Image2VecWrapper(
-            TransientGoals(
-                render_mode="none", transient_reward=0.25, termination_reward=1
-            )
-        ),
-        # swapped reward structure
-        # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),
-    ]
+    # agents = [
+    #     HealthyAgent(),
+    #     SpineLossDepression(),
+    #     # ContextDependentLearningRate(),
+    #     # HighDiscountRate(),
+    #     # ScaledTargets(),
+    #     # HighExploration(),
+    #     # ShiftedTargets(),
+    # ]
+    # envs = [
+    #     Image2VecWrapper(
+    #         TransientGoals(
+    #             render_mode="none", transient_reward=0.25, termination_reward=1
+    #         )
+    #     ),
+    #     # swapped reward structure
+    #     # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),
+    # ]
 
-    pbar = tqdm(total=(len(agents) * len(envs) * N_TRIALS), initial=0)
-    tbar = tqdm(
-        total=(len(agents) * len(envs) * N_TRIALS * iterations_per_trial), initial=0
-    )
+    # pbar = tqdm(total=(len(agents) * len(envs) * N_TRIALS), initial=0)
+    # tbar = tqdm(
+    #     total=(len(agents) * len(envs) * N_TRIALS * iterations_per_trial), initial=0
+    # )
 
     for rep in range(N_TRIALS):
-        for env in envs:
-            for agent in agents:
-                trial(agent, env, rep, trial_num, tbar=tbar, steps=iterations_per_trial)
-                pbar.update()
+        for env in [
+            Image2VecWrapper(
+                TransientGoals(
+                    render_mode="none", transient_reward=0.25, termination_reward=1
+                )
+            ),
+            # swapped reward structure
+            # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),
+        ]:
+            for agent in [
+                HealthyAgent(),
+                SpineLossDepression(),
+                # ContextDependentLearningRate(),
+                # HighDiscountRate(),
+                # ScaledTargets(),
+                # HighExploration(),
+                # ShiftedTargets(),
+            ]:
+                trial(agent, env, rep, trial_num, tbar=None, steps=iterations_per_trial)
+                # pbar.update()
                 trial_num += 1
 
-    pbar.close()
+    # pbar.close()
 
 
 if __name__ == "__main__":

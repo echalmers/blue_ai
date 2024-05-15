@@ -41,6 +41,7 @@ class TransientGoals(MiniGridEnv):
         n_transient_obstacles=1,
         transient_obstacles=None,
         replace_transient_obstacles=False,
+        max_steps=500,
         **kwargs,
     ):
 
@@ -62,7 +63,6 @@ class TransientGoals(MiniGridEnv):
         self.replace_transient_obstacles = replace_transient_obstacles
 
         mission_space = MissionSpace(mission_func=self._gen_mission)
-        max_steps = (len(self.im) ** 2) // 2
 
         super().__init__(
             mission_space=mission_space,
