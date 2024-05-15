@@ -1,38 +1,40 @@
+from typing import Any, Dict, List, Tuple, TypedDict
 import pandas as pd
 import pickle
-import argparse
 
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from tqdm import tqdm
 
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
+from blue_ai.agents.agent_classes import *
 
-if __name__ == "__main__":
-    from blue_ai.agents.agent_classes import (
-        HealthyAgent,
-        SpineLossDepression,
-        ContextDependentLearningRate,
-        HighDiscountRate,
-        ScaledTargets,
-        ShiftedTargets,
-        HighExploration,
-    )
+
+class ResultDict(TypedDict):
+    trial_id: int | str
+    agent: str
+    step: int
+    episode: int
+    reward: float
+    cumulative_reward: float
+    terminal_goal: bool
+    transient_goal: bool
+    lava: bool
+    stuck: bool
 
 
 def run_trial(agent, env, steps=30000, trial_id="", tbar=None):
     state, _ = env.reset()
-
     # setup variables to track progress
     steps_this_episode = 0
     episode_num = 0
     cumulative_reward = 0
 
     # setup results dataframe
-    results = [None] * steps
+    results: List[ResultDict] = []
+    pos: Dict[Tuple[int, int], int] = {}
 
-    # track agent positions to see if they get stuck
-    pos = {}
+    ## Setting up progress bar
     steps_iter = tqdm(range(steps), leave=False)
     steps_iter.set_postfix(
         agent=agent.__class__.__name__, env=env.__class__.__name__, trial=trial_id
@@ -65,25 +67,29 @@ def run_trial(agent, env, steps=30000, trial_id="", tbar=None):
         lava = reward < 0
         stuck = max(pos.values()) > 2000
         cumulative_reward += reward
-        results[step] = {
-            "trial_id": trial_id,
-            "agent": agent.__class__.__name__,
-            "step": step,
-            "episode": episode_num,
-            "reward": reward,
-            "cumulative_reward": cumulative_reward,
-            "terminal_goal": terminal_goal,
-            "transient_goal": transient_goal,
-            "lava": lava,
-            "stuck": stuck,
-        }
+
+        results.append(
+            {
+                "trial_id": trial_id,
+                "agent": agent.__class__.__name__,
+                "step": step,
+                "episode": episode_num,
+                "reward": reward,
+                "cumulative_reward": cumulative_reward,
+                "terminal_goal": terminal_goal,
+                "transient_goal": transient_goal,
+                "lava": lava,
+                "stuck": stuck,
+            }
+        )
 
         if tbar is not None:
             tbar.update()
 
-    results = pd.DataFrame(results)
+    results_dataframe = pd.DataFrame(results)
     steps_iter.close()
-    return results, agent, env
+
+    return results_dataframe, agent, env
 
 
 def save_trial(results, agent, env, filename):
@@ -133,13 +139,14 @@ def main():
     trial_num = 0
 
     agents = [
-        HealthyAgent(),
-        SpineLossDepression(),
+        # HealthyAgent(),
+        # SpineLossDepression(),
         # ContextDependentLearningRate(),
         # HighDiscountRate(),
         # ScaledTargets(),
         # HighExploration(),
         # ShiftedTargets(),
+        ExponentialLossAgent(),
     ]
     envs = [
         Image2VecWrapper(

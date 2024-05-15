@@ -94,6 +94,7 @@ class DQN:
         softmax_temp=None,
         seed=42,
         weight_decay=0,
+        loss_fn: torch.nn.Module | None = None,
     ):
         """
         :param network: deep network, of type torch.nn.Sequential
@@ -116,7 +117,7 @@ class DQN:
         self.value_net.to(self.device)
 
         # instantiate loss and optimizer
-        self.loss_fn = torch.nn.MSELoss()
+        self.loss_fn: torch.nn.Module = loss_fn or torch.nn.MSELoss()
         self.lr = lr
         self.optimizer = torch.optim.Adam(
             self.policy_net.parameters(), lr=lr, weight_decay=weight_decay
@@ -182,6 +183,7 @@ class DQN:
             # get target value estimates, based on actual rewards and value net's predictions of next-state value
             with torch.no_grad():
                 new_state_value, _ = self.value_net(ns).max(1)
+
             target_action_value = r + self.gamma * new_state_value * (1 - d)
             target_values = state_action_values.clone().detach()
             target_values[np.arange(target_values.shape[0]), a] = target_action_value

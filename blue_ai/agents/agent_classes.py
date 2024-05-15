@@ -3,6 +3,7 @@ from torch import nn
 import numpy as np
 import torch
 
+from blue_ai.envs.custom_decay import ExponentialLoss
 
 # a basic multi-layer network
 common_network = nn.Sequential(
@@ -24,6 +25,7 @@ class BaseAgent(DQN):
         batch_size=1500,
         weight_decay=0.0,
         softmax_temperature=None,
+        loss_fn: torch.nn.Module | None = None,
     ):
         super().__init__(
             network=nn.Sequential(
@@ -39,6 +41,7 @@ class BaseAgent(DQN):
             softmax_temp=softmax_temperature,
             batch_size=batch_size,
             weight_decay=weight_decay,
+            loss_fn=loss_fn,
         )
 
 
@@ -133,3 +136,12 @@ class ShiftedTargets(BaseAgent):
             self.optimizer.step()
 
             return loss.item()
+
+
+class ExponentialLossAgent(BaseAgent):
+    display_name = "Exponential Loss Agent"
+
+    custom_loss_function = ExponentialLoss()
+
+    def __init__(self):
+        super().__init__(loss_fn=self.custom_loss_function)
