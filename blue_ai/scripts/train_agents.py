@@ -139,14 +139,14 @@ def main():
     trial_num = 0
 
     agents = [
-        # HealthyAgent(),
-        # SpineLossDepression(),
+        HealthyAgent(),
+        SpineLossDepression(),
         # ContextDependentLearningRate(),
         # HighDiscountRate(),
         # ScaledTargets(),
         # HighExploration(),
         # ShiftedTargets(),
-        ExponentialLossAgent(),
+        # ExponentialLossAgent(),
     ]
     envs = [
         Image2VecWrapper(

@@ -16,19 +16,21 @@ def plot_learning_curves(
 
     # Group by agent and episode, calculate the max step and sum of rewards per episode
     grouped_dataset = (
-        dataset.groupby(["agent", "episode", "trial_id"])
-        .agg({"reward": "sum", "step": "max"})
-        .reset_index()
+        dataset.groupby(["agent", "step"])["reward"]
+        .transform(lambda s: s.rolling(500))
+        .mean()
     )
 
-    sns.kdeplot(
+    print(grouped_dataset)
+
+    sns.lineplot(
         data=grouped_dataset,
         y="reward",
         x="step",
         hue="agent",
         # levels=100,
-        fill=True,
-        alpha=(1 / 2),
+        # fill=True,
+        # alpha=(1 / 2),
     )
 
 
