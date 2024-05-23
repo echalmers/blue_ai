@@ -1,12 +1,11 @@
-from blue_ai.scripts.train_agents import load_trial
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-import glob
-import os
 from train_agents import load_dataset
 from blue_ai.envs.transient_goals import TransientGoals
 import blue_ai.agents.agent_classes as agent_classes
+
+from blue_ai.scripts.constants import FIGURE_PATH
 
 
 class PerformancePlotter:
@@ -20,6 +19,8 @@ class PerformancePlotter:
         self.high_terminal_results = load_dataset(
             [f"{cls.__name__}_[!s]*.pkl" for cls in agent_classes]
         )
+
+        print(self.high_terminal_results)
 
     @staticmethod
     def plot_sample_env(ax):
@@ -78,10 +79,6 @@ class PerformancePlotter:
         lava["event"] = "hazard"
         lava.rename({"lava": "count"}, axis=1, inplace=True)
 
-        # stuck = goals[['trial_id', 'dropout', 'stuck']]
-        # stuck['goal type'] = 'stuck'
-        # stuck.rename({'stuck': 'count'}, axis=1, inplace=True)
-
         goals = pd.concat(
             [goals_terminal, goals_transient] + ([lava] if include_lava else []),
             ignore_index=True,
@@ -97,8 +94,8 @@ class PerformancePlotter:
         # plot cumulative reward
         sns.lineplot(
             data=self.high_terminal_results[
-                (self.high_terminal_results["step"] <= 20_000)
-                & (self.high_terminal_results["step"] % 5 == 0)
+                # (self.high_terminal_results["step"] <= 20_000)
+                (self.high_terminal_results["step"] % 5 == 0)
             ],
             x="step",
             y="cumulative_reward",
@@ -133,7 +130,6 @@ class PerformancePlotter:
 
 
 if __name__ == "__main__":
-
     plotter = PerformancePlotter()
 
     f, ax = plt.subplots(1, 2, figsize=(9, 3))
@@ -146,4 +142,5 @@ if __name__ == "__main__":
     plotter.plot_goals_per_episode(ax[1])
 
     plt.show()
+    plt.savefig(FIGURE_PATH / "performance.png")
     exit()

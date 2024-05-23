@@ -9,12 +9,14 @@ import matplotlib.pyplot as plt
 import pickle
 import seaborn as sns
 
+from blue_ai.scripts.constants import FIGURE_PATH, DATA_PATH
+
 import os
 import numpy as np
 
 
 def plot_weight_changes(ax):
-    with open(os.path.join(".", "data", "weight_updates.pkl"), "rb") as f:
+    with open(DATA_PATH / "weight_updates.pkl", "rb") as f:
         df = pd.DataFrame(pickle.load(f))
     print(df)
 
@@ -61,7 +63,7 @@ def plot_weight_changes(ax):
 
 
 if __name__ == "__main__":
-    if os.path.exists(os.path.join(".", "data", "weight_updates.pkl")):
+    if (DATA_PATH / "weight_updates.pkl").exists():
         plot_weight_changes()
 
     else:
@@ -122,7 +124,7 @@ if __name__ == "__main__":
                     else:
                         state = new_state
 
-        with open(os.path.join(".", "data", "weight_updates.pkl"), "wb") as f:
+        with open(DATA_PATH / "weight_updates.pkl", "wb") as f:
             pickle.dump(pd.DataFrame(results).to_dict(orient="list"), f)
         plot_weight_changes()
 

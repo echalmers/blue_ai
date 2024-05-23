@@ -1,13 +1,26 @@
 import pandas as pd
 import pickle
-import numpy as np
-import glob
-import os
+from copy import deepcopy
+
+from blue_ai.envs.transient_goals import TransientGoals
+from blue_ai.envs.custom_wrappers import Image2VecWrapper
+from tqdm import tqdm
+
+from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
+
+if __name__ == "__main__":
+    from blue_ai.agents.agent_classes import (
+        HealthyAgent,
+        SpineLossDepression,
+        ContextDependentLearningRate,
+        HighDiscountRate,
+        ScaledTargets,
+        ShiftedTargets,
+        HighExploration,
+    )
 
 
-def run_trial(agent, env, steps=30000, trial_id=""):
-
-    # reset the environment
+def run_trial(agent, env, steps=30000, trial_id="", tbar=None):
     state, _ = env.reset()
 
     # setup variables to track progress
@@ -29,18 +42,13 @@ def run_trial(agent, env, steps=30000, trial_id=""):
 
         # get & execute action
         action = agent.select_action(state)
-        new_state, reward, done, _, _ = env.step(action)
+        new_state, reward, done, truncated, _ = env.step(action)
 
         # use this experience to update agent
         agent.update(state, action, reward, new_state, done=False)
 
         # reset environment if done (ideally env would do this itself)
-        if done or steps_this_episode > 500:
-            print(
-                str(agent.__class__.__name__) + f": goal reached at step {step}/{steps}"
-                if done
-                else "***TIMEOUT***"
-            )
+        if truncated or done:
             state, _ = env.reset()
             episode_num += 1
             steps_this_episode = 0
@@ -66,6 +74,9 @@ def run_trial(agent, env, steps=30000, trial_id=""):
             "stuck": stuck,
         }
 
+        if tbar is not None:
+            tbar.update()
+
     results = pd.DataFrame(results)
     return results, agent, env
 
@@ -86,8 +97,8 @@ def load_dataset(filename_patterns):
         filename_patterns = [filename_patterns]
     results = []
     for pattern in filename_patterns:
-        for filename in glob.glob(os.path.join(".", "data", pattern)):
-            print(filename)
+        print(len(list(DATA_PATH.glob(pattern))))
+        for filename in DATA_PATH.glob(pattern):
             this_result, agent, _ = load_trial(filename)
             this_result["agent"] = agent.display_name
             results.append(this_result)
@@ -95,54 +106,57 @@ def load_dataset(filename_patterns):
     return results
 
 
-if __name__ == "__main__":
-
-    from blue_ai.agents.agent_classes import (
-        HealthyAgent,
-        SpineLossDepression,
-        ContextDependentLearningRate,
-        HighDiscountRate,
-        ScaledTargets,
-        ShiftedTargets,
-        HighExploration,
+def trial(agent, env, rep, trial_num, tbar=None, steps=30_000):
+    results, agent, env = run_trial(
+        agent,
+        env,
+        steps=steps,
+        trial_id=trial_num,
+        tbar=tbar,
     )
-    from blue_ai.envs.transient_goals import TransientGoals
-    from blue_ai.envs.custom_wrappers import Image2VecWrapper
-    import os
 
+    filename = (
+        DATA_PATH
+        / f'{agent.__class__.__name__}_{"swapped_" if env.unwrapped.transient_reward > 0.25 else ""}{rep}.pkl'
+    )
+    save_trial(results, agent, env, filename)
+    return trial_num
+
+
+def main():
+    iterations_per_trial = 30_000
     trial_num = 0
 
-    for rep in range(20):
+    agents = [
+        HealthyAgent(),
+        SpineLossDepression(),
+        # ContextDependentLearningRate(),
+        # HighDiscountRate(),
+        # ScaledTargets(),
+        # HighExploration(),
+        # ShiftedTargets(),
+    ]
+    envs = [
+        Image2VecWrapper(
+            TransientGoals(
+                render_mode="none", transient_reward=0.25, termination_reward=1
+            )
+        ),
+        # swapped reward structure
+        # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),
+    ]
 
-        for env in [
-            Image2VecWrapper(
-                TransientGoals(
-                    render_mode="none", transient_reward=0.25, termination_reward=1
-                )
-            ),
-            # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),  # swapped reward structure
-        ]:
+    tbar = tqdm(
+        total=(len(agents) * len(envs) * N_TRIALS * iterations_per_trial), initial=0
+    )
 
-            for agent in [
-                HealthyAgent(),
-                SpineLossDepression(),
-                # ContextDependentLearningRate(),
-                # HighDiscountRate(),
-                # ScaledTargets(),
-                # HighExploration(),
-                # ShiftedTargets(),
-            ]:
-                results, agent, env = run_trial(
-                    agent, env, steps=30_000, trial_id=trial_num
-                )
-                save_trial(
-                    results,
-                    agent,
-                    env,
-                    filename=os.path.join(
-                        ".",
-                        "data",
-                        f'{agent.__class__.__name__}_{"swapped_" if env.unwrapped.transient_reward > 0.25 else ""}{rep}.pkl',
-                    ),
-                )
+    for rep in range(N_TRIALS):
+        for env in envs:
+            for agent in agents:
+                tbar.set_postfix(agent=agent.__class__.__name__, env=env.__class__.__name__, rep=rep)
+                trial(deepcopy(agent), env, rep, trial_num, tbar=tbar, steps=iterations_per_trial)
                 trial_num += 1
+
+
+if __name__ == "__main__":
+    main()

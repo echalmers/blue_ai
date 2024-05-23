@@ -5,3 +5,6 @@ data/
 __pycache__/
 build/lib/blue_ai
 blue_ai_envs.egg-info
+/build/
+blue_ai.egg-info
+blue_ai/scripts/img

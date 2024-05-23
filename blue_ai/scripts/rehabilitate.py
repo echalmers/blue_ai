@@ -2,14 +2,16 @@ from blue_ai.scripts.train_agents import run_trial, save_trial
 from blue_ai.agents.agent_classes import HealthyAgent
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
+from blue_ai.scripts.constants import DATA_PATH
+
 import torch
-import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+from tqdm import trange
 
 
-for rep in range(10):
+for rep in trange(10):
     results1, agent, env = run_trial(
         trial_id=rep,
         agent=HealthyAgent(),
@@ -46,7 +48,7 @@ for rep in range(10):
         results,
         agent,
         env,
-        filename=os.path.join(".", "data", f"rehabilitate_{rep}.pkl"),
+        DATA_PATH / f"rehabilitate_{rep}.pkl",
     )
 
 plt.plot(results["cumulative_reward"])

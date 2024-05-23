@@ -1,11 +1,12 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-import os
 
-results = pd.read_csv(os.path.join(".", "data", "simple_env_comparison.csv"))
+from blue_ai.scripts.constants import FIGURE_PATH, DATA_PATH
+
+results = pd.read_csv(DATA_PATH / "simple_env_comparison.csv")
 results["agent"] = results["agent"].replace(
-    {"HealthyAgent": "healthy", "SpineLossDepression": "simluated\nspine loss"}
+    {"HealthyAgent": "healthy", "SpineLossDepression": "simulated\nspine loss"}
 )
 results["reward"] *= 100
 print(results)
@@ -24,5 +25,5 @@ plt.xlabel("environment")
 plt.ylabel("average reward per 100 steps")
 plt.title("performance in full-complexity and simple environments")
 plt.tight_layout()
-plt.savefig("img/simple_env_comparison.png", dpi=300)
+plt.savefig(FIGURE_PATH / "simple_env_comparison.png", dpi=300)
 plt.show()

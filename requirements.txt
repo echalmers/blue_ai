@@ -1,8 +1,0 @@
-black
-imageio
-matplotlib
-minigrid
-pandas
-scipy
-seaborn
-torch

@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
-
 from view_performance import PerformancePlotter
 from view_discounting import DiscountAndCorrelationPlotter
 from view_perceived_fear_2 import PerceivedFearPlotter
 from view_perceived_value import PerceivedValuePlotter
 from blue_ai.agents.agent_classes import SpineLossDepression
+from blue_ai.scripts.constants import FIGURE_PATH
 
 SpineLossDepression.display_name = "simulated\nspine loss"
 
@@ -49,7 +49,7 @@ for label, ax in axes.items():
     )
 
 plt.tight_layout()
-plt.savefig("img/performance_results.png", dpi=300)
+plt.savefig(FIGURE_PATH / "performance_results.png", dpi=300)
 
 
 mosaic = """
@@ -88,5 +88,5 @@ for label, ax in axes2.items():
     )
 
 plt.tight_layout()
-plt.savefig("img/value_fear.png", dpi=300)
+plt.savefig(FIGURE_PATH / "value_fear.png", dpi=300)
 plt.show()

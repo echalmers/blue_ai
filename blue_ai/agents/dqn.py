@@ -7,12 +7,12 @@ import torch
 from torch import nn
 
 
+def softmax(values, t=1.0):
+    return torch.softmax(values / t, dim=0)
+
+
 def softmax_selection(values, t=1.0):
-    e_x = np.exp(
-        values / t - np.max(values / t)
-    )  # Subtracting the maximum value for numerical stability (thanks ChatGPT!)
-    p = e_x / e_x.sum(axis=0)
-    return np.random.choice(len(values), p=p)
+    return torch.multinomial(softmax(values, t=t), 1).item()
 
 
 class TransitionMemory:
@@ -158,7 +158,7 @@ class DQN:
             )[0]
 
         if self.softmax_temp is not None:
-            return softmax_selection(values.detach().numpy(), self.softmax_temp)
+            return softmax_selection(values, self.softmax_temp)
 
         max_q, index = values.max(0)
         return index.item()

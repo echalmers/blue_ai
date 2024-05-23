@@ -3,10 +3,10 @@ from blue_ai.agents.tabular.mbrl import MBRL
 from blue_ai.envs.custom_wrappers import Image2FlatVecWrapper
 from blue_ai.envs.transient_goals import TransientGoals
 
-import pickle
+from blue_ai.scripts.constants import DATA_PATH
 import os
 
-agent_save_path = os.path.join(".", "data", "mbrl.pkl")
+agent_save_path = DATA_PATH / "mbrl.pkl"
 
 if os.path.exists(agent_save_path):
     agent = MBRL.load(agent_save_path, actions=[0, 1, 2])
@@ -25,7 +25,6 @@ env = Image2FlatVecWrapper(
 )  # set render mode to "human" to see the agent moving around
 
 for i in range(10_000 // 500):
-    print(i)
     results, agent, env = run_trial(agent=agent, env=env, steps=500)
     agent.save(agent_save_path)
 
