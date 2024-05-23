@@ -1,6 +1,6 @@
 import pandas as pd
 import pickle
-import argparse
+from copy import deepcopy
 
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
@@ -33,12 +33,8 @@ def run_trial(agent, env, steps=30000, trial_id="", tbar=None):
 
     # track agent positions to see if they get stuck
     pos = {}
-    steps_iter = tqdm(range(steps), leave=False)
-    steps_iter.set_postfix(
-        agent=agent.__class__.__name__, env=env.__class__.__name__, trial=trial_id
-    )
 
-    for step in steps_iter:
+    for step in range(steps):
         steps_this_episode += 1
 
         # record position
@@ -82,7 +78,6 @@ def run_trial(agent, env, steps=30000, trial_id="", tbar=None):
             tbar.update()
 
     results = pd.DataFrame(results)
-    steps_iter.close()
     return results, agent, env
 
 
@@ -132,54 +127,35 @@ def main():
     iterations_per_trial = 30_000
     trial_num = 0
 
-    # agents = [
-    #     HealthyAgent(),
-    #     SpineLossDepression(),
-    #     # ContextDependentLearningRate(),
-    #     # HighDiscountRate(),
-    #     # ScaledTargets(),
-    #     # HighExploration(),
-    #     # ShiftedTargets(),
-    # ]
-    # envs = [
-    #     Image2VecWrapper(
-    #         TransientGoals(
-    #             render_mode="none", transient_reward=0.25, termination_reward=1
-    #         )
-    #     ),
-    #     # swapped reward structure
-    #     # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),
-    # ]
+    agents = [
+        HealthyAgent(),
+        SpineLossDepression(),
+        # ContextDependentLearningRate(),
+        # HighDiscountRate(),
+        # ScaledTargets(),
+        # HighExploration(),
+        # ShiftedTargets(),
+    ]
+    envs = [
+        Image2VecWrapper(
+            TransientGoals(
+                render_mode="none", transient_reward=0.25, termination_reward=1
+            )
+        ),
+        # swapped reward structure
+        # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),
+    ]
 
-    # pbar = tqdm(total=(len(agents) * len(envs) * N_TRIALS), initial=0)
-    # tbar = tqdm(
-    #     total=(len(agents) * len(envs) * N_TRIALS * iterations_per_trial), initial=0
-    # )
+    tbar = tqdm(
+        total=(len(agents) * len(envs) * N_TRIALS * iterations_per_trial), initial=0
+    )
 
     for rep in range(N_TRIALS):
-        for env in [
-            Image2VecWrapper(
-                TransientGoals(
-                    render_mode="none", transient_reward=0.25, termination_reward=1
-                )
-            ),
-            # swapped reward structure
-            # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),
-        ]:
-            for agent in [
-                HealthyAgent(),
-                SpineLossDepression(),
-                # ContextDependentLearningRate(),
-                # HighDiscountRate(),
-                # ScaledTargets(),
-                # HighExploration(),
-                # ShiftedTargets(),
-            ]:
-                trial(agent, env, rep, trial_num, tbar=None, steps=iterations_per_trial)
-                # pbar.update()
+        for env in envs:
+            for agent in agents:
+                tbar.set_postfix(agent=agent.__class__.__name__, env=env.__class__.__name__, rep=rep)
+                trial(deepcopy(agent), env, rep, trial_num, tbar=tbar, steps=iterations_per_trial)
                 trial_num += 1
-
-    # pbar.close()
 
 
 if __name__ == "__main__":
