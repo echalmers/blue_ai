@@ -21,9 +21,11 @@ class ResultDict(TypedDict):
     transient_goal: bool
     lava: bool
     stuck: bool
+    mean_synapse: float
+    num_pos_synapse: int
 
 
-def run_trial(agent, env, steps=30000, trial_id="", tbar=None):
+def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
     state, _ = env.reset()
     # setup variables to track progress
     steps_this_episode = 0
@@ -80,6 +82,10 @@ def run_trial(agent, env, steps=30000, trial_id="", tbar=None):
                 "transient_goal": transient_goal,
                 "lava": lava,
                 "stuck": stuck,
+                "mean_synapse": next(agent.policy_net.parameters()).mean().item(),
+                "num_pos_synapse": (next(agent.policy_net.parameters()) > 0)
+                .sum()
+                .item(),
             }
         )
 
@@ -108,8 +114,8 @@ def load_dataset(filename_patterns):
         filename_patterns = [filename_patterns]
     results = []
     for pattern in filename_patterns:
-        print(len(list(DATA_PATH.glob(pattern))))
-        for filename in DATA_PATH.glob(pattern):
+        files = list(DATA_PATH.glob(pattern))
+        for filename in tqdm(files, leave=False, total=len(files)):
             this_result, agent, _ = load_trial(filename)
             this_result["agent"] = agent.display_name
             results.append(this_result)
@@ -146,7 +152,7 @@ def main():
         # ScaledTargets(),
         # HighExploration(),
         # ShiftedTargets(),
-        # ExponentialLossAgent(),
+        PositiveLossAgent(),
     ]
     envs = [
         Image2VecWrapper(

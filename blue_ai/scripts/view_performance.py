@@ -12,7 +12,11 @@ class PerformancePlotter:
 
     def __init__(
         self,
-        agent_classes=(agent_classes.HealthyAgent, agent_classes.SpineLossDepression),
+        agent_classes=(
+            agent_classes.PositiveLossAgent,
+            agent_classes.HealthyAgent,
+            agent_classes.SpineLossDepression,
+        ),
     ):
 
         self.agent_classes = agent_classes

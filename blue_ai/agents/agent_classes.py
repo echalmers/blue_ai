@@ -1,9 +1,9 @@
+from copy import deepcopy
 from blue_ai.agents.dqn import DQN
 from torch import nn
 import numpy as np
 import torch
 
-from blue_ai.envs.custom_decay import ExponentialLoss
 
 # a basic multi-layer network
 common_network = nn.Sequential(
@@ -27,6 +27,7 @@ class BaseAgent(DQN):
         softmax_temperature=None,
         loss_fn: torch.nn.Module | None = None,
     ):
+
         super().__init__(
             network=nn.Sequential(
                 nn.Flatten(1, -1), nn.Linear(100, 10), nn.Tanh(), nn.Linear(10, 3)
@@ -138,10 +139,13 @@ class ShiftedTargets(BaseAgent):
             return loss.item()
 
 
-class ExponentialLossAgent(BaseAgent):
-    display_name = "Exponential Loss Agent"
+class PositiveLossAgent(BaseAgent):
 
-    custom_loss_function = ExponentialLoss()
+    display_name = "Positive Loss Agent"
 
     def __init__(self):
-        super().__init__(loss_fn=self.custom_loss_function)
+        from blue_ai.envs.custom_decay import ExponentialLoss
+
+        custom_loss_function = ExponentialLoss()
+        super().__init__(loss_fn=custom_loss_function)
+        custom_loss_function.policy_hook = self.policy_net
