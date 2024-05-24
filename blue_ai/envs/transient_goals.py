@@ -41,6 +41,7 @@ class TransientGoals(MiniGridEnv):
         n_transient_obstacles=1,
         transient_obstacles=None,
         replace_transient_obstacles=False,
+        max_steps=500,
         **kwargs,
     ):
 

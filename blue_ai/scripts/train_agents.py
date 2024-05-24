@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Tuple, TypedDict
 import pandas as pd
 import pickle
+from copy import deepcopy
 
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
@@ -36,13 +37,14 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
     results: List[ResultDict] = []
     pos: Dict[Tuple[int, int], int] = {}
 
-    ## Setting up progress bar
+    # track agent positions to see if they get stuck
+    pos = {}
     steps_iter = tqdm(range(steps), leave=False)
     steps_iter.set_postfix(
         agent=agent.__class__.__name__, env=env.__class__.__name__, trial=trial_id
     )
 
-    for step in steps_iter:
+    for step in range(steps):
         steps_this_episode += 1
 
         # record position
@@ -92,10 +94,9 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
         if tbar is not None:
             tbar.update()
 
-    results_dataframe = pd.DataFrame(results)
+    results = pd.DataFrame(results)
     steps_iter.close()
-
-    return results_dataframe, agent, env
+    return results, agent, env
 
 
 def save_trial(results, agent, env, filename):
@@ -164,7 +165,6 @@ def main():
         # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),
     ]
 
-    pbar = tqdm(total=(len(agents) * len(envs) * N_TRIALS), initial=0)
     tbar = tqdm(
         total=(len(agents) * len(envs) * N_TRIALS * iterations_per_trial), initial=0
     )
@@ -172,11 +172,9 @@ def main():
     for rep in range(N_TRIALS):
         for env in envs:
             for agent in agents:
-                trial(agent, env, rep, trial_num, tbar=tbar, steps=iterations_per_trial)
-                pbar.update()
+                tbar.set_postfix(agent=agent.__class__.__name__, env=env.__class__.__name__, rep=rep)
+                trial(deepcopy(agent), env, rep, trial_num, tbar=tbar, steps=iterations_per_trial)
                 trial_num += 1
-
-    pbar.close()
 
 
 if __name__ == "__main__":
