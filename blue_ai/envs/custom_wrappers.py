@@ -41,7 +41,8 @@ class Image2VecWrapper(gym.ObservationWrapper):
         rgb = np.zeros((observation.shape[1], observation.shape[2], 3))
         for obj, (index, color) in object_number_map.items():
             rgb += np.tensordot(observation[index, :, :].T, color, axes=0)
-        return rgb / len(object_number_map)
+        rgb /= 256
+        return rgb
 
 
 if __name__ == '__main__':

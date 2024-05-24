@@ -4,12 +4,6 @@ import numpy as np
 import torch
 
 
-# a basic multi-layer network
-common_network = nn.Sequential(
-    nn.Flatten(1, -1), nn.Linear(100, 10), nn.Tanh(), nn.Linear(10, 3)
-)
-
-
 class BaseAgent(DQN):
 
     def __init__(

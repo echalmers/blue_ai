@@ -6,12 +6,18 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import pandas as pd
+import tqdm
 
+
+REPS = 3
+STEPS = 30_000
 
 rewards_table = pd.DataFrame(columns=["step", "cumulative reward"])
 goals_table = pd.DataFrame(columns=["goal type", "count"])
 
-for repetition in range(3):
+progress_bar = tqdm.tqdm(range(REPS * STEPS))
+
+for repetition in range(REPS):
     # a multi-layer network
     multilayer = nn.Sequential(
         nn.Flatten(1, -1), nn.Linear(100, 10), nn.Tanh(), nn.Linear(10, 3)
@@ -38,7 +44,6 @@ for repetition in range(3):
     state, _ = env.reset()
 
     # set up an array and other variables to store results
-    STEPS = 30_000
     steps_this_episode = 0
     rewards = np.zeros(STEPS)
     num_required_goals = 0
@@ -47,7 +52,7 @@ for repetition in range(3):
 
     # training loop
     for step in range(STEPS):
-        print(step)
+        progress_bar.update()
         steps_this_episode += 1
 
         # get & execute action
