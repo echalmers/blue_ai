@@ -3,6 +3,7 @@ import numpy as np
 
 
 from minigrid.core.constants import OBJECT_TO_IDX
+from blue_ai.envs import custom_world_objects
 
 object_vector_map = {
     OBJECT_TO_IDX["wall"]: [1, 0, 0, 0],
@@ -27,7 +28,19 @@ class Image2VecWrapper(gym.ObservationWrapper):
         """
         image = observation["image"]
         vec = np.zeros((image.shape[0], image.shape[1], 4))
-        for i in range(image.shape[0]):
-            for j in range(image.shape[1]):
-                vec[i, j, :] = object_vector_map.get(image[i, j, 0], [0, 0, 0, 0])
+        for obj, vector in object_vector_map.items():
+            vec[image[:, :, 0] == obj] = vector
+        # for i in range(image.shape[0]):
+        #     for j in range(image.shape[1]):
+        #         vec[i, j, :] = object_vector_map.get(image[i, j, 0], [0, 0, 0, 0])
         return np.moveaxis(vec, (2, 0, 1), (0, 1, 2))
+
+
+
+if __name__ == '__main__':
+    from blue_ai.envs.transient_goals import TransientGoals
+    env = Image2VecWrapper(
+        TransientGoals(render_mode="none", transient_reward=0.25, termination_reward=1)
+    )
+
+    state, _ = env.reset()
