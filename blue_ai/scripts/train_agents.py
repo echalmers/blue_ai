@@ -39,10 +39,10 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
 
     # track agent positions to see if they get stuck
     pos = {}
-    steps_iter = tqdm(range(steps), leave=False)
-    steps_iter.set_postfix(
-        agent=agent.__class__.__name__, env=env.__class__.__name__, trial=trial_id
-    )
+    if tbar is not None:
+        tbar.set_postfix(
+            agent=agent.__class__.__name__, env=env.__class__.__name__, trial=trial_id
+        )
 
     for step in range(steps):
         steps_this_episode += 1
@@ -95,7 +95,6 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
             tbar.update()
 
     results = pd.DataFrame(results)
-    steps_iter.close()
     return results, agent, env
 
 
@@ -172,8 +171,17 @@ def main():
     for rep in range(N_TRIALS):
         for env in envs:
             for agent in agents:
-                tbar.set_postfix(agent=agent.__class__.__name__, env=env.__class__.__name__, rep=rep)
-                trial(deepcopy(agent), env, rep, trial_num, tbar=tbar, steps=iterations_per_trial)
+                tbar.set_postfix(
+                    agent=agent.__class__.__name__, env=env.__class__.__name__, rep=rep
+                )
+                trial(
+                    deepcopy(agent),
+                    env,
+                    rep,
+                    trial_num,
+                    tbar=tbar,
+                    steps=iterations_per_trial,
+                )
                 trial_num += 1
 
 
