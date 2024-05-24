@@ -21,7 +21,7 @@ class BaseAgent(DQN):
     ):
         super().__init__(
             network=nn.Sequential(
-                nn.Flatten(1, -1), nn.Linear(100, 10), nn.Tanh(), nn.Linear(10, 3)
+                nn.Flatten(1, -1), nn.Linear(100, 25), nn.Tanh(), nn.Linear(25, 3)
             ),
             input_shape=input_shape,
             replay_buffer_size=replay_buffer_size,

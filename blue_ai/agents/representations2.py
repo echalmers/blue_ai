@@ -1,3 +1,5 @@
+import numpy as np
+
 from blue_ai.agents.dqn import DQN
 
 import torch.nn as nn
@@ -62,7 +64,9 @@ if __name__ == '__main__':
     from blue_ai.scripts.constants import DATA_PATH
     from blue_ai.envs.custom_wrappers import Image2VecWrapper
     from matplotlib import pyplot as plt
+    from blue_ai.envs.transient_goals import TransientGoals
 
+    # create models to interpret networks' hidden layers
     _, healthy_agent, _ = load_trial(DATA_PATH / 'HealthyAgent_0.pkl')
     _, depressed_agent, _ = load_trial(DATA_PATH / 'SpineLossDepression_0.pkl')
 
@@ -75,35 +79,52 @@ if __name__ == '__main__':
     print(l[-1])
     # plt.plot(l)
 
-    n = 6
-    fig, ax = plt.subplots(n, 4)
-    obs, healthy_reconstructions = healthy_probe.sample_reconstructions(n=n)
-    _, depressed_reconstructions = depressed_probe.sample_reconstructions(observations=obs)
-    for i in range(n):
-        this_obs = obs[i].cpu().numpy()
-        healthy_recon = healthy_reconstructions[i].cpu().numpy()
-        depressed_recon = depressed_reconstructions[i].cpu().numpy()
+    # create an environment
+    env = Image2VecWrapper(
+        TransientGoals(
+            render_mode="rgb_array", transient_reward=0.25, termination_reward=1
+        )
+    )
+    state, _ = env.reset()
 
-        ax[i, 0].plot(this_obs.flatten(), 'k')
-        ax[i, 0].plot(healthy_recon.flatten(), 'b')
-        ax[i, 0].plot(depressed_recon.flatten(), 'r')
+    def plot(state):
+        ax[0].cla()
+        ax[1].cla()
+        ax[2].cla()
+        print('plotting', state)
+        ax[0].imshow(env.render())
+        ax[1].imshow(Image2VecWrapper.observation_to_image(state))
+        state = torch.Tensor(np.expand_dims(state, 0))
+        ax[2].imshow(Image2VecWrapper.observation_to_image(healthy_probe.sample_reconstructions(observations=state)[1][0]))
+        ax[3].imshow(Image2VecWrapper.observation_to_image(depressed_probe.sample_reconstructions(observations=state)[1][0]))
 
-        ax[i, 1].imshow(Image2VecWrapper.observation_to_image(this_obs))
+        for i in range(4):
+            ax[i].set_xticks([])
+            ax[i].set_yticks([])
 
-        healthy_recon[healthy_recon < 0] = 0
-        healthy_recon /= healthy_recon.max()
-        depressed_recon[depressed_recon < 0] = 0
-        depressed_recon /= depressed_recon.max()
+        ax[1].set_title('visual input')
+        ax[2].set_title('healthy reconstructed')
+        ax[2].set_title('depressed reconstructed')
+        plt.pause(0.1)
 
-        ax[i, 2].imshow(Image2VecWrapper.observation_to_image(healthy_recon ** 2))
-        ax[i, 3].imshow(Image2VecWrapper.observation_to_image(depressed_recon ** 1.5))
+    def process(event):
+        global state
+        if event.key == 'left':
+            action = 0
+        elif event.key == 'right':
+            action = 1
+        elif event.key == 'up':
+            action = 2
 
-        for j in range(1, 4):
-            ax[i, j].set_xticks([])
-            ax[i, j].set_yticks([])
+        state, _, done, _, _ = env.step(action)
+        if done:
+            state, _ = env.reset()
+        plot(state)
 
-    ax[0, 0].legend(['obs', 'healthy', 'depressed'])
-    ax[0, 1].set_title('actual visual input')
-    ax[0, 2].set_title('healthy reconstruction')
-    ax[0, 3].set_title('depressed reconstruction')
+    # create figure window
+    fig, ax = plt.subplots(1, 4)
+    fig.canvas.mpl_connect('key_press_event', process)
+    plot(state)
+
     plt.show()
+
