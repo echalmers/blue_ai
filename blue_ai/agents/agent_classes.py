@@ -15,6 +15,7 @@ class BaseAgent(DQN):
 
     def __init__(
         self,
+        network: nn.Sequential | None = None,
         input_shape=(4, 5, 5),
         replay_buffer_size=10000,
         update_frequency=5,
@@ -29,8 +30,11 @@ class BaseAgent(DQN):
     ):
 
         super().__init__(
-            network=nn.Sequential(
-                nn.Flatten(1, -1), nn.Linear(100, 10), nn.Tanh(), nn.Linear(10, 3)
+            network=(
+                network
+                or nn.Sequential(
+                    nn.Flatten(1, -1), nn.Linear(100, 10), nn.Tanh(), nn.Linear(10, 3)
+                )
             ),
             input_shape=input_shape,
             replay_buffer_size=replay_buffer_size,
@@ -144,8 +148,38 @@ class PositiveLossAgent(BaseAgent):
     display_name = "Positive Loss Agent"
 
     def __init__(self):
-        from blue_ai.envs.custom_decay import ExponentialLoss
+        from blue_ai.envs.custom_decay import PositivePenaltyLoss
 
-        custom_loss_function = ExponentialLoss()
+        custom_loss_function = PositivePenaltyLoss(alpha=0.2)
+
         super().__init__(loss_fn=custom_loss_function)
+        custom_loss_function.policy_hook = self.policy_net
+
+
+class ReluActivation(BaseAgent):
+
+    display_name = "ReluActivation"
+
+    def __init__(self):
+        network = nn.Sequential(
+            nn.Flatten(1, -1), nn.Linear(100, 10), nn.ReLU(), nn.Linear(10, 3)
+        )
+
+        super().__init__(network=network)
+
+
+class ReluLossActivation(BaseAgent):
+
+    display_name = "Positive Loss Agent + ReluActivation"
+
+    def __init__(self):
+        from blue_ai.envs.custom_decay import PositivePenaltyLoss
+
+        custom_loss_function = PositivePenaltyLoss(alpha=0.2)
+        network = nn.Sequential(
+            nn.Flatten(1, -1), nn.Linear(100, 10), nn.ReLU(), nn.Linear(10, 3)
+        )
+
+        super().__init__(loss_fn=custom_loss_function, network=network)
+
         custom_loss_function.policy_hook = self.policy_net

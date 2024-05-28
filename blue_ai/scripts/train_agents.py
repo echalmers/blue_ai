@@ -117,7 +117,11 @@ def load_dataset(filename_patterns):
         files = list(DATA_PATH.glob(pattern))
         for filename in tqdm(files, leave=False, total=len(files)):
             this_result, agent, _ = load_trial(filename)
-            this_result["agent"] = agent.display_name
+            this_result["agent"] = (
+                agent.display_name
+                if hasattr(agent, "display_name")
+                else agent.__class__.__name__
+            )
             results.append(this_result)
     results = pd.concat(results, ignore_index=True)
     return results
@@ -153,6 +157,8 @@ def main():
         # HighExploration(),
         # ShiftedTargets(),
         PositiveLossAgent(),
+        ReluActivation(),
+        ReluLossActivation(),
     ]
     envs = [
         Image2VecWrapper(
