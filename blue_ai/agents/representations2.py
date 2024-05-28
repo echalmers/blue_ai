@@ -8,8 +8,9 @@ import torch
 
 class RepresentationProbe:
 
-    def __init__(self, agent: DQN):
+    def __init__(self, agent: DQN, memory_agent: DQN = None):
         self.agent = agent
+        self.memory_agent = memory_agent or agent
         self._internal_activations = None
 
         # get sample input
@@ -22,7 +23,7 @@ class RepresentationProbe:
 
         # create model to reconstruct inputs from internal representations
         self.model = nn.Sequential(
-            nn.Linear(middle_layer.in_features, state.numel()),
+            nn.Linear(middle_layer.in_features + middle_layer.out_features, state.numel()),
             nn.Tanh(),
             nn.Linear(state.numel(), state.numel()),
             nn.Unflatten(1, state.shape)
@@ -37,7 +38,7 @@ class RepresentationProbe:
         # fit model
         losses = []
         for i in range(200):
-            observations, _, _, _, _ = self.agent.transition_memory.sample(1000)
+            observations, _, _, _, _ = self.memory_agent.transition_memory.sample(1000)
             self.agent.policy_net(observations)
             reconstruction = self.model(self._internal_activations)
             loss = loss_fn(reconstruction, observations)
@@ -47,16 +48,14 @@ class RepresentationProbe:
             optimizer.step()
         return losses
 
-    def sample_reconstructions(self, n=None, observations=None):
+    def get_reconstructions(self, observations):
         with torch.no_grad():
-            if n:
-                observations, _, _, _, _ = self.agent.transition_memory.sample(n)
             self.agent.policy_net(observations)
             reconstruct = self.model(self._internal_activations)
         return observations, reconstruct
 
     def _capture_activations(self, layer, input, output):
-        self._internal_activations = input[0].detach()
+        self._internal_activations = torch.hstack((input[0].detach(), output.detach()))
 
 
 if __name__ == '__main__':
@@ -74,7 +73,7 @@ if __name__ == '__main__':
     l = healthy_probe.fit()
     print(l[-1])
     # plt.plot(l)
-    depressed_probe = RepresentationProbe(depressed_agent)
+    depressed_probe = RepresentationProbe(depressed_agent, memory_agent=None)
     l = depressed_probe.fit()
     print(l[-1])
     # plt.plot(l)
@@ -88,24 +87,36 @@ if __name__ == '__main__':
     state, _ = env.reset()
 
     def plot(state):
-        ax[0].cla()
-        ax[1].cla()
-        ax[2].cla()
-        print('plotting', state)
+
+        for i in range(4):
+            ax[i].cla()
+
         ax[0].imshow(env.render())
         ax[1].imshow(Image2VecWrapper.observation_to_image(state))
-        state = torch.Tensor(np.expand_dims(state, 0))
-        ax[2].imshow(Image2VecWrapper.observation_to_image(healthy_probe.sample_reconstructions(observations=state)[1][0]))
-        ax[3].imshow(Image2VecWrapper.observation_to_image(depressed_probe.sample_reconstructions(observations=state)[1][0]))
+        state = torch.tensor(np.expand_dims(state, 0).astype(np.float32), device=healthy_agent.device)
+
+        healthy_recon = healthy_probe.get_reconstructions(observations=state)[1][0].cpu()
+        depressed_recon = depressed_probe.get_reconstructions(observations=state)[1][0].cpu()
+        healthy_recon[healthy_recon < 0] = 0
+        # healthy_recon /= healthy_recon.max()
+        depressed_recon[depressed_recon < 0] = 0
+        # depressed_recon /= depressed_recon.max()
+
+        ax[2].imshow(Image2VecWrapper.observation_to_image(healthy_recon ** 1.5))
+        ax[3].imshow(Image2VecWrapper.observation_to_image(depressed_recon ** 1.5))
 
         for i in range(4):
             ax[i].set_xticks([])
             ax[i].set_yticks([])
 
+        for i in range(1, 4):
+            t = plt.Polygon([[1.75, 4.25], [2.25, 4.25], [2, 3.75]], color='red')
+            ax[i].add_patch(t)
+
         ax[1].set_title('visual input')
         ax[2].set_title('healthy reconstructed')
-        ax[2].set_title('depressed reconstructed')
-        plt.pause(0.1)
+        ax[3].set_title('depressed reconstructed')
+        plt.pause(0.01)
 
     def process(event):
         global state

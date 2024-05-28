@@ -9,7 +9,7 @@ class BaseAgent(DQN):
     def __init__(
         self,
         input_shape=(4, 5, 5),
-        replay_buffer_size=10000,
+        replay_buffer_size=20000,
         update_frequency=5,
         lr=0.01,
         sync_frequency=25,
