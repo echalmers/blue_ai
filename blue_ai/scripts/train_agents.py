@@ -35,10 +35,9 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
 
     # setup results dataframe
     results: List[ResultDict] = []
-    pos: Dict[Tuple[int, int], int] = {}
 
     # track agent positions to see if they get stuck
-    pos = {}
+    pos: Dict[Tuple[int, int], int] = {}
     if tbar is not None:
         tbar.set_postfix(
             agent=agent.__class__.__name__, env=env.__class__.__name__, trial=trial_id

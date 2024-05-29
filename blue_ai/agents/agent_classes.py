@@ -1,4 +1,3 @@
-from copy import deepcopy
 from blue_ai.agents.dqn import DQN
 from torch import nn
 import numpy as np
