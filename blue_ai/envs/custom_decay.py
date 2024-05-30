@@ -12,9 +12,10 @@ class PositivePenaltyLoss(nn.Module):
     """
 
     def __init__(self, alpha=0.2):
+
         super(PositivePenaltyLoss, self).__init__()
         self.policy_hook: Sequential = None
-        self.alpha = alpha
+        self.λ = alpha
 
     def forward(self, inputs: torch.Tensor, targets: torch.Tensor):
         net = next(self.policy_hook.parameters())
@@ -23,4 +24,4 @@ class PositivePenaltyLoss(nn.Module):
         positive_penalty = torch.clamp(net, min=0).sum()
         normal = self.known(inputs, targets)
 
-        return normal + self.alpha * positive_penalty
+        return normal + self.λ * positive_penalty

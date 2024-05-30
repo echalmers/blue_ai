@@ -122,12 +122,14 @@ def load_dataset(filename_patterns):
                 if hasattr(agent, "display_name")
                 else agent.__class__.__name__
             )
+
+            this_result["filename"] = filename
             results.append(this_result)
     results = pd.concat(results, ignore_index=True)
     return results
 
 
-def trial(agent, env, rep, trial_num, tbar=None, steps=30_000):
+def trial(agent: BaseAgent, env, rep, trial_num, tbar=None, steps=30_000):
     results, agent, env = run_trial(
         agent,
         env,
@@ -138,8 +140,9 @@ def trial(agent, env, rep, trial_num, tbar=None, steps=30_000):
 
     filename = (
         DATA_PATH
-        / f'{agent.__class__.__name__}_{"swapped_" if env.unwrapped.transient_reward > 0.25 else ""}{rep}.pkl'
+        / f'{agent.file_display_name()}_{"swapped_" if env.unwrapped.transient_reward > 0.25 else ""}{rep}.pkl'
     )
+
     save_trial(results, agent, env, filename)
     return trial_num
 
@@ -148,17 +151,17 @@ def main():
     iterations_per_trial = 30_000
     trial_num = 0
 
-    agents = [
-        HealthyAgent(),
-        SpineLossDepression(),
+    agents: List[BaseAgent] = [
+        # HealthyAgent(),
+        # SpineLossDepression(),
         # ContextDependentLearningRate(),
         # HighDiscountRate(),
         # ScaledTargets(),
         # HighExploration(),
         # ShiftedTargets(),
-        PositiveLossAgent(),
-        ReluActivation(),
-        ReluLossActivation(),
+        # PositiveLossAgent(),
+        # ReluActivation(),
+        # ReluLossActivation(),
     ]
     envs = [
         Image2VecWrapper(
@@ -168,6 +171,12 @@ def main():
         ),
         # swapped reward structure
         # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),
+    ]
+
+    # Setup agent sweep
+    agents += [
+        PositiveLossAgent(alpha=(2**-x), embed_alpha_in_filename=True)
+        for x in range(1, 6)
     ]
 
     tbar = tqdm(

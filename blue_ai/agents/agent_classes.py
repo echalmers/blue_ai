@@ -1,8 +1,12 @@
 from copy import deepcopy
+from typing import override
 from blue_ai.agents.dqn import DQN
 from torch import nn
 import numpy as np
 import torch
+
+
+from blue_ai.envs.custom_decay import PositivePenaltyLoss
 
 
 # a basic multi-layer network
@@ -12,6 +16,13 @@ common_network = nn.Sequential(
 
 
 class BaseAgent(DQN):
+
+    def file_display_name(self):
+        """
+        Used for getting the name of used for saving the files, override this
+        if you need to embedded custom information in the filename
+        """
+        return self.__class__.__name__
 
     def __init__(
         self,
@@ -48,6 +59,9 @@ class BaseAgent(DQN):
             weight_decay=weight_decay,
             loss_fn=loss_fn,
         )
+
+    def __repr__(self) -> str:
+        return self.file_display_name()
 
 
 class HealthyAgent(BaseAgent):
@@ -144,16 +158,22 @@ class ShiftedTargets(BaseAgent):
 
 
 class PositiveLossAgent(BaseAgent):
-
     display_name = "Positive Loss Agent"
 
-    def __init__(self):
-        from blue_ai.envs.custom_decay import PositivePenaltyLoss
-
-        custom_loss_function = PositivePenaltyLoss(alpha=0.2)
+    def __init__(self, alpha=0.2, embed_alpha_in_filename=False):
+        self.embed_alpha_in_filename = embed_alpha_in_filename
+        self.alpha = alpha
+        custom_loss_function = PositivePenaltyLoss(alpha=self.alpha)
 
         super().__init__(loss_fn=custom_loss_function)
         custom_loss_function.policy_hook = self.policy_net
+
+    @override
+    def file_display_name(self):
+        if not self.embed_alpha_in_filename:
+            return super().file_display_name()
+
+        return f"{super().file_display_name()}_{self.alpha}"
 
 
 class ReluActivation(BaseAgent):

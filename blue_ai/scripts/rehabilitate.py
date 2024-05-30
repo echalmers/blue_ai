@@ -11,45 +11,50 @@ import numpy as np
 from tqdm import trange
 
 
-for rep in trange(10):
-    results1, agent, env = run_trial(
-        trial_id=rep,
-        agent=HealthyAgent(),
-        env=Image2VecWrapper(TransientGoals(render_mode="none")),
-        steps=40_000,
-    )
+def main():
+    for rep in trange(10):
+        results1, agent, env = run_trial(
+            trial_id=rep,
+            agent=HealthyAgent(),
+            env=Image2VecWrapper(TransientGoals(render_mode="none")),
+            steps=40_000,
+        )
 
-    agent.optimizer = torch.optim.Adam(
-        agent.policy_net.parameters(), lr=agent.lr, weight_decay=3e-3
-    )
+        agent.optimizer = torch.optim.Adam(
+            agent.policy_net.parameters(), lr=agent.lr, weight_decay=3e-3
+        )
 
-    results2, agent, env = run_trial(
-        trial_id=rep,
-        agent=agent,
-        env=env,
-        steps=40_000,
-    )
+        results2, agent, env = run_trial(
+            trial_id=rep,
+            agent=agent,
+            env=env,
+            steps=40_000,
+        )
 
-    agent.optimizer = torch.optim.Adam(
-        agent.policy_net.parameters(), lr=agent.lr, weight_decay=0
-    )
+        agent.optimizer = torch.optim.Adam(
+            agent.policy_net.parameters(), lr=agent.lr, weight_decay=0
+        )
 
-    results3, agent, env = run_trial(
-        trial_id=rep,
-        agent=agent,
-        env=env,
-        steps=30_000,
-    )
+        results3, agent, env = run_trial(
+            trial_id=rep,
+            agent=agent,
+            env=env,
+            steps=30_000,
+        )
 
-    results = pd.concat([results1, results2, results3], ignore_index=True)
-    results["cumulative_reward"] = results["reward"].cumsum()
-    results["step"] = np.arange(results.shape[0])
-    save_trial(
-        results,
-        agent,
-        env,
-        DATA_PATH / f"rehabilitate_{rep}.pkl",
-    )
+        results = pd.concat([results1, results2, results3], ignore_index=True)
+        results["cumulative_reward"] = results["reward"].cumsum()
+        results["step"] = np.arange(results.shape[0])
+        save_trial(
+            results,
+            agent,
+            env,
+            DATA_PATH / f"rehabilitate_{rep}.pkl",
+        )
 
-plt.plot(results["cumulative_reward"])
-plt.show()
+    plt.plot(results["cumulative_reward"])
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()
