@@ -11,21 +11,6 @@ from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.agents.agent_classes import *
 
 
-class ResultDict(TypedDict):
-    trial_id: int | str
-    agent: str
-    step: int
-    episode: int
-    reward: float
-    cumulative_reward: float
-    terminal_goal: bool
-    transient_goal: bool
-    lava: bool
-    stuck: bool
-    mean_synapse: float
-    num_pos_synapse: int
-
-
 def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
     state, _ = env.reset()
     # setup variables to track progress
@@ -34,7 +19,7 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
     cumulative_reward = 0
 
     # setup results dataframe
-    results: List[ResultDict] = []
+    results = [None] * steps
 
     # track agent positions to see if they get stuck
     pos: Dict[Tuple[int, int], int] = {}
@@ -71,24 +56,20 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
         stuck = max(pos.values()) > 2000
         cumulative_reward += reward
 
-        results.append(
-            {
-                "trial_id": trial_id,
-                "agent": agent.__class__.__name__,
-                "step": step,
-                "episode": episode_num,
-                "reward": reward,
-                "cumulative_reward": cumulative_reward,
-                "terminal_goal": terminal_goal,
-                "transient_goal": transient_goal,
-                "lava": lava,
-                "stuck": stuck,
-                "mean_synapse": next(agent.policy_net.parameters()).mean().item(),
-                "num_pos_synapse": (next(agent.policy_net.parameters()) > 0)
-                .sum()
-                .item(),
-            }
-        )
+        results[step] = {
+            "trial_id": trial_id,
+            "agent": agent.__class__.__name__,
+            "step": step,
+            "episode": episode_num,
+            "reward": reward,
+            "cumulative_reward": cumulative_reward,
+            "terminal_goal": terminal_goal,
+            "transient_goal": transient_goal,
+            "lava": lava,
+            "stuck": stuck,
+            "mean_synapse": next(agent.policy_net.parameters()).mean().item(),
+            "num_pos_synapse": (next(agent.policy_net.parameters()) > 0).sum().item(),
+        }
 
         if tbar is not None:
             tbar.update()
@@ -151,8 +132,8 @@ def main():
     trial_num = 0
 
     agents: List[BaseAgent] = [
-        # HealthyAgent(),
-        # SpineLossDepression(),
+        HealthyAgent(),
+        SpineLossDepression(),
         # ContextDependentLearningRate(),
         # HighDiscountRate(),
         # ScaledTargets(),
@@ -172,11 +153,11 @@ def main():
         # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),
     ]
 
-    # Setup agent sweep
-    agents += [
-        PositiveLossAgent(alpha=(2**-x), embed_alpha_in_filename=True)
-        for x in range(1, 6)
-    ]
+    # # Setup agent sweep
+    # agents += [
+    #     PositiveLossAgent(alpha=(2**-x), embed_alpha_in_filename=True)
+    #     for x in range(1, 6)
+    # ]
 
     tbar = tqdm(
         total=(len(agents) * len(envs) * N_TRIALS * iterations_per_trial), initial=0

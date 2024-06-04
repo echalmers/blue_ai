@@ -95,7 +95,6 @@ class DQN:
         seed=42,
         weight_decay=0,
         loss_fn: torch.nn.Module | None = None,
-        step_hook=None,
     ):
         """
         :param network: deep network, of type torch.nn.Sequential
@@ -140,8 +139,6 @@ class DQN:
         self.epsilon = epsilon
         self.update_counter = 0
         self.softmax_temp = softmax_temp
-
-        self.step_hook = step_hook
 
     def get_action_values(self, state):
         with torch.no_grad():
@@ -191,9 +188,6 @@ class DQN:
             target_action_value = r + self.gamma * new_state_value * (1 - d)
             target_values = state_action_values.clone().detach()
             target_values[np.arange(target_values.shape[0]), a] = target_action_value
-
-            if self.step_hook is not None:
-                self.step_hook()
 
             # optimize loss
             loss = self.loss_fn(state_action_values, target_values)
