@@ -1,48 +1,45 @@
+from pandas import DataFrame
 from blue_ai.scripts.train_agents import load_dataset
 import seaborn as sns
 import matplotlib.pyplot as plt
 from blue_ai.scripts.constants import FIGURE_PATH
 
 
-def plot_learning_curves(ax, dataset, n_boot=1, **kwargs):
+def plot_learning_curves(
+    ax,
+    dataset: DataFrame,
+):
     plt.sca(ax)
+    plt.legend(title="Agent")
+
+    print(dataset)
 
     # Group by agent and episode, calculate the max step and sum of rewards per episode
     grouped_dataset = (
-        dataset.groupby(["agent", "episode"])
-        .agg({"step": "max", "reward": "sum"})
-        .reset_index()
+        dataset.groupby(["agent", "step"])["reward"]
+        .transform(lambda s: s.rolling(500))
+        .mean()
     )
 
-    # Calculate the moving average of the reward for each agent
-    grouped_dataset["moving_avg_reward"] = grouped_dataset.groupby("agent")[
-        "reward"
-    ].transform(lambda x: x.rolling(window=100, min_periods=1).mean())
+    print(grouped_dataset)
 
-    # Plot the moving average reward per episode
     sns.lineplot(
         data=grouped_dataset,
+        y="reward",
         x="step",
-        y="moving_avg_reward",
         hue="agent",
-        n_boot=n_boot,
-        **kwargs,
+        # levels=100,
+        # fill=True,
+        # alpha=(1 / 2),
     )
-
-    plt.title("Moving Average Reward per Episode by Agent")
-    plt.ylabel("Moving Average Reward")
-    plt.xlabel("Step")
-    plt.legend(title="Agent")
 
 
 def main():
     # Load the dataset
     dataset = load_dataset("*.pkl")
 
-    # Create a figure and axis for plotting
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    # Plot learning curves
     plot_learning_curves(ax, dataset)
 
     # Show the plot

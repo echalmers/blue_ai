@@ -18,7 +18,7 @@ test_cases = {
     "input_rgb,expected", test_cases.values(), ids=test_cases.keys()
 )
 def test_color_classification(input_rgb, expected):
-    result = ColorClassifier.classify_color(input_rgb)
+    result = classify_color(input_rgb)
     assert result == expected
 
 
@@ -28,7 +28,7 @@ def test_unknown_color():
         ValueError,
         match="Color distance exceeds threshold, classification is not possible.",
     ):
-        ColorClassifier.classify_color(input_rgb)
+        classify_color(input_rgb)
 
 
 if __name__ == "__main__":
