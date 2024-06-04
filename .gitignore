@@ -9,3 +9,5 @@ blue_ai_envs.egg-info
 blue_ai.egg-info
 blue_ai/scripts/img
 .venv
+*.png
+*.jpg
