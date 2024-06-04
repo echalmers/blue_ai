@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Tuple, TypedDict
 import pandas as pd
 import pickle
 from copy import deepcopy
@@ -7,22 +8,11 @@ from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from tqdm import tqdm
 
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
-
-if __name__ == "__main__":
-    from blue_ai.agents.agent_classes import (
-        HealthyAgent,
-        SpineLossDepression,
-        ContextDependentLearningRate,
-        HighDiscountRate,
-        ScaledTargets,
-        ShiftedTargets,
-        HighExploration,
-    )
+from blue_ai.agents.agent_classes import *
 
 
-def run_trial(agent, env, steps=30000, trial_id="", tbar=None):
+def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
     state, _ = env.reset()
-
     # setup variables to track progress
     steps_this_episode = 0
     episode_num = 0
@@ -32,7 +22,11 @@ def run_trial(agent, env, steps=30000, trial_id="", tbar=None):
     results = [None] * steps
 
     # track agent positions to see if they get stuck
-    pos = {}
+    pos: Dict[Tuple[int, int], int] = {}
+    if tbar is not None:
+        tbar.set_postfix(
+            agent=agent.__class__.__name__, env=env.__class__.__name__, trial=trial_id
+        )
 
     for step in range(steps):
         steps_this_episode += 1
@@ -61,6 +55,7 @@ def run_trial(agent, env, steps=30000, trial_id="", tbar=None):
         lava = reward < 0
         stuck = max(pos.values()) > 2000
         cumulative_reward += reward
+
         results[step] = {
             "trial_id": trial_id,
             "agent": agent.__class__.__name__,
@@ -72,6 +67,8 @@ def run_trial(agent, env, steps=30000, trial_id="", tbar=None):
             "transient_goal": transient_goal,
             "lava": lava,
             "stuck": stuck,
+            "mean_synapse": next(agent.policy_net.parameters()).mean().item(),
+            "num_pos_synapse": (next(agent.policy_net.parameters()) > 0).sum().item(),
         }
 
         if tbar is not None:
@@ -97,16 +94,22 @@ def load_dataset(filename_patterns):
         filename_patterns = [filename_patterns]
     results = []
     for pattern in filename_patterns:
-        print(len(list(DATA_PATH.glob(pattern))))
-        for filename in DATA_PATH.glob(pattern):
+        files = list(DATA_PATH.glob(pattern))
+        for filename in tqdm(files, leave=False, total=len(files)):
             this_result, agent, _ = load_trial(filename)
-            this_result["agent"] = agent.display_name
+            this_result["agent"] = (
+                agent.display_name
+                if hasattr(agent, "display_name")
+                else agent.__class__.__name__
+            )
+
+            this_result["filename"] = filename
             results.append(this_result)
     results = pd.concat(results, ignore_index=True)
     return results
 
 
-def trial(agent, env, rep, trial_num, tbar=None, steps=30_000):
+def trial(agent: BaseAgent, env, rep, trial_num, tbar=None, steps=30_000):
     results, agent, env = run_trial(
         agent,
         env,
@@ -117,8 +120,9 @@ def trial(agent, env, rep, trial_num, tbar=None, steps=30_000):
 
     filename = (
         DATA_PATH
-        / f'{agent.__class__.__name__}_{"swapped_" if env.unwrapped.transient_reward > 0.25 else ""}{rep}.pkl'
+        / f'{agent.file_display_name()}_{"swapped_" if env.unwrapped.transient_reward > 0.25 else ""}{rep}.pkl'
     )
+
     save_trial(results, agent, env, filename)
     return trial_num
 
@@ -127,7 +131,7 @@ def main():
     iterations_per_trial = 30_000
     trial_num = 0
 
-    agents = [
+    agents: List[BaseAgent] = [
         HealthyAgent(),
         SpineLossDepression(),
         # ContextDependentLearningRate(),
@@ -135,6 +139,9 @@ def main():
         # ScaledTargets(),
         # HighExploration(),
         # ShiftedTargets(),
+        # PositiveLossAgent(),
+        # ReluActivation(),
+        # ReluLossActivation(),
     ]
     envs = [
         Image2VecWrapper(
@@ -146,6 +153,12 @@ def main():
         # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),
     ]
 
+    # # Setup agent sweep
+    # agents += [
+    #     PositiveLossAgent(alpha=(2**-x), embed_alpha_in_filename=True)
+    #     for x in range(1, 6)
+    # ]
+
     tbar = tqdm(
         total=(len(agents) * len(envs) * N_TRIALS * iterations_per_trial), initial=0
     )
@@ -153,8 +166,17 @@ def main():
     for rep in range(N_TRIALS):
         for env in envs:
             for agent in agents:
-                tbar.set_postfix(agent=agent.__class__.__name__, env=env.__class__.__name__, rep=rep)
-                trial(deepcopy(agent), env, rep, trial_num, tbar=tbar, steps=iterations_per_trial)
+                tbar.set_postfix(
+                    agent=agent.__class__.__name__, env=env.__class__.__name__, rep=rep
+                )
+                trial(
+                    deepcopy(agent),
+                    env,
+                    rep,
+                    trial_num,
+                    tbar=tbar,
+                    steps=iterations_per_trial,
+                )
                 trial_num += 1
 
 

@@ -4,10 +4,21 @@ import numpy as np
 import torch
 
 
+from blue_ai.envs.custom_decay import PositivePenaltyLoss
+
+
 class BaseAgent(DQN):
+
+    def file_display_name(self):
+        """
+        Used for getting the name of used for saving the files, override this
+        if you need to embedded custom information in the filename
+        """
+        return self.__class__.__name__
 
     def __init__(
         self,
+        network: nn.Sequential | None = None,
         input_shape=(4, 5, 5),
         replay_buffer_size=20000,
         update_frequency=5,
@@ -18,10 +29,15 @@ class BaseAgent(DQN):
         batch_size=1500,
         weight_decay=0.0,
         softmax_temperature=None,
+        loss_fn: torch.nn.Module | None = None,
     ):
+
         super().__init__(
-            network=nn.Sequential(
-                nn.Flatten(1, -1), nn.Linear(100, 25), nn.Tanh(), nn.Linear(25, 3)
+            network=(
+                network
+                or nn.Sequential(
+                    nn.Flatten(1, -1), nn.Linear(100, 25), nn.Sigmoid(), nn.Linear(25, 3)
+                )
             ),
             input_shape=input_shape,
             replay_buffer_size=replay_buffer_size,
@@ -33,7 +49,11 @@ class BaseAgent(DQN):
             softmax_temp=softmax_temperature,
             batch_size=batch_size,
             weight_decay=weight_decay,
+            loss_fn=loss_fn,
         )
+
+    def __repr__(self) -> str:
+        return self.file_display_name()
 
 
 class HealthyAgent(BaseAgent):
@@ -49,7 +69,7 @@ class SpineLossDepression(BaseAgent):
     display_name = "simulated spine loss"
 
     def __init__(self):
-        super().__init__(weight_decay=3e-3)
+        super().__init__(weight_decay=1e-3)
 
 
 class ContextDependentLearningRate(BaseAgent):
@@ -127,3 +147,50 @@ class ShiftedTargets(BaseAgent):
             self.optimizer.step()
 
             return loss.item()
+
+
+class PositiveLossAgent(BaseAgent):
+    display_name = "Positive Loss Agent"
+
+    def __init__(self, alpha=1e-1, embed_alpha_in_filename=False):
+        self.embed_alpha_in_filename = embed_alpha_in_filename
+        self.alpha = alpha
+        custom_loss_function = PositivePenaltyLoss(alpha=self.alpha)
+
+        super().__init__(loss_fn=custom_loss_function)
+        custom_loss_function.params = [x for x in self.policy_net.parameters() if x.dim() == 2]
+
+    def file_display_name(self):
+        if not self.embed_alpha_in_filename:
+            return super().file_display_name()
+
+        return f"{super().file_display_name()}_{self.alpha}"
+
+
+class ReluActivation(BaseAgent):
+
+    display_name = "ReluActivation"
+
+    def __init__(self):
+        network = nn.Sequential(
+            nn.Flatten(1, -1), nn.Linear(100, 10), nn.ReLU(), nn.Linear(10, 3)
+        )
+
+        super().__init__(network=network)
+
+
+class ReluLossActivation(BaseAgent):
+
+    display_name = "Positive Loss Agent + ReluActivation"
+
+    def __init__(self):
+        from blue_ai.envs.custom_decay import PositivePenaltyLoss
+
+        custom_loss_function = PositivePenaltyLoss(alpha=0.2)
+        network = nn.Sequential(
+            nn.Flatten(1, -1), nn.Linear(100, 10), nn.ReLU(), nn.Linear(10, 3)
+        )
+
+        super().__init__(loss_fn=custom_loss_function, network=network)
+
+        custom_loss_function.policy_hook = self.policy_net

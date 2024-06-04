@@ -1,7 +1,6 @@
 from typing import Tuple
 import numpy as np
 from enum import Enum
-import functools
 
 
 class Colors(Enum):
@@ -27,9 +26,6 @@ _COLORS = {
 }
 COLOR_KEYS = np.array(list(_COLORS.keys()))
 THRESHOLD = 150
-
-
-_color_cache = {}
 
 
 def color_distance(c1: np.ndarray, c2: np.ndarray) -> np.ndarray:
