@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from train_agents import load_dataset
+from blue_ai.scripts.train_agents import load_dataset
 from blue_ai.envs.transient_goals import TransientGoals
 import blue_ai.agents.agent_classes as agent_classes
 

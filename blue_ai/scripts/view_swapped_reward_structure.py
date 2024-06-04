@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
-from view_performance import load_dataset, aggregate_goals
+from blue_ai.scripts.view_performance import load_dataset, aggregate_goals
 from blue_ai.agents.agent_classes import HealthyAgent, SpineLossDepression
 
 

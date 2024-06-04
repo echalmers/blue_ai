@@ -1,5 +1,5 @@
-from weight_update import plot_weight_changes
-from view_discounting import DiscountAndCorrelationPlotter
+from blue_ai.scripts.weight_update import plot_weight_changes
+from blue_ai.scripts.view_discounting import DiscountAndCorrelationPlotter
 import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
 

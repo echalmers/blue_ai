@@ -1,4 +1,5 @@
-import re
+from matplotlib.axes import Axes
+from numpy.random import randint
 from blue_ai.scripts.constants import FIGURE_PATH
 import blue_ai.scripts.train_agents
 
@@ -6,8 +7,32 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from functools import lru_cache
 
+from warnings import warn
+import itertools
+
+
+def flatten(it):
+
+    return itertools.chain.from_iterable(it)
+
+
+def remove_legend(ax: Axes):
+    """
+    Remove the legend if it is present
+    """
+    if legend := ax.get_legend():
+        legend.remove()
+
+
+def get_agent_names(x):
+    return x["agent_name"].unique()
+
 
 def plot_data(data, colors, line_offset=0):
+    if len(data) <= 0:
+        warn("No data passed; Skipping")
+        return
+
     ax1 = plt.subplot(2, 3, 1 + line_offset)
     sns.lineplot(
         data=data,
@@ -18,7 +43,7 @@ def plot_data(data, colors, line_offset=0):
     )
 
     ax1.set_ylabel("% Positive Synapses")
-    ax1.get_legend().remove()
+    remove_legend(ax1)
 
     ax2 = plt.subplot(2, 3, 2 + line_offset)
     sns.lineplot(
@@ -28,7 +53,7 @@ def plot_data(data, colors, line_offset=0):
         hue="agent_name",
         palette=colors,
     )
-    ax2.get_legend().remove()
+    remove_legend(ax2)
 
     ax3 = plt.subplot(2, 3, 3 + line_offset)
     sns.lineplot(
@@ -38,7 +63,7 @@ def plot_data(data, colors, line_offset=0):
         hue="agent_name",
         palette=colors,
     )
-    ax3.get_legend().remove()
+    remove_legend(ax3)
 
     handles, labels = ax1.get_legend_handles_labels()
 
@@ -55,12 +80,13 @@ def get_alpha(x: str):
     >>> get_alpha("/blue_ai/blue_ai/scripts/data/PositiveLossAgent_5_0.pkl")
     5.0
     """
-    match = re.search(r"PositiveLossAgent_([0-9]*\.?[0-9]+)_[0-9]+", str(x))
+    from re import search
 
-    if match is None:
-        return None
+    PATTERN = r"PositiveLossAgent_([0-9]*\.?[0-9]+)_[0-9]+"
+    match = search(PATTERN, str(x))
 
-    return match.group(1)
+    # Return None or the found match
+    return match and float(match.group(1))
 
 
 if __name__ == "__main__":
@@ -68,7 +94,7 @@ if __name__ == "__main__":
 
     data = blue_ai.scripts.train_agents.load_dataset("*.pkl")
 
-    data = data[(data["step"] % 20 == 0)]
+    data = data[(data["step"] % 10_000 == 0)]
 
     data["%pos_synapse"] = (data["num_pos_synapse"] / 10).rolling(20).mean()
     data["alpha"] = data["filename"].apply(get_alpha)
@@ -77,20 +103,26 @@ if __name__ == "__main__":
         lambda x: x and f"-{x}α" or ""  # I'm sorry
     )
 
-    non_sweeping_keys = data[(data["alpha"].isna())]["agent_name"].unique()
-    sweeping_keys = data[(data["alpha"].notna())]["agent_name"].unique()
+    # Agents without an "alpha"
+    non_sweeping = data[(data["alpha"].isna())]
+    sweeping = data[(data["alpha"].notna())]
 
-    colors = dict(
-        list(zip(non_sweeping_keys, sns.color_palette("Set1")))
-        + list((zip(sweeping_keys, sns.color_palette("flare"))))
-    )
+    non_sweeping_keys = get_agent_names(non_sweeping)
+    sweeping_keys = get_agent_names(sweeping)
 
-    h, l = plot_data(data[(data["alpha"].isna())], colors)
+    keys = [
+        (non_sweeping_keys, sns.color_palette("Set1")),
+        (sweeping_keys, sns.color_palette("flare")),
+    ]
 
-    plt.figlegend(h, l, loc="upper center", ncol=3, title="Agent")
+    colors = dict(flatten(zip(x[0], x[1]) for x in keys))
 
-    h, l = plot_data(data[(data["alpha"].notna())], colors, line_offset=3)
+    if result := plot_data(data[(data["alpha"].isna())], colors):
+        h, l = result
+        plt.figlegend(h, l, loc="upper center", ncol=3, title="Agent")
 
-    plt.figlegend(h, l, loc="lower center", ncol=3, title="Agent")
+    if result := plot_data(data[(data["alpha"].notna())], colors, line_offset=3):
+        h, l = result
+        plt.figlegend(h, l, loc="lower center", ncol=3, title="Agent")
 
     plt.savefig(FIGURE_PATH / "positive.png")

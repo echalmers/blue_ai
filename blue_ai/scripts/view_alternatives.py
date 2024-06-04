@@ -2,11 +2,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib.transforms as mtransforms
 
-from view_perceived_value import PerceivedValuePlotter
-from view_discounting import DiscountAndCorrelationPlotter
-from view_performance import PerformancePlotter
-from view_perceived_fear_2 import PerceivedFearPlotter
-from compare_exploration import plot_kl_divergence
+from blue_ai.scripts.view_perceived_value import PerceivedValuePlotter
+from blue_ai.scripts.view_discounting import DiscountAndCorrelationPlotter
+from blue_ai.scripts.view_performance import PerformancePlotter
+from blue_ai.scripts.view_perceived_fear_2 import PerceivedFearPlotter
+from blue_ai.scripts.compare_exploration import plot_kl_divergence
 from blue_ai.agents.agent_classes import (
     HealthyAgent,
     SpineLossDepression,

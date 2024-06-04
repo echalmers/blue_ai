@@ -1,4 +1,4 @@
-from train_agents import run_trial
+from blue_ai.scripts.train_agents import run_trial
 from blue_ai.agents.tabular.mbrl import MBRL
 from blue_ai.envs.custom_wrappers import Image2FlatVecWrapper
 from blue_ai.envs.transient_goals import TransientGoals

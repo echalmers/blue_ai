@@ -147,7 +147,7 @@ def trial(agent: BaseAgent, env, rep, trial_num, tbar=None, steps=30_000):
 
 
 def main():
-    iterations_per_trial = 30_000
+    iterations_per_trial = 15_000
     trial_num = 0
 
     agents: List[BaseAgent] = [
@@ -175,7 +175,7 @@ def main():
     # Setup agent sweep
     agents += [
         PositiveLossAgent(alpha=(2**-x), embed_alpha_in_filename=True)
-        for x in range(1, 6)
+        for x in range(1, 2)
     ]
 
     tbar = tqdm(
