@@ -66,8 +66,9 @@ if __name__ == '__main__':
     from blue_ai.envs.transient_goals import TransientGoals
 
     # create models to interpret networks' hidden layers
-    _, healthy_agent, _ = load_trial(DATA_PATH / 'HealthyAgent_0.pkl')
-    _, depressed_agent, _ = load_trial(DATA_PATH / 'SpineLossDepression_0.pkl')
+    healthy_results, healthy_agent, _ = load_trial(DATA_PATH / 'HealthyAgent_0.pkl')
+    depressed_results, depressed_agent, _ = load_trial(DATA_PATH / 'SpineLossDepression_0.pkl')
+    schiz_results, schiz_agent, _ = load_trial(DATA_PATH / 'PositiveLossAgent_0.pkl')
 
     healthy_probe = RepresentationProbe(healthy_agent)
     l = healthy_probe.fit()
@@ -77,6 +78,9 @@ if __name__ == '__main__':
     l = depressed_probe.fit()
     print(l[-1])
     # plt.plot(l)
+    schiz_probe = RepresentationProbe(schiz_agent, memory_agent=None)
+    l = schiz_probe.fit()
+    print(l[-1])
 
     # create an environment
     env = Image2VecWrapper(
@@ -88,7 +92,7 @@ if __name__ == '__main__':
 
     def plot(state):
 
-        for i in range(4):
+        for i in range(5):
             ax[i].cla()
 
         ax[0].imshow(env.render())
@@ -97,19 +101,22 @@ if __name__ == '__main__':
 
         healthy_recon = healthy_probe.get_reconstructions(observations=state)[1][0].cpu()
         depressed_recon = depressed_probe.get_reconstructions(observations=state)[1][0].cpu()
+        schiz_recon = schiz_probe.get_reconstructions(observations=state)[1][0].cpu()
         healthy_recon[healthy_recon < 0] = 0
         # healthy_recon /= healthy_recon.max()
         depressed_recon[depressed_recon < 0] = 0
         # depressed_recon /= depressed_recon.max()
+        schiz_recon[schiz_recon < 0] = 0
 
         ax[2].imshow(Image2VecWrapper.observation_to_image(healthy_recon ** 1.5))
         ax[3].imshow(Image2VecWrapper.observation_to_image(depressed_recon ** 1.5))
+        ax[4].imshow(Image2VecWrapper.observation_to_image(schiz_recon ** 1.5))
 
-        for i in range(4):
+        for i in range(5):
             ax[i].set_xticks([])
             ax[i].set_yticks([])
 
-        for i in range(1, 4):
+        for i in range(1, 5):
             t = plt.Polygon([[1.75, 4.25], [2.25, 4.25], [2, 3.75]], color='red')
             ax[i].add_patch(t)
 
@@ -133,7 +140,7 @@ if __name__ == '__main__':
         plot(state)
 
     # create figure window
-    fig, ax = plt.subplots(1, 4)
+    fig, ax = plt.subplots(1, 5)
     fig.canvas.mpl_connect('key_press_event', process)
     plot(state)
 

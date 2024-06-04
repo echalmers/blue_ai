@@ -152,13 +152,13 @@ class ShiftedTargets(BaseAgent):
 class PositiveLossAgent(BaseAgent):
     display_name = "Positive Loss Agent"
 
-    def __init__(self, alpha=1e-1, embed_alpha_in_filename=False):
+    def __init__(self, alpha=1e-2, embed_alpha_in_filename=False):
         self.embed_alpha_in_filename = embed_alpha_in_filename
         self.alpha = alpha
         custom_loss_function = PositivePenaltyLoss(alpha=self.alpha)
 
         super().__init__(loss_fn=custom_loss_function)
-        custom_loss_function.params = [x for x in self.policy_net.parameters() if x.dim() == 2]
+        custom_loss_function.params = [x for x in self.policy_net.parameters() if x.dim() > 0]
 
     def file_display_name(self):
         if not self.embed_alpha_in_filename:
