@@ -14,14 +14,13 @@ class PositivePenaltyLoss(nn.Module):
     def __init__(self, alpha=0.2):
 
         super(PositivePenaltyLoss, self).__init__()
-        self.policy_hook: Sequential = None
+        self.params = None
         self.λ = alpha
 
     def forward(self, inputs: torch.Tensor, targets: torch.Tensor):
-        net = next(self.policy_hook.parameters())
-        # This is actually a ReLU function
-        # https://discuss.pytorch.org/t/why-are-there-3-relu-functions-or-maybe-even-more/5891/2
-        positive_penalty = torch.clamp(net, min=0).sum()
+        positive_penalty = 0
+        for paramset in self.params:
+            positive_penalty += (torch.clamp(paramset, min=0) ** 2).sum()
         normal = self.known(inputs, targets)
 
         return normal + self.λ * positive_penalty
