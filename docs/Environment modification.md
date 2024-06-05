@@ -8,13 +8,13 @@ this is used as a basis for the dynamic elements of the environment.
 ### Example
 
 The below environment is simply a square with the with the end goal and
-starting position (this may be overridden in some instances)
+starting position defined.
 
 ![Environment Example](./env_example.png)
 
 > Please do not use this as a starting point as it has been scaled so that it
-> is actually visible, [env1.png](../blue_ai/envs/env1.png) for a actual template
-> if needed
+> is actually visible, use [env1.png](../blue_ai/envs/env1.png) for a actual
+> template if needed
 
 ### Color Mappings
 
