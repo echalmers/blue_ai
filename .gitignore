@@ -1,13 +1,22 @@
-venv/
+# Build Files
+**/__pycache__
+**/*.egg-info
+build/
+
+# Macos Stuff 
+**/.DS_Store
+
+
+# All Data exports 
+**/*.pkl
+
+# IDE stuff 
 .idea/
-*.pkl
-data/
-__pycache__/
-build/lib/blue_ai
-blue_ai_envs.egg-info
-/build/
-blue_ai.egg-info
-blue_ai/scripts/img
+
+# pyvenv 
 .venv
-*.png
-*.jpg
+venv
+
+# Script Outputs
+blue_Ai/scripts/img 
+blue_Ai/scripts/data
