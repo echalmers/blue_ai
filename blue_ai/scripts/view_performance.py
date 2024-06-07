@@ -15,6 +15,7 @@ class PerformancePlotter:
         agent_classes=(
             agent_classes.HealthyAgent,
             agent_classes.SpineLossDepression,
+            agent_classes.PositiveLossAgent
         ),
     ):
 

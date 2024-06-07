@@ -11,21 +11,25 @@ class RepresentationProbe:
     def __init__(self, agent: DQN, memory_agent: DQN = None):
         self.agent = agent
         self.memory_agent = memory_agent or agent
-        self._internal_activations = None
+        self._internal_activations = dict()
 
         # get sample input
         state = self.agent.transition_memory.states[0]
 
         # find and register the middle layer
         layers = [layer for layer in self.agent.policy_net if isinstance(layer, nn.Linear)]
-        middle_layer = layers[len(layers)//2]
-        middle_layer.register_forward_hook(self._capture_activations)
+        num_internal_units = 0
+        for layer in layers[1:]:
+            layer.register_forward_hook(self._capture_activations)
+            num_internal_units += layer.in_features
 
         # create model to reconstruct inputs from internal representations
         self.model = nn.Sequential(
-            nn.Linear(middle_layer.in_features + middle_layer.out_features, state.numel()),
+            nn.Linear(num_internal_units, state.numel()*2),
             nn.Tanh(),
-            nn.Linear(state.numel(), state.numel()),
+            # nn.Linear(state.numel(), state.numel()),
+            # nn.Tanh(),
+            nn.Linear(state.numel()*2, state.numel()),
             nn.Unflatten(1, state.shape)
         )
         print(self.model)
@@ -33,14 +37,14 @@ class RepresentationProbe:
 
     def fit(self):
         loss_fn = torch.nn.MSELoss()
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.05, weight_decay=1e-6)
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01, weight_decay=0)
 
         # fit model
         losses = []
-        for i in range(200):
+        for i in range(5000):
             observations, _, _, _, _ = self.memory_agent.transition_memory.sample(1000)
             self.agent.policy_net(observations)
-            reconstruction = self.model(self._internal_activations)
+            reconstruction = self.model(torch.hstack(list(self._internal_activations.values())))
             loss = loss_fn(reconstruction, observations)
             losses.append(loss.item())
             optimizer.zero_grad()
@@ -51,11 +55,11 @@ class RepresentationProbe:
     def get_reconstructions(self, observations):
         with torch.no_grad():
             self.agent.policy_net(observations)
-            reconstruct = self.model(self._internal_activations)
+            reconstruct = self.model(torch.hstack(list(self._internal_activations.values())))
         return observations, reconstruct
 
     def _capture_activations(self, layer, input, output):
-        self._internal_activations = torch.hstack((input[0].detach(), output.detach()))
+        self._internal_activations[layer] = input[0]
 
 
 if __name__ == '__main__':
