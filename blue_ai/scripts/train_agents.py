@@ -11,12 +11,21 @@ from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.agents.agent_classes import *
 
 
-def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
+def run_trial(
+    agent: BaseAgent,
+    env,
+    steps=30000,
+    trial_id="",
+    tbar=None,
+    starting_cumalative_reward=0,
+    starting_episode_num=0,
+    starting_step=0,
+):
     state, _ = env.reset()
     # setup variables to track progress
     steps_this_episode = 0
-    episode_num = 0
-    cumulative_reward = 0
+    episode_num = starting_episode_num
+    cumulative_reward = starting_cumalative_reward
 
     # setup results dataframe
     results = [None] * steps
@@ -27,6 +36,9 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
         tbar.set_postfix(
             agent=agent.__class__.__name__, env=env.__class__.__name__, trial=trial_id
         )
+
+    total_reward = sum([o.reward for o in env.unwrapped.obstacles])
+    total_penalties = sum([o.reward for o in env.unwrapped.penalties])
 
     for step in range(steps):
         steps_this_episode += 1
@@ -46,6 +58,9 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
             state, _ = env.reset()
             episode_num += 1
             steps_this_episode = 0
+
+            total_reward = sum([o.reward for o in env.unwrapped.obstacles])
+            total_penalties = sum([o.reward for o in env.unwrapped.penalties])
         else:
             state = new_state
 
@@ -69,12 +84,17 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
             "stuck": stuck,
             "mean_synapse": next(agent.policy_net.parameters()).mean().item(),
             "num_pos_synapse": (next(agent.policy_net.parameters()) > 0).sum().item(),
-        }
+            "total_reward": total_reward,
+            "total_penalties": total_penalties,
+        } | agent.get_metadata()  # Add any optional meta data the specific agent may want to provide
 
         if tbar is not None:
             tbar.update()
 
     results = pd.DataFrame(results)
+
+    # Offset the starting steps in the resultant dataframe
+    results["step"] += starting_step
     return results, agent, env
 
 

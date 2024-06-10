@@ -18,5 +18,5 @@ build/
 venv
 
 # Script Outputs
-blue_Ai/scripts/img 
-blue_Ai/scripts/data
+blue_ai/scripts/img 
+blue_ai/scripts/data

@@ -12,6 +12,7 @@ setup(
         "seaborn",
         "torch",
         "tqdm",
+        "anytree",
     ],
     include_package_data=True,
     package_data={"": ["*.png"]},

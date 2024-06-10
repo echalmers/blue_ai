@@ -1,4 +1,6 @@
-from typing import Dict, Any
+from typing import Dict, Any, override
+
+from pandas._config import display
 
 from blue_ai.agents.dqn import DQN
 from torch import nn
@@ -10,7 +12,6 @@ from blue_ai.envs.custom_decay import PositivePenaltyLoss
 
 
 class BaseAgent(DQN):
-
     def file_display_name(self):
         """
         Used for getting the name of used for saving the files, override this
@@ -18,17 +19,25 @@ class BaseAgent(DQN):
         """
         return self.__class__.__name__
 
-    def get_metadata(self) -> Dict[str, Any] | None:
+    def state_change(self, **kwargs):
+        """
+        Changes the internal state of agent if needed, this is a optional implmention needed for some specizlied agents
+
+        By default this is a no op, and is safe to call on non implementing Agents
+        """
+
+    def get_metadata(self) -> Dict[str, Any]:
         """
         Allows for adding extra metadata to the pickle dumps this should always take the shape of dictionary of string -> Any
         >>> x = BaseAgent()
         >>> x.get_metadata() # Returns Nothing
+        {}
         >>> x.get_metadata = lambda : {"foo":"bar"}
         >>> x.get_metadata()
         {'foo': 'bar'}
         """
 
-        return None
+        return {}
 
     def __init__(
         self,
@@ -84,9 +93,10 @@ class HealthyAgent(BaseAgent):
 class SpineLossDepression(BaseAgent):
 
     display_name = "simulated spine loss"
+    weight_decay = 1e-3
 
     def __init__(self):
-        super().__init__(weight_decay=1e-3)
+        super().__init__(weight_decay=self.weight_decay)
 
 
 class ContextDependentLearningRate(BaseAgent):
@@ -213,3 +223,41 @@ class ReluLossActivation(BaseAgent):
         super().__init__(loss_fn=custom_loss_function, network=network)
 
         custom_loss_function.policy_hook = self.policy_net
+
+
+class RehabiliationAgent(BaseAgent):
+    display_name = "RehabiliationAgent"
+
+    def __init__(self, weight_decay=3e-3):
+        super().__init__()
+        # This should not be changed overtime and is used to return to the original state
+        self.weight_decay_amount = weight_decay
+        self.weight_decay = self.weight_decay_amount
+
+    @override
+    def get_metadata(self) -> Dict[str, Any]:
+        return {"spine_loss": self.weight_decay}
+
+    @override
+    def state_change(self, **kwargs):
+        assert (
+            "stage" in kwargs
+        ), f"{self.__class__.__name__}.state_change requires kwarg 'stage'"
+
+        stage: int = kwargs["stage"]
+        assert stage in range(0, 3), "Stage outside required range (0,2]"
+
+        match stage:
+            # "Health Stage"
+            case 0:
+                self.weight_decay = 0
+            # Depressive Stage
+            case 1:
+                self.weight_decay = self.weight_decay_amount
+            # Treatment stage
+            case 2:
+                self.weight_decay = 0
+
+        self.optimizer = torch.optim.Adam(
+            self.policy_net.parameters(), lr=self.lr, weight_decay=self.weight_decay
+        )
