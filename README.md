@@ -1,4 +1,7 @@
 # BLUE AI
+
+See [Docs](./docs/index.md)
+
 code accompanying the paper: "A melancholy machine: simulated synapse loss induces depression-like behaviors in deep reinforcement learning"
 
 For an interactive demo of the environment, run environment_demo.py
