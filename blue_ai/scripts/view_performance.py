@@ -1,11 +1,56 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from train_agents import load_dataset
+from blue_ai.scripts.train_agents import load_dataset
 from blue_ai.envs.transient_goals import TransientGoals
 import blue_ai.agents.agent_classes as agent_classes
 
 from blue_ai.scripts.constants import FIGURE_PATH
+
+
+def aggregate_goals(type, data, include_lava=True):
+    if type == "total":
+        goals = (
+            data.groupby(by=["trial_id", "agent"])[
+                ["terminal_goal", "transient_goal", "lava", "stuck"]
+            ]
+            .sum()
+            .reset_index()
+        )
+    elif type == "episode":
+        goals = (
+            data.groupby(by=["trial_id", "episode", "agent"])[
+                ["terminal_goal", "transient_goal", "lava", "stuck"]
+            ]
+            .sum()
+            .reset_index()
+        )
+        goals = (
+            goals.groupby(by=["trial_id", "agent"])[
+                ["terminal_goal", "transient_goal", "lava", "stuck"]
+            ]
+            .mean()
+            .reset_index()
+        )
+
+    goals_transient = goals[["trial_id", "agent", "transient_goal"]]
+    goals_transient["event"] = "optional goal"
+    goals_transient.rename({"transient_goal": "count"}, axis=1, inplace=True)
+
+    goals_terminal = goals[["trial_id", "agent", "terminal_goal"]]
+    goals_terminal["event"] = "required goal"
+    goals_terminal.rename({"terminal_goal": "count"}, axis=1, inplace=True)
+
+    lava = goals[["trial_id", "agent", "lava"]]
+    lava["event"] = "hazard"
+    lava.rename({"lava": "count"}, axis=1, inplace=True)
+
+    goals = pd.concat(
+        [goals_terminal, goals_transient] + ([lava] if include_lava else []),
+        ignore_index=True,
+    )
+    goals.rename({"event": "object"}, axis=1, inplace=True)
+    return goals
 
 
 class PerformancePlotter:
@@ -44,51 +89,6 @@ class PerformancePlotter:
         plt.xticks([])
         plt.yticks([])
 
-    @staticmethod
-    def aggregate_goals(type, data, include_lava=True):
-        if type == "total":
-            goals = (
-                data.groupby(by=["trial_id", "agent"])[
-                    ["terminal_goal", "transient_goal", "lava", "stuck"]
-                ]
-                .sum()
-                .reset_index()
-            )
-        elif type == "episode":
-            goals = (
-                data.groupby(by=["trial_id", "episode", "agent"])[
-                    ["terminal_goal", "transient_goal", "lava", "stuck"]
-                ]
-                .sum()
-                .reset_index()
-            )
-            goals = (
-                goals.groupby(by=["trial_id", "agent"])[
-                    ["terminal_goal", "transient_goal", "lava", "stuck"]
-                ]
-                .mean()
-                .reset_index()
-            )
-
-        goals_transient = goals[["trial_id", "agent", "transient_goal"]]
-        goals_transient["event"] = "optional goal"
-        goals_transient.rename({"transient_goal": "count"}, axis=1, inplace=True)
-
-        goals_terminal = goals[["trial_id", "agent", "terminal_goal"]]
-        goals_terminal["event"] = "required goal"
-        goals_terminal.rename({"terminal_goal": "count"}, axis=1, inplace=True)
-
-        lava = goals[["trial_id", "agent", "lava"]]
-        lava["event"] = "hazard"
-        lava.rename({"lava": "count"}, axis=1, inplace=True)
-
-        goals = pd.concat(
-            [goals_terminal, goals_transient] + ([lava] if include_lava else []),
-            ignore_index=True,
-        )
-        goals.rename({"event": "object"}, axis=1, inplace=True)
-        return goals
-
     def plot_learning_curves(self, ax, n_boot=1, **kwargs):
         plt.sca(ax)
 
@@ -113,7 +113,7 @@ class PerformancePlotter:
     def plot_goals_per_episode(self, ax, n_boot=1):
         plt.sca(ax)
 
-        high_terminal_goals = self.aggregate_goals(
+        high_terminal_goals = aggregate_goals(
             type="episode", data=self.high_terminal_results
         )
         sns.barplot(

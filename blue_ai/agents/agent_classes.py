@@ -1,3 +1,5 @@
+from typing import Dict, Any
+
 from blue_ai.agents.dqn import DQN
 from torch import nn
 import numpy as np
@@ -15,6 +17,18 @@ class BaseAgent(DQN):
         if you need to embedded custom information in the filename
         """
         return self.__class__.__name__
+
+    def get_metadata(self) -> Dict[str, Any] | None:
+        """
+        Allows for adding extra metadata to the pickle dumps this should always take the shape of dictionary of string -> Any
+        >>> x = BaseAgent()
+        >>> x.get_metadata() # Returns Nothing
+        >>> x.get_metadata = lambda : {"foo":"bar"}
+        >>> x.get_metadata()
+        {'foo': 'bar'}
+        """
+
+        return None
 
     def __init__(
         self,
@@ -36,7 +50,10 @@ class BaseAgent(DQN):
             network=(
                 network
                 or nn.Sequential(
-                    nn.Flatten(1, -1), nn.Linear(100, 10), nn.Sigmoid(), nn.Linear(10, 3)
+                    nn.Flatten(1, -1),
+                    nn.Linear(100, 10),
+                    nn.Sigmoid(),
+                    nn.Linear(10, 3),
                 )
             ),
             input_shape=input_shape,
@@ -158,7 +175,9 @@ class PositiveLossAgent(BaseAgent):
         custom_loss_function = PositivePenaltyLoss(alpha=self.alpha)
 
         super().__init__(loss_fn=custom_loss_function)
-        custom_loss_function.params = [x for x in self.policy_net.parameters() if x.dim() == 2]
+        custom_loss_function.params = [
+            x for x in self.policy_net.parameters() if x.dim() == 2
+        ]
 
     def file_display_name(self):
         if not self.embed_alpha_in_filename:

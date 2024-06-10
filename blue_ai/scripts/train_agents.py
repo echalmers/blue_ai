@@ -128,7 +128,7 @@ def trial(agent: BaseAgent, env, rep, trial_num, tbar=None, steps=30_000):
 
 
 def main():
-    iterations_per_trial = 30_000
+    iterations_per_trial = 15_000
     trial_num = 0
 
     agents: List[BaseAgent] = [
