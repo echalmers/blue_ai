@@ -16,12 +16,13 @@ def flatten(it):
     return itertools.chain.from_iterable(it)
 
 
-def remove_legend(ax: Axes):
+def remove_legend(*args, _debug=False):
     """
     Remove the legend if it is present
     """
-    if legend := ax.get_legend():
-        legend.remove()
+    for ax in args:
+        if legend := ax.get_legend():
+            legend.remove()
 
 
 def get_agent_names(x):

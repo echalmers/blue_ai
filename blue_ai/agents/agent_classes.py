@@ -245,17 +245,14 @@ class RehabiliationAgent(BaseAgent):
         ), f"{self.__class__.__name__}.state_change requires kwarg 'stage'"
 
         stage: int = kwargs["stage"]
-        assert stage in range(0, 3), "Stage outside required range (0,2]"
+        assert stage in range(0, 2), "Stage outside required range (0,2]"
 
         match stage:
             # "Health Stage"
             case 0:
-                self.weight_decay = 0
+                self.weight_decay = self.weight_decay_amount
             # Depressive Stage
             case 1:
-                self.weight_decay = self.weight_decay_amount
-            # Treatment stage
-            case 2:
                 self.weight_decay = 0
 
         self.optimizer = torch.optim.Adam(

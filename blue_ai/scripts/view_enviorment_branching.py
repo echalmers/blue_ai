@@ -1,14 +1,15 @@
-from numpy import cumsum
-import pandas as pd
 from blue_ai.scripts.constants import DATA_PATH, FIGURE_PATH
+from blue_ai.scripts.enviorment_branching import STEPS_PER_STAGE
+from blue_ai.scripts.view_positive_synapses import remove_legend
 
-import pickle
-import numpy as np
-import seaborn as sns
+from itertools import product
+from numpy import cumsum
 import matplotlib.pyplot as plt
 
-from blue_ai.scripts.view_positive_synapses import remove_legend
-from blue_ai.scripts.enviorment_branching import STEPS_PER_STAGE
+import numpy as np
+import pandas as pd
+import pickle
+import seaborn as sns
 
 
 def load():
@@ -17,50 +18,78 @@ def load():
 
 
 def main():
-    plt.figure(figsize=(6 * 4, 6 * 1 + 2))  # Set the figure size
+    fig, axes = plt.subplots(3, 1)
 
-    # Add Vertical lines indicating stage transition
-    for threshold in cumsum(STEPS_PER_STAGE):
-        plt.axvline(threshold)
+    fig.set_figwidth(6 * 4)
+    fig.set_figheight(6 * 3)
+
+    for ax, threshold in product(axes, cumsum(STEPS_PER_STAGE) - STEPS_PER_STAGE[0]):
+        ax.axvline(threshold)
 
     data: pd.DataFrame = load()
 
-    data["possible_reward"] = data.groupby(["agent", "path", "trial_id"])[
-        "total_reward"
-    ].transform("sum")
+    # Convert categorical columns
+    data["agent"] = data["agent"].astype("category")
+    data["path"] = data["path"].astype("category")
+    data["trial_id"] = data["trial_id"].astype("category")
 
-    data["cumulative_reward"] = (
-        data["cumulative_reward"] / data["possible_reward"]
-    ) * 100
+    data = data.reset_index()
+
+    data["rolling"] = (
+        data.groupby(["path", "trial_id", "agent"], sort=False)["reward"]
+        .rolling(1000)
+        .mean()
+    ).reset_index(drop=True)
+
+    data = data[data["step"] % 50 == 0]
 
     keys = data["path"].unique()
-    keys = sorted(keys, key=(lambda x: x.count("B") - x.count("G")))
+    keys = sorted(keys, key=(lambda x: (x.count("B") - x.count("G") / len(x))))
     colors = sns.diverging_palette(250, 0, l=65, center="dark", n=len(keys))
     palette = dict(list(zip(keys, colors)))
 
-    data = data[(data["step"] % 100 == 0)]
-
-    ax1 = sns.lineplot(
+    print("Cumulative: ", end="")
+    sns.lineplot(
         data=data,
-        x="step",
         y="cumulative_reward",
-        hue="path",
+        x="step",
         style="agent",
+        hue="path",
         palette=palette,
-        # estimator=None,
-        # n_boot=0,
+        ax=axes[0],
+    )
+    print("Done")
+
+    print("Rolling :", end="")
+    sns.lineplot(
+        data=data,
+        y="reward",
+        x="step",
+        hue="path",
+        palette=palette,
+        ax=axes[1],
+    )
+    print("Done")
+
+    sns.lineplot(
+        data=data,
+        y="rolling",
+        x="step",
+        hue="path",
+        palette=palette,
+        ax=axes[2],
     )
 
-    ax1.set_ylabel("% Reward Obtained")
+    remove_legend(*axes)
 
-    ax1.set_xlabel("Total Steps")
-
-    h, l = ax1.get_legend_handles_labels()
+    # Create custom Legend at top of screen always two rows long
+    h, l = axes[0].get_legend_handles_labels()
     plt.figlegend(h, l, loc="upper center", ncols=len(keys) // 2)
-    remove_legend(ax1)
 
     plt.savefig(FIGURE_PATH / "branching.png")
 
 
 if __name__ == "__main__":
+    data = load()
+
     main()

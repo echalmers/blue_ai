@@ -19,7 +19,7 @@ from typing import List
 import pickle
 
 
-STEPS_PER_STAGE = [40_000, 40_000, 30_000]
+STEPS_PER_STAGE = [40_000, 40_000]
 # STEPS_PER_STAGE = [s // 100 for s in STEPS_PER_STAGE]
 
 
@@ -65,13 +65,13 @@ def main():
     ]
 
     base = AnyNode()
-    for i in range(2):
+    for i in range(20):
         agents = deepcopy(agents)
         for a in agents:
             agent_node = AnyNode(
                 agent=a, parent=base, results=pd.DataFrame(), trial_id=i
             )
-            create_custom_tree(agent_node, 3, branches, trial_id=i)
+            create_custom_tree(agent_node, 2, branches, trial_id=i)
 
     total = sum(
         [
@@ -88,19 +88,20 @@ def main():
         stage = len(node.ancestors) - 2
 
         node.agent = deepcopy(node.parent.agent)
+        node.results = deepcopy(node.parent.results)
         node.agent.state_change(stage=stage)
 
         # Inherit initial data from parent
         if len(node.parent.results) > 0:
             starting_episode_num = node.parent.results["episode"].max()
-            starting_cumalative_reward = node.parent.results["episode"].max()
+            starting_cumalative_reward = node.parent.results["cumulative_reward"].max()
             starting_step = node.parent.results["step"].max()
         else:
             starting_episode_num = 0
             starting_cumalative_reward = 0
             starting_step = 0
 
-        node.results, _, _ = run_trial(
+        r, _, _ = run_trial(
             node.agent,
             node.env,
             STEPS_PER_STAGE[stage],
@@ -108,17 +109,22 @@ def main():
             trial_id=node.trial_id,
             # So that this data lines up bettwen the runs
             starting_episode_num=starting_episode_num,
-            starting_cumalative_reward=starting_cumalative_reward,
             starting_step=starting_step,
         )
+
+        node.results = pd.concat([node.results, r])
 
         node.results["path"] = "".join(
             [a.env.name[0] for a in (node,) + node.ancestors if len(a.ancestors) >= 2]
         )
 
         node.results["env_type"] = node.env.name
+        node.results["starting_cumalative_reward"] = starting_cumalative_reward
 
-    combined_results = pd.concat([node.results for node in base.descendants])
+    with open(DATA_PATH / "full_tree.pkl", "wb") as f:
+        pickle.dump(base, f)
+
+    combined_results = pd.concat([node.results for node in base.leaves])
 
     with open(DATA_PATH / "branching.pkl", "wb") as f:
         pickle.dump(combined_results, f)
