@@ -27,8 +27,10 @@ class RepresentationProbe:
         self.model = nn.Sequential(
             nn.Linear(num_internal_units, state.numel()*2),
             nn.Tanh(),
-            # nn.Linear(state.numel(), state.numel()),
-            # nn.Tanh(),
+            nn.Linear(state.numel()*2, state.numel()*2),
+            nn.Tanh(),
+            nn.Linear(state.numel() * 2, state.numel() * 2),
+            nn.Tanh(),
             nn.Linear(state.numel()*2, state.numel()),
             nn.Unflatten(1, state.shape)
         )
@@ -37,11 +39,11 @@ class RepresentationProbe:
 
     def fit(self):
         loss_fn = torch.nn.MSELoss()
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01, weight_decay=0)
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001, weight_decay=1e-6)
 
         # fit model
         losses = []
-        for i in range(5000):
+        for i in range(10_000):
             observations, _, _, _, _ = self.memory_agent.transition_memory.sample(1000)
             self.agent.policy_net(observations)
             reconstruction = self.model(torch.hstack(list(self._internal_activations.values())))
@@ -54,7 +56,7 @@ class RepresentationProbe:
 
     def get_reconstructions(self, observations):
         with torch.no_grad():
-            self.agent.policy_net(observations)
+            self.agent.policy_net(observations + torch.normal(0, 0.1, size=observations.shape, device=self.agent.device))
             reconstruct = self.model(torch.hstack(list(self._internal_activations.values())))
         return observations, reconstruct
 

@@ -2,7 +2,7 @@ from pathlib import Path
 
 _CURRENT_DIR = Path(__file__).parent
 
-N_TRIALS = 1
+N_TRIALS = 3
 
 FIGURE_PATH = _CURRENT_DIR / "img"
 DATA_PATH = _CURRENT_DIR / "data"

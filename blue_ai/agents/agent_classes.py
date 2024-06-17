@@ -2,6 +2,7 @@ from blue_ai.agents.dqn import DQN
 from torch import nn
 import numpy as np
 import torch
+import torch.nn.utils.prune as prune
 
 
 from blue_ai.envs.custom_decay import PositivePenaltyLoss
@@ -156,7 +157,7 @@ class ShiftedTargets(BaseAgent):
 class PositiveLossAgent(BaseAgent):
     display_name = "Positive Loss Agent"
 
-    def __init__(self, alpha=1e-5, embed_alpha_in_filename=False):
+    def __init__(self, alpha=6e-5, embed_alpha_in_filename=False):
         self.embed_alpha_in_filename = embed_alpha_in_filename
         self.alpha = alpha
         custom_loss_function = PositivePenaltyLoss(alpha=self.alpha)
@@ -198,3 +199,23 @@ class ReluLossActivation(BaseAgent):
         super().__init__(loss_fn=custom_loss_function, network=network)
 
         custom_loss_function.policy_hook = self.policy_net
+
+
+
+class PrunedAgent(BaseAgent):
+
+    display_name = "Pruned Agent"
+
+    def __init__(self):
+        network = nn.Sequential(
+            nn.Flatten(1, -1),
+            nn.Linear(100, 25), nn.Sigmoid(),
+            nn.Linear(25, 25), nn.Sigmoid(),
+            nn.Linear(25, 25), nn.Sigmoid(),
+            nn.Linear(25, 3),
+        )
+        pruner = prune.RandomUnstructured(0.67)
+        for layer_index in [1, 3, 5, 7]:
+            pruner.apply(network[layer_index], 'weight', 0.67)
+
+        super().__init__(network=network)

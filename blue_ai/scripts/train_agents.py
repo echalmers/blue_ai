@@ -133,15 +133,16 @@ def main():
 
     agents: List[BaseAgent] = [
         # HealthyAgent(),
-        # SpineLossDepression(),
+        SpineLossDepression(),
         # ContextDependentLearningRate(),
         # HighDiscountRate(),
         # ScaledTargets(),
         # HighExploration(),
         # ShiftedTargets(),
-        PositiveLossAgent(),
+        # PositiveLossAgent(),
         # ReluActivation(),
         # ReluLossActivation(),
+        # PrunedAgent(),
     ]
     envs = [
         Image2VecWrapper(
