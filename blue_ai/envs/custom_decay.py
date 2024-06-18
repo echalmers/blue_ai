@@ -5,6 +5,7 @@ from torch.nn.modules import MSELoss, Sequential
 
 class PositivePenaltyLoss(nn.Module):
     known = MSELoss()
+    leaky_relu = torch.nn.LeakyReLU(negative_slope=0)
 
     """
     Uses a combinations of MSE Loss with a RELU penalty, meaning that positive 
@@ -20,7 +21,7 @@ class PositivePenaltyLoss(nn.Module):
     def forward(self, inputs: torch.Tensor, targets: torch.Tensor):
         positive_penalty = 0
         for paramset in self.params:
-            positive_penalty += (torch.clamp(paramset, min=0) ** 2).sum()
+            positive_penalty += (self.leaky_relu(paramset) ** 2).sum()
         normal = self.known(inputs, targets)
 
         return normal + self.λ * positive_penalty

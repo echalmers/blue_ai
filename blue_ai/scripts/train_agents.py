@@ -132,14 +132,14 @@ def main():
     trial_num = 0
 
     agents: List[BaseAgent] = [
-        # HealthyAgent(),
+        HealthyAgent(),
         SpineLossDepression(),
         # ContextDependentLearningRate(),
         # HighDiscountRate(),
         # ScaledTargets(),
         # HighExploration(),
         # ShiftedTargets(),
-        # PositiveLossAgent(),
+        PositiveLossAgent(),
         # ReluActivation(),
         # ReluLossActivation(),
         # PrunedAgent(),
@@ -148,7 +148,8 @@ def main():
         Image2VecWrapper(
             TransientGoals(
                 render_mode="none", transient_reward=0.25, termination_reward=1
-            )
+            ),
+            noise_level=0.01
         ),
         # swapped reward structure
         # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),

@@ -39,8 +39,8 @@ class BaseAgent(DQN):
                 or nn.Sequential(
                     nn.Flatten(1, -1),
                     nn.Linear(100, 25), nn.Sigmoid(),
-                    nn.Linear(25, 25), nn.Sigmoid(),
-                    nn.Linear(25, 25), nn.Sigmoid(),
+                    # nn.Linear(25, 25), nn.Sigmoid(),
+                    # nn.Linear(25, 25), nn.Sigmoid(),
                     nn.Linear(25, 3)
             )
             ),
@@ -74,7 +74,7 @@ class SpineLossDepression(BaseAgent):
     display_name = "simulated spine loss"
 
     def __init__(self):
-        super().__init__(weight_decay=1e-5)
+        super().__init__(weight_decay=1e-3)
 
 
 class ContextDependentLearningRate(BaseAgent):
@@ -157,7 +157,7 @@ class ShiftedTargets(BaseAgent):
 class PositiveLossAgent(BaseAgent):
     display_name = "Positive Loss Agent"
 
-    def __init__(self, alpha=6e-5, embed_alpha_in_filename=False):
+    def __init__(self, alpha=1e-3, embed_alpha_in_filename=False):
         self.embed_alpha_in_filename = embed_alpha_in_filename
         self.alpha = alpha
         custom_loss_function = PositivePenaltyLoss(alpha=self.alpha)

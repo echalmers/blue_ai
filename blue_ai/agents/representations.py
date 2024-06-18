@@ -29,8 +29,8 @@ class RepresentationProbe:
             nn.Tanh(),
             nn.Linear(state.numel()*2, state.numel()*2),
             nn.Tanh(),
-            nn.Linear(state.numel() * 2, state.numel() * 2),
-            nn.Tanh(),
+            # nn.Linear(state.numel() * 2, state.numel() * 2),
+            # nn.Tanh(),
             nn.Linear(state.numel()*2, state.numel()),
             nn.Unflatten(1, state.shape)
         )
@@ -43,9 +43,10 @@ class RepresentationProbe:
 
         # fit model
         losses = []
-        for i in range(10_000):
+        for i in range(5_000):
             observations, _, _, _, _ = self.memory_agent.transition_memory.sample(1000)
-            self.agent.policy_net(observations)
+            with torch.no_grad():
+                self.agent.policy_net(observations)
             reconstruction = self.model(torch.hstack(list(self._internal_activations.values())))
             loss = loss_fn(reconstruction, observations)
             losses.append(loss.item())
@@ -56,7 +57,7 @@ class RepresentationProbe:
 
     def get_reconstructions(self, observations):
         with torch.no_grad():
-            self.agent.policy_net(observations + torch.normal(0, 0.1, size=observations.shape, device=self.agent.device))
+            self.agent.policy_net(observations)
             reconstruct = self.model(torch.hstack(list(self._internal_activations.values())))
         return observations, reconstruct
 
@@ -92,7 +93,8 @@ if __name__ == '__main__':
     env = Image2VecWrapper(
         TransientGoals(
             render_mode="rgb_array", transient_reward=0.25, termination_reward=1
-        )
+        ),
+        noise_level=0.15
     )
     state, _ = env.reset()
 

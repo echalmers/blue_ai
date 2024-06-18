@@ -14,8 +14,9 @@ object_number_map = {
 
 
 class Image2VecWrapper(gym.ObservationWrapper):
-    def __init__(self, env):
+    def __init__(self, env, noise_level=0):
         super().__init__(env)
+        self.noise_level = noise_level
 
     def observation(self, observation):
         """
@@ -31,6 +32,7 @@ class Image2VecWrapper(gym.ObservationWrapper):
         vec = np.zeros((image.shape[0], image.shape[1], 4))
         for obj, (index, _) in object_number_map.items():
             vec[image[:, :, 0] == obj, index] = 1
+        vec += np.random.normal(0, self.noise_level, size=vec.shape)
         return np.moveaxis(vec, (2, 0, 1), (0, 1, 2))
 
     @staticmethod
