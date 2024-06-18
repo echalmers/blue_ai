@@ -37,7 +37,7 @@ class TransientGoals(MiniGridEnv):
         img_filename="env1.png",
         transient_locations=None,
         replace_transient_goals=False,
-        transient_penalty=-1,
+        transient_penalty=-1.0,
         n_transient_obstacles=1,
         transient_obstacles=None,
         replace_transient_obstacles=False,

@@ -58,11 +58,16 @@ def run_trial(
             state, _ = env.reset()
             episode_num += 1
             steps_this_episode = 0
-
-            total_reward = sum([o.reward for o in env.unwrapped.obstacles])
+            total_reward = (
+                sum([o.reward for o in env.unwrapped.obstacles])
+                + env.unwrapped.termination_reward
+            )
             total_penalties = sum([o.reward for o in env.unwrapped.penalties])
         else:
             state = new_state
+
+            total_reward = 0
+            total_penalties = 0
 
         # add results to the history
         transient_goal = reward == env.unwrapped.transient_reward
@@ -71,23 +76,35 @@ def run_trial(
         stuck = max(pos.values()) > 2000
         cumulative_reward += reward
 
-        results[step] = {
-            "trial_id": trial_id,
-            "agent": agent.__class__.__name__,
-            "step": step,
-            "episode": episode_num,
-            "reward": reward,
-            "cumulative_reward": cumulative_reward,
-            "terminal_goal": terminal_goal,
-            "transient_goal": transient_goal,
-            "lava": lava,
-            "stuck": stuck,
-            "mean_synapse": next(agent.policy_net.parameters()).mean().item(),
-            "num_pos_synapse": (next(agent.policy_net.parameters()) > 0).sum().item(),
-            "total_reward": total_reward,
-            "total_penalties": total_penalties,
-        } | agent.get_metadata()  # Add any optional meta data the specific agent may want to provide
+        layers = {
+            f"layer_{i}": params.to("cpu", non_blocking=True).detach().numpy()
+            for i, params in enumerate(agent.policy_net.parameters())
+        }
 
+        results[step] = (
+            {
+                "trial_id": trial_id,
+                "agent": agent.__class__.__name__,
+                "step": step,
+                "episode": episode_num,
+                "reward": reward,
+                "cumulative_reward": cumulative_reward,
+                "terminal_goal": terminal_goal,
+                "transient_goal": transient_goal,
+                "lava": lava,
+                "stuck": stuck,
+                "mean_synapse": next(agent.policy_net.parameters()).mean().item(),
+                "num_pos_synapse": (next(agent.policy_net.parameters()) > 0)
+                .sum()
+                .item(),
+                "network": list(agent.policy_net.parameters()),
+                "total_reward": total_reward,
+                "total_penalties": total_penalties,
+            }
+            | layers
+            # Add any optional meta data the specific agent may want to provide
+            | agent.get_metadata()
+        )
         if tbar is not None:
             tbar.update()
 

@@ -1,5 +1,6 @@
 from numbers import Number
 import copy
+import os
 import random
 
 import numpy as np
@@ -78,7 +79,13 @@ class DQN:
      change
     """
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device(
+        "cuda"
+        if torch.cuda.is_available()
+        # Allow for disableing the gpu
+        and "NO_GPU" not in os.environ
+        else "cpu"
+    )
 
     def __init__(
         self,
