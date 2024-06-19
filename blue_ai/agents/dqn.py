@@ -1,3 +1,7 @@
+"""
+
+
+"""
 from numbers import Number
 import copy
 import random
@@ -8,16 +12,20 @@ from torch import nn
 
 
 def softmax(values, t=1.0):
+    """
+    Rescales inputs into range[0-1] to an accumulative sum of t.
+    """
     return torch.softmax(values / t, dim=0)
 
+    
 
 def softmax_selection(values, t=1.0):
     return torch.multinomial(softmax(values, t=t), 1).item()
 
-
+TranistionMemory
 class TransitionMemory:
     """
-    A memory of state transitions
+    Stores & manages state transitions of agent experiences 
     """
 
     def __init__(self, capacity, state_size, device):
@@ -39,6 +47,16 @@ class TransitionMemory:
         self.done = torch.zeros(capacity, device=device)
 
     def add(self, state, action, reward, new_state, done):
+        """
+        Adds a new policy state to memory.
+
+        
+        :param state: Current state of agent.
+        :param action: Action taken relative to current state.
+        :param reward: Perceived rewarded that action results in.
+        :param new_state: New state as a consequence of action.
+        :param done: Boolean identifies complete policy transition.
+        """
         self.index = (self.index + 1) % self.capacity
 
         self.states[self.index, :] = torch.tensor(state)
@@ -50,6 +68,12 @@ class TransitionMemory:
         self.size = min(self.size + 1, self.capacity)
 
     def sample(self, n):
+        """
+        Samples random index point returning policy values at index
+
+        :param n: stores x values of a size self.size   
+        """
+
         n = min(n, self.size)
 
         idx = np.random.choice(self.size, n, replace=False)
@@ -62,6 +86,10 @@ class TransitionMemory:
         )
 
     def last(self):
+        """
+        Samples data off of last index returning final policy values
+        
+        """
         return (
             self.states[self.index, :],
             self.actions[self.index],
@@ -108,6 +136,7 @@ class DQN:
         :param epsilon: parameter for e-greedy action sampling
         :param softmax_temp: softmax temperature for use in new RL rule
         :param seed: random seed
+        :param weight_decay: rate at which connection between nodes is overwritten  
         """
         torch.manual_seed(seed)
 
