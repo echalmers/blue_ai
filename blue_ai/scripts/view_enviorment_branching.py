@@ -13,7 +13,6 @@ import seaborn as sns
 import torch
 
 from tqdm import tqdm
-import dask.dataframe as dd
 
 import pickle
 
@@ -89,13 +88,14 @@ def graph_cols(cols, axes, data: pd.DataFrame, palette):
 
 
 def main():
-    data = load()
+    data: pd.DataFrame = pd.read_parquet(DATA_PATH / "no_layers.parquet")
+
+    # data.path = pd.Categorical(data["path"].str[::-1])
 
     GRAPHED_COLUMNS = [
         "cumulative_reward",
         "% Utilization",
         "Reward Per Step",
-        "layer_2",
     ]
 
     agents = data["agent"].unique()
@@ -116,7 +116,7 @@ def main():
     runs = data.groupby(UNIQUE_RUNS, observed=True)
 
     def cosine_distances(x):
-        breakpoint()
+        t = torch.from_numpy(np.array(x.to_numpy().tolist())).flatten(start_dim=1)
 
         results = torch.arccos(cos(t[1:], t[:-1]))
 
@@ -130,13 +130,6 @@ def main():
     data["% Utilization"] = 100 * (
         (runs["reward"].cumsum() / runs["total_reward"].cumsum())
     )
-
-    data = data[
-        data["step"]
-        > (data["path"].str.len() - 1).map(
-            dict(enumerate(np.cumsum(STEPS_PER_STAGE) - STEPS_PER_STAGE[0]))
-        )
-    ]
 
     palette = dict(list(zip(data["path"].unique(), sns.color_palette())))
 
@@ -206,8 +199,10 @@ def IQR(data):
 
     values = data.replace([np.inf, -np.inf], np.nan).dropna()
 
-    Q1 = np.percentile(values, 25)
-    Q3 = np.percentile(values, 75)
+    R = 10
+
+    Q1 = np.percentile(values, R)
+    Q3 = np.percentile(values, 100 - R)
 
     # Calculate IQR
     IQR = Q3 - Q1

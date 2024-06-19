@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import Any, Dict, List, Tuple, TypedDict
 import pandas as pd
 import pickle
@@ -9,6 +10,36 @@ from tqdm import tqdm
 
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.agents.agent_classes import *
+import polars as pl
+import json
+
+
+def get_len(df, col):
+    try:
+        return len(df[col].unique())
+    except:
+        return -1
+
+
+@lru_cache
+def json_cached(x):
+    return json.dumps(x)
+
+
+def categorize(df):
+    for c in df.columns:
+        if str(df[c].dtype) == "object" and 0 < get_len(df, c) < 100:
+            df[c] = pd.Categorical(df[c])
+
+
+def categorize_pl(df: pl.DataFrame):
+    return df.with_columns(
+        **{
+            col: df[col].cast(pl.Categorical)
+            for col in df.select([pl.col(pl.String)]).columns
+            if df[col].n_unique() < 50
+        }
+    )
 
 
 def run_trial(
@@ -20,6 +51,7 @@ def run_trial(
     starting_cumalative_reward=0,
     starting_episode_num=0,
     starting_step=0,
+    polars_ok=False,
 ):
     state, _ = env.reset()
     # setup variables to track progress
@@ -29,6 +61,7 @@ def run_trial(
 
     # setup results dataframe
     results = [None] * steps
+    layers = []
 
     # track agent positions to see if they get stuck
     pos: Dict[Tuple[int, int], int] = {}
@@ -66,8 +99,8 @@ def run_trial(
         else:
             state = new_state
 
-            total_reward = 0
-            total_penalties = 0
+            total_reward = 0.0
+            total_penalties = 0.0
 
         # add results to the history
         transient_goal = reward == env.unwrapped.transient_reward
@@ -76,10 +109,12 @@ def run_trial(
         stuck = max(pos.values()) > 2000
         cumulative_reward += reward
 
-        layers = {
-            f"layer_{i}": params.to("cpu", non_blocking=True).detach().numpy()
-            for i, params in enumerate(agent.policy_net.parameters())
-        }
+        flat_layers = pl.Series(
+            [
+                p.to("cpu", non_blocking=True).detach().numpy().flatten()
+                for p in agent.policy_net.parameters()
+            ]
+        )
 
         results[step] = (
             {
@@ -87,32 +122,41 @@ def run_trial(
                 "agent": agent.__class__.__name__,
                 "step": step,
                 "episode": episode_num,
-                "reward": reward,
-                "cumulative_reward": cumulative_reward,
+                "reward": float(reward),
+                "cumulative_reward": float(cumulative_reward),
                 "terminal_goal": terminal_goal,
                 "transient_goal": transient_goal,
                 "lava": lava,
                 "stuck": stuck,
-                "mean_synapse": next(agent.policy_net.parameters()).mean().item(),
-                "num_pos_synapse": (next(agent.policy_net.parameters()) > 0)
-                .sum()
-                .item(),
-                "network": list(agent.policy_net.parameters()),
-                "total_reward": total_reward,
-                "total_penalties": total_penalties,
+                # "mean_synapse": next(agent.policy_net.parameters()).mean().item(),
+                # "num_pos_synapse": (next(agent.policy_net.parameters()) > 0).sum().item(),
+                "total_reward": float(total_reward),
+                "total_penalties": float(total_penalties),
+                "layer": flat_layers,
             }
-            | layers
             # Add any optional meta data the specific agent may want to provide
             | agent.get_metadata()
         )
         if tbar is not None:
             tbar.update()
 
-    results = pd.DataFrame(results)
+    df: pl.DataFrame = pl.DataFrame(
+        results,
+        schema_overrides={
+            "cumulative_reward": pl.Float64,
+            "total_reward": pl.Float64,
+            "total_penalties": pl.Float64,
+        },
+    )
 
-    # Offset the starting steps in the resultant dataframe
-    results["step"] += starting_step
-    return results, agent, env
+    df = categorize_pl(df)
+
+    df = df.with_columns(step=df["step"] + starting_step)
+
+    if not polars_ok:
+        df = df.to_pandas()
+
+    return df, agent, env
 
 
 def save_trial(results, agent, env, filename):

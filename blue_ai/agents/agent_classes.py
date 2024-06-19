@@ -253,7 +253,7 @@ class RehabiliationAgent(BaseAgent):
                 self.weight_decay = self.weight_decay_amount
             # Depressive Stage
             case 1:
-                self.weight_decay = 0
+                self.weight_decay = 0.0
 
         self.optimizer = torch.optim.Adam(
             self.policy_net.parameters(), lr=self.lr, weight_decay=self.weight_decay

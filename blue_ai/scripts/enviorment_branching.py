@@ -1,4 +1,5 @@
 from numpy import tile
+from torch import polar
 from tqdm import tqdm
 from blue_ai.agents.agent_classes import (
     BaseAgent,
@@ -9,9 +10,14 @@ from blue_ai.agents.agent_classes import (
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
-from blue_ai.scripts.train_agents import run_trial
+from blue_ai.scripts.train_agents import (
+    categorize,
+    categorize_pl,
+    run_trial,
+)
 
 import pandas as pd
+import polars as pl
 
 from copy import deepcopy
 from anytree import AnyNode, LevelGroupOrderIter, LevelOrderIter, RenderTree
@@ -21,8 +27,8 @@ from typing import List
 import pickle
 
 
-STEPS_PER_STAGE = [20_000, 60_000]
-# STEPS_PER_STAGE = [s // 10 for s in STEPS_PER_STAGE]
+STEPS_PER_STAGE = [100_000, 100_000]
+# STEPS_PER_STAGE = [s // 1000 for s in STEPS_PER_STAGE]
 
 
 class NamedEnvironment(Image2VecWrapper):
@@ -53,12 +59,29 @@ def create_custom_tree(
 def main():
     branches = [
         NamedEnvironment(
+            TransientGoals(
+                render_mode="none",
+                transient_reward=0.5,
+                n_transient_obstacles=0,
+            ),
+            name="Amazing",
+        ),
+        NamedEnvironment(
             TransientGoals(render_mode="none", transient_penalty=-0.2),
             name="Good",
         ),
         NamedEnvironment(
             TransientGoals(render_mode="none", transient_reward=0.1),
             name="Bad",
+        ),
+        NamedEnvironment(
+            TransientGoals(
+                render_mode="none",
+                transient_reward=0.1,
+                n_transient_obstacles=5,
+                n_transient_goals=1,
+            ),
+            name="Hell",
         ),
     ]
 
@@ -73,11 +96,11 @@ def main():
     ]
 
     base = AnyNode()
-    for i in range(10):
+    for i in range(20):
         agents = deepcopy(agents)
         for a in agents:
             agent_node = AnyNode(
-                agent=a, parent=base, results=pd.DataFrame(), trial_id=i
+                agent=a, parent=base, results=pl.DataFrame(), trial_id=i
             )
             create_custom_tree(agent_node, 2, branches, trial_id=i)
 
@@ -108,9 +131,9 @@ def main():
             starting_step = node.parent.results["step"].max()
 
             # A section of data from the previous run, useful for carrying trend data across
-            prequel = node.parent.results[
-                abs(node.parent.results["step"] - STEPS_PER_STAGE[stage]) <= 5000
-            ]
+            prequel = node.parent.results.filter(
+                abs(pl.col("step") - STEPS_PER_STAGE[stage]) <= 5000
+            )
 
         r, _, _ = run_trial(
             agent=node.agent,
@@ -121,34 +144,49 @@ def main():
             # So that this data lines up bettwen the runs
             starting_episode_num=starting_episode_num + 1,
             starting_step=starting_step + 1,
+            polars_ok=True,
+        )
+        r = r.with_columns(
+            path=pl.lit(node.env_path),
+            env_type=pl.lit(node.env.name),
         )
 
-        node.results = pd.concat([prequel, r]).reset_index(drop=True)
-        node.results["path"] = str(node.env_path)
-        node.results["env_type"] = node.env.name
+        node.results = pl.concat([prequel, r])
 
-        ## Remove inefficient string columns replacing them with
-        for c in node.results.columns:
-            if (
-                str(node.results[c].dtype) == "object"
-                and 0 < get_len(node.results, c) < 100
-            ):
-                node.results[c] = pd.Categorical(node.results[c])
+        node.results = node.results.with_columns(
+            path=pl.lit(node.env_path),
+            env_type=pl.lit(node.env.name),
+        )
 
         (save_path := DATA_PATH / "branching_chunks").mkdir(exist_ok=True)
 
         file_name = (
-            save_path / f"{node.agent.file_display_name()}_{node.path}_{node.trial_id}"
+            save_path
+            / f"{node.agent.file_display_name()}_{node.env_path}_{node.trial_id}"
         )
+        categorize_pl(node.results)
+        node.results.write_parquet(file_name.with_suffix(".parquet"))
+
         if node.is_leaf:
-            node.results.to_pickle(file_name.with_suffix(".pkl"))
+            node.results.drop_in_place("layer")
 
-    combined_results = pd.concat(
-        [node.results for node in base.descendants]
-    ).reset_index(drop=True)
+            for a in node.ancestors:
+                if hasattr(a, "results") and len(a.results) > 0:
+                    a.results.drop_in_place("layer")
 
-    with open(DATA_PATH / "branching.pkl", "wb") as f:
-        pickle.dump(combined_results, f)
+    frames = [node.results for node in base.descendants if len(node.results) > 0]
+
+    combined_results = pl.concat(
+        frames,
+        how="diagonal",
+    )
+
+    # combined_results.drop_in_place("layer")
+
+    combined_results = categorize_pl(combined_results)
+
+    combined_results.write_parquet(DATA_PATH / "branching.parquet")
+    # combined_results.write_csv(DATA_PATH / "branching.csv")
 
 
 def get_len(df, col):
