@@ -77,7 +77,7 @@ class HealthyAgent(BaseAgent):
     display_name = "healthy"
 
     def __init__(self):
-        super().__init__(weight_decay=0)
+        super().__init__(weight_decay=1e-5)
 
 
 class SpineLossDepression(BaseAgent):
@@ -173,7 +173,7 @@ class PositiveLossAgent(BaseAgent):
         self.alpha = alpha
         custom_loss_function = PositivePenaltyLoss(alpha=self.alpha)
 
-        super().__init__(loss_fn=custom_loss_function)
+        super().__init__(loss_fn=custom_loss_function, weight_decay=0)
         custom_loss_function.params = [x for x in self.policy_net.parameters() if x.dim() > 0]
 
     def file_display_name(self):

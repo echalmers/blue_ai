@@ -5,7 +5,7 @@ from torch.nn.modules import MSELoss, Sequential
 
 class PositivePenaltyLoss(nn.Module):
     known = MSELoss()
-    leaky_relu = torch.nn.LeakyReLU(negative_slope=0)
+    leaky_relu = torch.nn.LeakyReLU(negative_slope=1e-2)
 
     """
     Uses a combinations of MSE Loss with a RELU penalty, meaning that positive 
