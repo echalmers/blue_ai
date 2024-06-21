@@ -71,32 +71,45 @@ if __name__ == '__main__':
     from blue_ai.envs.custom_wrappers import Image2VecWrapper
     from matplotlib import pyplot as plt
     from blue_ai.envs.transient_goals import TransientGoals
+    import pandas as pd
+    import pickle
+    import os
 
-    # create models to interpret networks' hidden layers
-    healthy_results, healthy_agent, _ = load_trial(DATA_PATH / 'HealthyAgent_0.pkl')
-    depressed_results, depressed_agent, _ = load_trial(DATA_PATH / 'SpineLossDepression_0.pkl')
-    schiz_results, schiz_agent, _ = load_trial(DATA_PATH / 'PositiveLossAgent_0.pkl')
 
-    healthy_probe = RepresentationProbe(healthy_agent)
-    l = healthy_probe.fit()
-    print(l[-1])
-    # plt.plot(l)
-    depressed_probe = RepresentationProbe(depressed_agent, memory_agent=None)
-    l = depressed_probe.fit()
-    print(l[-1])
-    # plt.plot(l)
-    schiz_probe = RepresentationProbe(schiz_agent, memory_agent=None)
-    l = schiz_probe.fit()
-    print(l[-1])
+    if os.path.exists(DATA_PATH / 'interpretation_models.pkl'):
+        with open(DATA_PATH / 'interpretation_models.pkl', 'rb') as f:
+            interpretation_models = pickle.load(f)
+    else:
+        interpretation_models = pd.DataFrame({
+            'filename': ['HealthyAgent_0.pkl', 'SpineLossDepression_0.pkl', 'PositiveLossAgent_0.pkl'],
+            'agent': None,
+            'interpretation_model': None,
+        })
+
+        for index, row in interpretation_models.iterrows():
+            results, agent, _ = load_trial(DATA_PATH / row['filename'])
+            probe = RepresentationProbe(agent)
+            l = probe.fit()
+            print(l[-1])
+            row['interpretation_model'] = probe
+            row['agent'] = agent
+        with open(DATA_PATH / 'interpretation_models.pkl', 'wb') as f:
+            pickle.dump(interpretation_models, f)
 
     # create an environment
     env = Image2VecWrapper(
         TransientGoals(
             render_mode="rgb_array", transient_reward=0.25, termination_reward=1
         ),
-        noise_level=0.15
+        noise_level=0.0
     )
     state, _ = env.reset()
+
+    # add noise to the networks
+    for index, row in interpretation_models.iterrows():
+        noise_layer = row['interpretation_model'].agent.policy_net[1]
+        assert hasattr(noise_layer, 'std')
+        noise_layer.std = 0.15
 
     def plot(state):
 
@@ -105,20 +118,13 @@ if __name__ == '__main__':
 
         ax[0].imshow(env.render())
         ax[1].imshow(Image2VecWrapper.observation_to_image(state))
-        state = torch.tensor(np.expand_dims(state, 0).astype(np.float32), device=healthy_agent.device)
+        state = torch.tensor(np.expand_dims(state, 0).astype(np.float32), device=interpretation_models['agent'][0].device)
 
-        healthy_recon = healthy_probe.get_reconstructions(observations=state)[1][0].cpu()
-        depressed_recon = depressed_probe.get_reconstructions(observations=state)[1][0].cpu()
-        schiz_recon = schiz_probe.get_reconstructions(observations=state)[1][0].cpu()
-        healthy_recon[healthy_recon < 0] = 0
-        # healthy_recon /= healthy_recon.max()
-        depressed_recon[depressed_recon < 0] = 0
-        # depressed_recon /= depressed_recon.max()
-        schiz_recon[schiz_recon < 0] = 0
-
-        ax[2].imshow(Image2VecWrapper.observation_to_image(healthy_recon ** 1.5))
-        ax[3].imshow(Image2VecWrapper.observation_to_image(depressed_recon ** 1.5))
-        ax[4].imshow(Image2VecWrapper.observation_to_image(schiz_recon ** 1.5))
+        for index, row in interpretation_models.iterrows():
+            recon = row['interpretation_model'].get_reconstructions(observations=state)[1][0].cpu()
+            print(row['filename'], nn.MSELoss()(recon, state))
+            recon[recon < 0] = 0
+            ax[2 + index].imshow(Image2VecWrapper.observation_to_image(recon ** 1.5))
 
         for i in range(5):
             ax[i].set_xticks([])
@@ -141,6 +147,8 @@ if __name__ == '__main__':
             action = 1
         elif event.key == 'up':
             action = 2
+        else:
+            return
 
         state, _, done, _, _ = env.step(action)
         if done:

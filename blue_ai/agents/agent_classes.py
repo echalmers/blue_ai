@@ -8,6 +8,16 @@ import torch.nn.utils.prune as prune
 from blue_ai.envs.custom_decay import PositivePenaltyLoss
 
 
+class NoiseLayer(nn.Module):
+
+    def __init__(self, std):
+        super().__init__()
+        self.std = std
+
+    def forward(self, input):
+        return input + torch.normal(0, self.std, size=input.shape)
+
+
 class BaseAgent(DQN):
 
     def file_display_name(self):
@@ -38,6 +48,7 @@ class BaseAgent(DQN):
                 network
                 or nn.Sequential(
                     nn.Flatten(1, -1),
+                    NoiseLayer(0),
                     nn.Linear(100, 25), nn.Sigmoid(),
                     # nn.Linear(25, 25), nn.Sigmoid(),
                     # nn.Linear(25, 25), nn.Sigmoid(),
@@ -157,7 +168,7 @@ class ShiftedTargets(BaseAgent):
 class PositiveLossAgent(BaseAgent):
     display_name = "Positive Loss Agent"
 
-    def __init__(self, alpha=1e-3, embed_alpha_in_filename=False):
+    def __init__(self, alpha=2e-3, embed_alpha_in_filename=False):
         self.embed_alpha_in_filename = embed_alpha_in_filename
         self.alpha = alpha
         custom_loss_function = PositivePenaltyLoss(alpha=self.alpha)

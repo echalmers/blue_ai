@@ -89,10 +89,11 @@ def load_trial(filename):
     return data["results"], data["agent"], data["env"]
 
 
-def load_dataset(filename_patterns):
+def load_dataset(filename_patterns, return_agents=False):
     if isinstance(filename_patterns, str):
         filename_patterns = [filename_patterns]
     results = []
+    agents = dict()
     for pattern in filename_patterns:
         files = list(DATA_PATH.glob(pattern))
         for filename in tqdm(files, leave=False, total=len(files)):
@@ -102,10 +103,15 @@ def load_dataset(filename_patterns):
                 if hasattr(agent, "display_name")
                 else agent.__class__.__name__
             )
-
             this_result["filename"] = filename
             results.append(this_result)
+
+            if return_agents:
+                agents[filename] = agent
     results = pd.concat(results, ignore_index=True)
+
+    if return_agents:
+        return results, agents
     return results
 
 
@@ -132,8 +138,8 @@ def main():
     trial_num = 0
 
     agents: List[BaseAgent] = [
-        HealthyAgent(),
-        SpineLossDepression(),
+        # HealthyAgent(),
+        # SpineLossDepression(),
         # ContextDependentLearningRate(),
         # HighDiscountRate(),
         # ScaledTargets(),
@@ -149,7 +155,7 @@ def main():
             TransientGoals(
                 render_mode="none", transient_reward=0.25, termination_reward=1
             ),
-            noise_level=0.01
+            noise_level=0.0
         ),
         # swapped reward structure
         # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),

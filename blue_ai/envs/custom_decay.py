@@ -21,7 +21,8 @@ class PositivePenaltyLoss(nn.Module):
     def forward(self, inputs: torch.Tensor, targets: torch.Tensor):
         positive_penalty = 0
         for paramset in self.params:
-            positive_penalty += (self.leaky_relu(paramset) ** 2).sum()
+            if paramset.dim() == 2:
+                positive_penalty += (self.leaky_relu(paramset) ** 2).sum()
         normal = self.known(inputs, targets)
 
         return normal + self.λ * positive_penalty
