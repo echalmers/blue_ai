@@ -5,7 +5,7 @@ from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 
 from copy import deepcopy
 from tqdm import tqdm
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 import pickle
@@ -37,7 +37,7 @@ def categorize_pl(df: pl.DataFrame):
 
 def run_trial(
     agent: agent_classes.BaseAgent,
-    env,
+    env: Image2VecWrapper,
     steps=30000,
     trial_id="",
     tbar=None,
