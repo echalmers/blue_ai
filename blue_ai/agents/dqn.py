@@ -14,6 +14,8 @@ from torch import nn
 def softmax(values, t=1.0):
     """
     Rescales inputs into range[0-1] to an accumulative sum of t.
+    :param values: tensor of values to rescale
+    :param t: softmax temperature - higher values result in a more uniformly-distributed output
     """
     return torch.softmax(values / t, dim=0)
 
@@ -22,7 +24,7 @@ def softmax(values, t=1.0):
 def softmax_selection(values, t=1.0):
     return torch.multinomial(softmax(values, t=t), 1).item()
 
-TranistionMemory
+
 class TransitionMemory:
     """
     Stores & manages state transitions of agent experiences 
@@ -48,12 +50,12 @@ class TransitionMemory:
 
     def add(self, state, action, reward, new_state, done):
         """
-        Adds a new policy state to memory.
+        Adds a new experience to memory.
 
         
         :param state: Current state of agent.
         :param action: Action taken relative to current state.
-        :param reward: Perceived rewarded that action results in.
+        :param reward: actual rewarded that action results in.
         :param new_state: New state as a consequence of action.
         :param done: Boolean identifies complete policy transition.
         """
@@ -69,9 +71,9 @@ class TransitionMemory:
 
     def sample(self, n):
         """
-        Samples random index point returning policy values at index
+        Returns a random sample of experiences
 
-        :param n: stores x values of a size self.size   
+        :param n: number of experiences to return
         """
 
         n = min(n, self.size)
@@ -136,7 +138,7 @@ class DQN:
         :param epsilon: parameter for e-greedy action sampling
         :param softmax_temp: softmax temperature for use in new RL rule
         :param seed: random seed
-        :param weight_decay: rate at which connection between nodes is overwritten  
+        :param weight_decay: rate at which connection between nodes decays to zero (l2 regularization)
         """
         torch.manual_seed(seed)
 
