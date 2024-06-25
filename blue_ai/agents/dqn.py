@@ -79,13 +79,21 @@ class DQN:
      change
     """
 
-    device = torch.device(
-        "cuda"
-        if torch.cuda.is_available()
-        # Allow for disableing the gpu
-        and "NO_GPU" not in os.environ
-        else "cpu"
-    )
+    if torch.cuda.is_available():
+        device_name = "cuda"
+    # elif torch.backends.mps.is_available():
+    #     device_name = "mps"
+    else:
+        device_name = "cpu"
+
+    # Allow for disableing the gpu
+    if "NO_GPU" in os.environ:
+        device_name = "cpu"
+
+    device = torch.device(device_name)
+
+    x = torch.ones(1).to(device)
+    print(x)
 
     def __init__(
         self,

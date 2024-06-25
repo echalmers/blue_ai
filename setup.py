@@ -13,8 +13,10 @@ setup(
         "torch",
         "tqdm",
         "anytree",
+        "polars",
     ],
     include_package_data=True,
     package_data={"": ["*.png"]},
     packages=["blue_ai"],
+    python_requires=">3.10.0",
 )

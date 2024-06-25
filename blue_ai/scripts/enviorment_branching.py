@@ -1,5 +1,3 @@
-from numpy import tile
-from torch import polar
 from tqdm import tqdm
 from blue_ai.agents.agent_classes import (
     BaseAgent,
@@ -9,26 +7,25 @@ from blue_ai.agents.agent_classes import (
 )
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
-from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
+from blue_ai.scripts.constants import DATA_PATH
 from blue_ai.scripts.train_agents import (
     categorize,
     categorize_pl,
     run_trial,
 )
 
-import pandas as pd
+import numpy as np
+
 import polars as pl
 
 from copy import deepcopy
-from anytree import AnyNode, LevelGroupOrderIter, LevelOrderIter, RenderTree
+from anytree import AnyNode, LevelOrderIter
 
 from typing import List
 
-import pickle
 
-
-STEPS_PER_STAGE = [100_000, 100_000]
-# STEPS_PER_STAGE = [s // 1000 for s in STEPS_PER_STAGE]
+STEPS_PER_STAGE = [5000, 10_000]
+# STEPS_PER_STAGE = [s // 10 for s in STEPS_PER_STAGE]
 
 
 class NamedEnvironment(Image2VecWrapper):
@@ -60,28 +57,13 @@ def main():
     branches = [
         NamedEnvironment(
             TransientGoals(
-                render_mode="none",
-                transient_reward=0.5,
-                n_transient_obstacles=0,
+                render_mode="none", transient_penalty=-0.1, n_transient_goals=5
             ),
-            name="Amazing",
-        ),
-        NamedEnvironment(
-            TransientGoals(render_mode="none", transient_penalty=-0.2),
             name="Good",
         ),
         NamedEnvironment(
-            TransientGoals(render_mode="none", transient_reward=0.1),
+            TransientGoals(render_mode="none", n_transient_obstacles=5),
             name="Bad",
-        ),
-        NamedEnvironment(
-            TransientGoals(
-                render_mode="none",
-                transient_reward=0.1,
-                n_transient_obstacles=5,
-                n_transient_goals=1,
-            ),
-            name="Hell",
         ),
     ]
 
@@ -91,12 +73,12 @@ def main():
 
     agents: List[BaseAgent] = [
         HealthyAgent(),
-        # SpineLossDepression(),
+        SpineLossDepression(),
         RehabiliationAgent(),
     ]
 
     base = AnyNode()
-    for i in range(20):
+    for i in range(5):
         agents = deepcopy(agents)
         for a in agents:
             agent_node = AnyNode(
@@ -130,9 +112,12 @@ def main():
             starting_episode_num = node.parent.results["episode"].max()
             starting_step = node.parent.results["step"].max()
 
-            # A section of data from the previous run, useful for carrying trend data across
-            prequel = node.parent.results.filter(
-                abs(pl.col("step") - STEPS_PER_STAGE[stage]) <= 5000
+            transition_centers = np.concat([[0], np.cumsum(STEPS_PER_STAGE)])
+
+            # A section of data from the previous run, useful for carrying trend
+            # data across
+            prequel = (node.parent.results).filter(
+                abs(pl.col("step") - transition_centers[stage]) <= 1500
             )
 
         r, _, _ = run_trial(
@@ -158,21 +143,7 @@ def main():
             env_type=pl.lit(node.env.name),
         )
 
-        (save_path := DATA_PATH / "branching_chunks").mkdir(exist_ok=True)
-
-        file_name = (
-            save_path
-            / f"{node.agent.file_display_name()}_{node.env_path}_{node.trial_id}"
-        )
         categorize_pl(node.results)
-        node.results.write_parquet(file_name.with_suffix(".parquet"))
-
-        if node.is_leaf:
-            node.results.drop_in_place("layer")
-
-            for a in node.ancestors:
-                if hasattr(a, "results") and len(a.results) > 0:
-                    a.results.drop_in_place("layer")
 
     frames = [node.results for node in base.descendants if len(node.results) > 0]
 
@@ -180,8 +151,6 @@ def main():
         frames,
         how="diagonal",
     )
-
-    # combined_results.drop_in_place("layer")
 
     combined_results = categorize_pl(combined_results)
 

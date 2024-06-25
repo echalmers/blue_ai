@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import seaborn as sns
 import torch
 
@@ -65,6 +66,7 @@ def graph_cols(cols, axes, data: pd.DataFrame, palette):
             x="step",
             y=f"{col}_mean",
             hue="path",
+            style="path",
             ax=ax,
             estimator=None,  # Disable the built in esitamtor, it is so stupidly slow it's incredible
             palette=palette,
@@ -75,27 +77,28 @@ def graph_cols(cols, axes, data: pd.DataFrame, palette):
         # The fact that this is orders of magnitude faster than what seaborn
         # does is baffeling. Because we aggregate the data ahead of time we don't
         # need to call groupby in a for loop which tends to help with perormance
-        for id in data["path"].unique():
-            d = data[data["path"] == id]
-
-            ax.fill_between(
-                d["step"],
-                d[f"{col}_mean"] + d[f"{col}_std"],
-                d[f"{col}_mean"] - d[f"{col}_std"],
-                color=palette[id],
-                alpha=0.1,
-            )
+        # for id in data["path"].unique():
+        #     d = data[data["path"] == id]
+        #
+        #     ax.fill_between(
+        #         d["step"],
+        #         d[f"{col}_mean"] + d[f"{col}_std"],
+        #         d[f"{col}_mean"] - d[f"{col}_std"],
+        #         color=palette[id],
+        #         alpha=0.1,
+        #     )
 
 
 def main():
-    data: pd.DataFrame = pd.read_parquet(DATA_PATH / "no_layers.parquet")
-
-    # data.path = pd.Categorical(data["path"].str[::-1])
+    data: pd.DataFrame = pl.read_parquet(DATA_PATH / "branching.parquet").to_pandas()
 
     GRAPHED_COLUMNS = [
         "cumulative_reward",
         "% Utilization",
-        "Reward Per Step",
+        # "% Penalty Hit",
+        # "Reward Per Step",
+        "weight_change",
+        "d/dx weight_change",
     ]
 
     agents = data["agent"].unique()
@@ -108,41 +111,48 @@ def main():
 
     # Add a line at each transion center
     ax: Axes
-    for ax, threshold in product(np.ndarray.flatten(axes), transiation_centers):
+    for ax, threshold in product(np.ndarray.flatten(axes), transiation_centers[:-1]):
         ax.axvline(threshold)
 
-    cos = torch.nn.CosineSimilarity(dim=1)
+    data["n_reward"] = data["reward"].transform(lambda x: x if x < 0 else 0)
 
     runs = data.groupby(UNIQUE_RUNS, observed=True)
 
-    def cosine_distances(x):
-        t = torch.from_numpy(np.array(x.to_numpy().tolist())).flatten(start_dim=1)
+    data["d/dx weight_change"] = runs["weight_change"].diff()
 
-        results = torch.arccos(cos(t[1:], t[:-1]))
-
-        return np.cumsum(np.pad(results, (0, 1), constant_values=np.nan))
-
-    for col in [c for c in GRAPHED_COLUMNS if "layer_" in c]:
-        data[col] = runs[col].transform(cosine_distances)
-
-    data["Reward Per Step"] = runs["reward"].transform(lambda x: x.rolling(2000).mean())
+    data["weight_change"] = runs["weight_change"].transform(
+        lambda x: x.rolling(300).mean()
+    )
+    data["Reward Per Step"] = runs["reward"].transform(
+        lambda x: x.rolling(500, center=True).mean()
+    )
 
     data["% Utilization"] = 100 * (
         (runs["reward"].cumsum() / runs["total_reward"].cumsum())
     )
 
-    palette = dict(list(zip(data["path"].unique(), sns.color_palette())))
+    data["% Penalty Hit"] = 100 * (
+        runs["n_reward"].cumsum() / runs["total_penalties"].cumsum()
+    )
+
+    palette = dict(list(zip(data["path"].unique(), sns.color_palette("deep"))))
+
+    assert len(data["path"].unique()) == len(palette), "Ran out of colors"
 
     # The types of data we want about each step
     aggregate_types = ["min", "max", "std", "mean"]
-
-    # Exclude outliers from the graph coming from div by zero or other floating
-    # point errors that pop up near the beginning of the sample
 
     for ax in axes.transpose():
         ax[1].set_ylim(
             IQR(data["% Utilization"]).min(), IQR(data["% Utilization"]).max()
         )
+
+        # ax[2].set_ylim(
+        #     IQR(data["% Penalty Hit"]).min(), IQR(data["% Penalty Hit"]).max()
+        # )
+
+    starts = np.concatenate([[0, 0], transiation_centers])
+    data = data[data["step"] > data["path"].apply(lambda x: starts[len(x)])]
 
     data = (
         data.groupby(["agent", "path", "step"], observed=True)
@@ -170,7 +180,7 @@ def main():
             palette,
         )
 
-        # remove_legend(*ax)
+        remove_legend(*ax)
 
         h, layers = top.get_legend_handles_labels()
 
@@ -185,7 +195,7 @@ def main():
     h = list(legend.values())
     layers = list(legend.keys())
 
-    # plt.figlegend(h, layers, loc="upper center", ncols=len(h))
+    plt.figlegend(h, layers, loc="center left")
 
     plt.savefig(FIGURE_PATH / "branching.png")
 
@@ -199,7 +209,7 @@ def IQR(data):
 
     values = data.replace([np.inf, -np.inf], np.nan).dropna()
 
-    R = 10
+    R = 25
 
     Q1 = np.percentile(values, R)
     Q3 = np.percentile(values, 100 - R)

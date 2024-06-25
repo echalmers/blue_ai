@@ -21,9 +21,11 @@ class BaseAgent(DQN):
 
     def state_change(self, **kwargs):
         """
-        Changes the internal state of agent if needed, this is a optional implmention needed for some specizlied agents
+        Changes the internal state of agent if needed, this is a optional
+        implmention needed for some specizlied agents
 
-        By default this is a no op, and is safe to call on non implementing Agents
+        By default this is a no op, and is safe to call on non implementing
+        Agents
         """
 
     def get_metadata(self) -> Dict[str, Any]:
