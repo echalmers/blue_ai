@@ -92,9 +92,6 @@ class DQN:
 
     device = torch.device(device_name)
 
-    x = torch.ones(1).to(device)
-    print(x)
-
     def __init__(
         self,
         network: nn.Sequential,
