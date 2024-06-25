@@ -3,7 +3,7 @@ import pandas as pd
 from blue_ai.scripts.train_agents import save_trial
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
-from blue_ai.agents.agent_classes import HealthyAgent, SpineLossDepression
+from blue_ai.agents.agent_classes import HealthyAgent, SpineLossDepression, SchizophrenicAgent
 from torch import nn
 import matplotlib.pyplot as plt
 import pickle
@@ -11,7 +11,7 @@ import seaborn as sns
 
 from blue_ai.scripts.constants import FIGURE_PATH, DATA_PATH
 
-import os
+import torch
 import numpy as np
 
 
@@ -45,7 +45,7 @@ def plot_weight_changes(ax):
         y="weight_change",
         hue="agent",
         n_boot=1,
-        palette=["skyblue", "salmon"],
+        palette=["skyblue", "salmon", "red"],
     )
     plt.title("mean absolute weight change per unit loss")
     plt.ylabel("")
@@ -64,13 +64,15 @@ def plot_weight_changes(ax):
 
 if __name__ == "__main__":
     if (DATA_PATH / "weight_updates.pkl").exists():
-        plot_weight_changes()
+        plt.figure()
+        plot_weight_changes(plt.gca())
+        plt.show()
 
     else:
         results = []
-        for rep in range(5):
+        for rep in range(1):
             print(rep)
-            for agent in [HealthyAgent(), SpineLossDepression()]:
+            for agent in [HealthyAgent(), SpineLossDepression(), SchizophrenicAgent()]:
 
                 env = Image2VecWrapper(TransientGoals(render_mode="none"))
                 state, _ = env.reset()
@@ -89,28 +91,30 @@ if __name__ == "__main__":
 
                     # use this experience to update agent
                     old_weights = np.concatenate(
-                        (
-                            agent.policy_net[1].weight.detach().flatten().numpy(),
-                            agent.policy_net[3].weight.detach().flatten().numpy(),
-                        )
+                        [
+                            layer.weight.detach().flatten().cpu().numpy()
+                            for layer in agent.policy_net if isinstance(layer, torch.nn.Linear)
+                        ]
                     )
 
                     loss = agent.update(state, action, reward, new_state, done=False)
 
                     if loss is not None:
                         new_weights = np.concatenate(
-                            (
-                                agent.policy_net[1].weight.detach().flatten().numpy(),
-                                agent.policy_net[3].weight.detach().flatten().numpy(),
-                            )
+                            [
+                                layer.weight.detach().flatten().cpu().numpy()
+                                for layer in agent.policy_net if isinstance(layer, torch.nn.Linear)
+                            ]
                         )
                         changes = new_weights - old_weights
+                        percent_changes = (new_weights - old_weights) / old_weights
                         results.append(
                             {
                                 "rep": rep,
                                 "agent": agent.display_name,
                                 "step": step,
                                 "weight_change": np.mean(np.abs(changes)),
+                                "percent_weight_change": np.mean(np.abs(percent_changes)),
                                 "loss": loss,
                                 "reward": reward_accumulator,
                             }

@@ -1,8 +1,8 @@
-from train_agents import load_trial
+from blue_ai.scripts.train_agents import load_trial
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-from constants import DATA_PATH
+from blue_ai.scripts.constants import DATA_PATH
 
 
 weights = pd.DataFrame()
@@ -10,7 +10,7 @@ weights = pd.DataFrame()
 for file in [
     'HealthyAgent_0.pkl',
     'SpineLossDepression_0.pkl',
-    'PositiveLossAgent_0.pkl'
+    'SchizophrenicAgent_0.pkl'
 ]:
     _, agent, _ = load_trial(DATA_PATH / file)
 

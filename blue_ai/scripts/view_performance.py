@@ -20,7 +20,7 @@ class PerformancePlotter:
             agent_classes = (
                 classes.HealthyAgent,
                 classes.SpineLossDepression,
-                classes.PositiveLossAgent,
+                classes.SchizophrenicAgent,
                 # agent_classes.PrunedAgent
             )
 
@@ -121,11 +121,12 @@ class PerformancePlotter:
         plt.ylabel("")
         plt.xlabel("time (steps in environment)")
 
-    def plot_goals_per_episode(self, ax, n_boot=1):
+    def plot_goals_per_episode(self, ax, n_boot=1, last_n_steps=None):
         plt.sca(ax)
 
         high_terminal_goals = self.aggregate_goals(
-            type="episode", data=self.high_terminal_results
+            type="episode",
+            data=self.high_terminal_results.groupby(['trial_id', 'agent']).tail(last_n_steps or self.high_terminal_results.shape[0])
         )
         sns.barplot(
             data=high_terminal_goals,

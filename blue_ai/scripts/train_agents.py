@@ -145,7 +145,7 @@ def main():
         # ScaledTargets(),
         # HighExploration(),
         # ShiftedTargets(),
-        PositiveLossAgent(),
+        SchizophrenicAgent(),
         # ReluActivation(),
         # ReluLossActivation(),
         # PrunedAgent(),
