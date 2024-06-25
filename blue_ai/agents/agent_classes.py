@@ -250,10 +250,10 @@ class RehabiliationAgent(BaseAgent):
         assert stage in range(0, 2), "Stage outside required range (0,2]"
 
         match stage:
-            # "Health Stage"
+            # Depressive Stage
             case 0:
                 self.weight_decay = self.weight_decay_amount
-            # Depressive Stage
+            # "Recovery Phase"
             case 1:
                 self.weight_decay = 0.0
 
