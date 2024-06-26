@@ -13,7 +13,7 @@ import numpy as np
 from blue_ai.envs.transient_goals import TransientGoals
 from copy import deepcopy
 from blue_ai.scripts.constants import DATA_PATH
-from blue_ai.scripts.train_agents import run_trial
+from blue_ai.scripts.train_agents import categorize_pl, run_trial
 
 from tqdm import tqdm
 
@@ -28,7 +28,7 @@ class RatioEnvironment(Image2VecWrapper):
             ),
         )
         self.ratio = ratio
-        self.name = f"Ratio environment : {self.ratio}"
+        self.name = f"Ratio(Rewards: {self.ratio[0]}, Lava: {self.ratio[1]})"
 
     def get_reward_penalty(self):
         return self.ratio
@@ -49,12 +49,10 @@ def ratio_environments(start, end):
 
 def main():
     N_TRIALS = 5
-    RATIO_SUM = 6
+    RATIO_SUM = 8
     # Start in a 1:1 environment branch into each of the ratios in (total - k, k) for k {0, total}
 
-    STEPS_PER_STAGE = [10_000, 10_000, 10_000]
-
-    # STEPS_PER_STAGE = [s // 1000 for s in STEPS_PER_STAGE]
+    STEPS_PER_STAGE = np.array([20_000, 20_000, 20_000])
 
     balanced = RatioEnvironment((RATIO_SUM // 2, RATIO_SUM // 2))
 
@@ -91,16 +89,17 @@ def main():
             r0.with_columns(
                 ratio_reward=balanced.get_reward_penalty()[0],
                 ratio_penalty=balanced.get_reward_penalty()[1],
+                name=pl.lit("Pre-Treatment"),
             )
         )
-
-        starting_episode_num = r0["episode"].max()
-        starting_step = r0["step"].max()
 
         # Start rehab
         agent.state_change(stage=1)
 
-        for e in ratio_environments(0, RATIO_SUM + 1):
+        for e in ratio_environments(1, RATIO_SUM + 1):
+            starting_episode_num = r0["episode"].max()
+            starting_step = r0["step"].max()
+
             r, r_agent, _ = run_trial(
                 env=e,
                 agent=deepcopy(agent),
@@ -116,13 +115,15 @@ def main():
                 r.with_columns(
                     ratio_reward=e.get_reward_penalty()[0],
                     ratio_penalty=e.get_reward_penalty()[1],
-                    e_ratio_reward=e.get_reward_penalty()[0],
-                    e_ratio_penalty=e.get_reward_penalty()[1],
+                    name=pl.lit(e.name),
                 )
             )
 
             starting_episode_num = r["episode"].max()
             starting_step = r["step"].max()
+
+            recovery_env = deepcopy(balanced)
+            recovery_env.name = e.name + " + Recovery"
 
             r, _, _ = run_trial(
                 env=deepcopy(balanced),
@@ -137,20 +138,26 @@ def main():
 
             results.append(
                 r.with_columns(
-                    ratio_reward=balanced.get_reward_penalty()[0],
-                    ratio_penalty=balanced.get_reward_penalty()[1],
-                    e_ratio_reward=e.get_reward_penalty()[0],
-                    e_ratio_penalty=e.get_reward_penalty()[1],
+                    ratio_reward=recovery_env.get_reward_penalty()[0],
+                    ratio_penalty=recovery_env.get_reward_penalty()[1],
+                    treatment_ratio_reward=e.get_reward_penalty()[0],
+                    treatment_ratio_penalty=e.get_reward_penalty()[1],
+                    name=pl.lit(e.name),
+                    is_recovery=pl.lit(True),
                 )
             )
 
     joined_results = pl.concat(results, how="diagonal")
 
+    breakpoint()
+
+    joined_results = categorize_pl(joined_results)
+
+    breakpoint()
+
     joined_results.write_parquet(DATA_PATH / "ratios.parquet")
 
     tbar.close()
-
-    breakpoint()
 
 
 if __name__ == "__main__":

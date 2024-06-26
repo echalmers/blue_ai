@@ -30,7 +30,6 @@ def categorize_pl(df: pl.DataFrame):
         **{
             col: df[col].cast(pl.Categorical)
             for col in df.select([pl.col(pl.String)]).columns
-            if df[col].n_unique() < 50
         }
     )
 
@@ -39,7 +38,7 @@ def run_trial(
     agent: agent_classes.BaseAgent,
     env: Image2VecWrapper,
     steps=30000,
-    trial_id="",
+    trial_id: str | int = "",
     tbar=None,
     starting_cumalative_reward=0,
     starting_episode_num=0,
@@ -133,6 +132,7 @@ def run_trial(
                 "weight_change": mean_absolute_weight_change,
                 "agent_pos_x": env.unwrapped.agent_pos[0],
                 "agent_pos_y": env.unwrapped.agent_pos[1],
+                # "params": pl.Series(params),
             }
             # Add any optional meta data the specific agent may want to provide
             | agent.get_metadata()
