@@ -126,7 +126,7 @@ def main():
             recovery_env.name = e.name + " + Recovery"
 
             r, _, _ = run_trial(
-                env=deepcopy(balanced),
+                env=recovery_env,
                 agent=r_agent,
                 steps=STEPS_PER_STAGE[2],
                 tbar=tbar,
@@ -142,18 +142,13 @@ def main():
                     ratio_penalty=recovery_env.get_reward_penalty()[1],
                     treatment_ratio_reward=e.get_reward_penalty()[0],
                     treatment_ratio_penalty=e.get_reward_penalty()[1],
-                    name=pl.lit(e.name),
+                    name=pl.lit(recovery_env.name),
                     is_recovery=pl.lit(True),
                 )
             )
 
     joined_results = pl.concat(results, how="diagonal")
-
-    breakpoint()
-
     joined_results = categorize_pl(joined_results)
-
-    breakpoint()
 
     joined_results.write_parquet(DATA_PATH / "ratios.parquet")
 

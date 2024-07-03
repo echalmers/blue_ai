@@ -27,6 +27,7 @@ def rotate_about_point(point, radians=None, degrees=None, origin=np.array([0, 0]
 def main():
     data = pd.read_parquet(DATA_PATH / "branching.parquet")
 
+
     g = sns.FacetGrid(data[data["path"].str.len() > 1], row="path", col="agent")
 
     origin = [
