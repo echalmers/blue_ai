@@ -87,6 +87,7 @@ def main():
 
         results.append(
             r0.with_columns(
+                state=pl.lit(1),
                 ratio_reward=balanced.get_reward_penalty()[0],
                 ratio_penalty=balanced.get_reward_penalty()[1],
                 name=pl.lit("Pre-Treatment"),
@@ -113,6 +114,7 @@ def main():
 
             results.append(
                 r.with_columns(
+                    state=pl.lit(1),
                     ratio_reward=e.get_reward_penalty()[0],
                     ratio_penalty=e.get_reward_penalty()[1],
                     name=pl.lit(e.name),
@@ -123,7 +125,7 @@ def main():
             starting_step = r["step"].max()
 
             recovery_env = deepcopy(balanced)
-            recovery_env.name = e.name + " + Recovery"
+            recovery_env.name = e.name
 
             r, _, _ = run_trial(
                 env=deepcopy(balanced),
@@ -138,10 +140,9 @@ def main():
 
             results.append(
                 r.with_columns(
+                    state=pl.lit(2),
                     ratio_reward=recovery_env.get_reward_penalty()[0],
                     ratio_penalty=recovery_env.get_reward_penalty()[1],
-                    treatment_ratio_reward=e.get_reward_penalty()[0],
-                    treatment_ratio_penalty=e.get_reward_penalty()[1],
                     name=pl.lit(e.name),
                     is_recovery=pl.lit(True),
                 )

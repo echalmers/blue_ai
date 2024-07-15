@@ -1,14 +1,11 @@
-from numpy.typing import ArrayLike
-import polars as pl
-from polars.dependencies import hvplot
-import numpy as np
 import holoviews as hv
+import numpy as np
+import polars as pl
 import scipy
+from numpy.typing import ArrayLike
+from polars.dependencies import hvplot
 
-from matplotlib.backends.backend_pdf import PdfPages
-import matplotlib.pyplot as plt
-
-from blue_ai.scripts.constants import DATA_PATH, FIGURE_PATH
+from blue_ai.scripts.constants import DATA_PATH
 
 hv.extension("bokeh")
 
@@ -97,58 +94,6 @@ def main():
     hvplot.show(grid, port=8080, responsive=True)
 
     hvplot.save(grid, "foo.html")
-
-    # g = sns.FacetGrid(
-    #     data,
-    #     row="agent",
-    #     col="name",
-    #     hue="stage",
-    #     sharex=True,
-    #     sharey=True,
-    #     margin_titles=True,
-    # )
-    # g.map_dataframe(
-    #     sns.histplot,
-    #     x="agent_pos_x",
-    #     y="agent_pos_y",
-    #     discrete=True,
-    # ).savefig(FIGURE_PATH / "ratio_positions.png")
-    #
-    # sns.catplot(data=data, hue="agent", x="ratio", y="utilization", kind="boxen")
-    #
-    # sns.catplot(data=tile_agg, x="name", y="count", col="agent", hue="type", kind="bar")
-    #
-    # g = sns.FacetGrid(
-    #     step_agg,
-    #     col="name",
-    #     hue="agent",
-    #     sharex=True,
-    #     sharey=True,
-    #     margin_titles=True,
-    # )
-    # g.map_dataframe(sns.lineplot, x="step", y="rolling_reward")
-    #
-    # g = sns.FacetGrid(
-    #     step_agg,
-    #     col="name",
-    #     hue="agent",
-    #     sharex=True,
-    #     sharey=True,
-    #     margin_titles=True,
-    # )
-    # g.map_dataframe(sns.lineplot, x="step", y="cumulative_reward")
-    #
-    # g = sns.FacetGrid(
-    #     step_agg,
-    #     col="name",
-    #     hue="agent",
-    #     sharex=True,
-    #     sharey=True,
-    #     margin_titles=True,
-    # )
-    # g.map_dataframe(sns.lineplot, x="step", y="utilization")
-
-    # multipage("all.pdf")
 
 
 if __name__ == "__main__":
