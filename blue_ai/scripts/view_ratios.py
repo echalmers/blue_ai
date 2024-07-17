@@ -1,13 +1,25 @@
+import os
+from pathlib import Path
+
 import holoviews as hv
 import numpy as np
 import polars as pl
-import scipy
+import xxhash
+from holoviews.operation.datashader import datashade
+from hvplot.polars import hvPlotTabularPolars as plot
 from numpy.typing import ArrayLike
-from polars.dependencies import hvplot
 
-from blue_ai.scripts.constants import DATA_PATH
+from blue_ai.scripts.constants import DATA_PATH, FIGURE_PATH
 
 hv.extension("bokeh")
+
+
+def save_if_not_exists(graph, filepath):
+    if not filepath.exists() or "REDO" in os.environ:
+        hv.save(graph, filepath)
+
+    else:
+        print(f"Skipping saving {filepath}")
 
 
 def fill_at_indices(indices: ArrayLike, values: ArrayLike, *_, length=None):
@@ -20,80 +32,78 @@ def fill_at_indices(indices: ArrayLike, values: ArrayLike, *_, length=None):
 def main():
     disk_data = pl.scan_parquet(DATA_PATH / "ratios.parquet")
 
-    data = disk_data.select(~pl.selectors.by_name("params")).collect()
-
-    numeric_lists = pl.selectors.by_dtype([pl.List(T) for T in pl.NUMERIC_DTYPES])
-    unique = ["agent", "trial_id", "name"]
-
-    map_shape = (data["agent_pos_x"].max(), data["agent_pos_y"].max())
+    hash = xxhash.xxh32()
+    data = (
+        disk_data.select(~pl.selectors.by_name("params"))
+        .with_columns(
+            stage=pl.col("state").alias("stage"),
+            ratio=pl.col("ratio_reward") / pl.col("ratio_penalty"),
+        )
+        .collect()
+    )
+    hash.update(data.hash_rows().to_numpy().tobytes())
 
     data = data.with_columns(
-        data.group_by(unique, maintain_order=True)
-        .agg(
-            pl.col("transient_goal", "lava", "terminal_goal")
-            .sum()
-            .name.prefix("cum_amount_"),
-            rolling_reward=pl.col("reward").rolling_mean(2000),
-            cumulative_reward=pl.col("reward").cum_sum(),
-            stage=(pl.col("step") // 20_000),
-            ratio=pl.col("ratio_reward") / pl.col("ratio_penalty"),
-            utilization=(
-                pl.col("reward").cum_sum() / pl.col("total_reward").cum_sum()
-            ).rolling_mean(20),
-            agent_cord=(pl.col("agent_pos_x") - 1)
-            + (pl.col("agent_pos_y") - 1) * map_shape[0],
-        )
-        .explode(numeric_lists)
+        id=pl.struct(["agent", "stage", "ratio_reward"]),
     )
 
-    grouping = [
-        "ratio_reward",
-        "agent",
-    ]
+    def path(path):
+        p = path if type(path) is Path else Path(path)
+        ext = "".join(p.suffixes)
+        name = str(p).rstrip(ext)
 
-    dist = (
-        data.group_by(*grouping, maintain_order=True)
-        .agg(
-            pl.col("agent_cord")
-            .map_elements(
-                lambda x: np.log1p(
-                    (
-                        map := fill_at_indices(
-                            *np.unique(x, return_counts=True), length=36
-                        )
-                    )
-                    / map.sum()
-                ).tolist()
-            )
-            .alias("prob"),
-            pl.lit((np.arange(0, 36) // 6).tolist()).alias("agent_pos_y"),
-            pl.lit((np.arange(0, 36) % 6).tolist()).alias("agent_pos_x"),
-        )
-        .with_columns(entropy=pl.col("prob").map_elements(scipy.stats.entropy))
-        .explode(numeric_lists)
-    )
+        return FIGURE_PATH / f"{name}_{hash.hexdigest()}{ext}"
 
-    data = (
-        data.group_by(*grouping, "step").agg(pl.col("utilization").mean()).sort("step")
-    )
-
-    grid = hv.Layout(
-        dist.plot.heatmap(
+    heatmap = (
+        plot(data)
+        .points(
             x="agent_pos_x",
             y="agent_pos_y",
-            C="prob",
-            row="agent",
-            col="ratio_reward",
+            datashade=True,
+            aggregator="count",
+            cmap="inferno",
+            colorbar=False,
+            xaxis=False,
+            yaxis=False,
+            row="ratio_reward",
+            col="agent",
+            groupby=["episode"],
         )
-        + dist.plot.heatmap(
-            x="agent", y="ratio_reward", C="entropy", label="Entropy of Paths"
+        .opts(
+            width=200,
+            height=200,
         )
-        + data.plot.line(x="step", y="utilization", by=grouping, groupby="ratio_reward")
-    ).cols(1)
+    )
+    # hvplot.show(heatmap)
+    save_if_not_exists(heatmap, path("heat_map_explore.gif"))
 
-    hvplot.show(grid, port=8080, responsive=True)
+    dist_entropy = (
+        pl.struct(["agent_pos_x", "agent_pos_y"])
+        .value_counts()
+        .map_elements(
+            lambda grid: grid.struct["count"].entropy(),
+            return_dtype=pl.Float64,
+        )
+    )
 
-    hvplot.save(grid, "foo.html")
+    exploration = plot(
+        data.group_by("id", "episode", "trial_id")
+        .agg(step=pl.col("step").mean(), entropy=dist_entropy)
+        .sort("step")
+        .with_columns(pl.col("entropy").rolling_mean(100, min_periods=1).over("id"))
+        .unnest("id")
+        .sort("ratio_reward")
+    ).line(
+        x="step",
+        y="entropy",
+        label="Agent Per Episode Exploration Rate, Higher is better",
+        by=["ratio_reward"],
+        groupby="agent",
+    )
+
+    # save_if_not_exists((heatmap + exploration).cols(1), path("combined.html"))
+
+    save_if_not_exists(exploration, path("exploration.html"))
 
 
 if __name__ == "__main__":
