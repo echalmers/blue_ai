@@ -149,12 +149,7 @@ def main():
             )
 
     joined_results = pl.concat(results, how="diagonal")
-
-    breakpoint()
-
     joined_results = categorize_pl(joined_results)
-
-    breakpoint()
 
     joined_results.write_parquet(DATA_PATH / "ratios.parquet")
 

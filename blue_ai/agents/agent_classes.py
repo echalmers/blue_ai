@@ -1,7 +1,4 @@
 from typing import Dict, Any, override
-
-from pandas._config import display
-
 from blue_ai.agents.dqn import DQN
 from torch import nn
 import numpy as np
@@ -12,6 +9,8 @@ from blue_ai.envs.custom_decay import PositivePenaltyLoss
 
 
 class BaseAgent(DQN):
+    metadata: Dict[str, Any]
+
     def file_display_name(self):
         """
         Used for getting the name of used for saving the files, override this
@@ -32,14 +31,19 @@ class BaseAgent(DQN):
         """
         Allows for adding extra metadata to the pickle dumps this should always take the shape of dictionary of string -> Any
         >>> x = BaseAgent()
+        >>> x.metadata = {} # If meta is not set (this is the default)
         >>> x.get_metadata() # Returns Nothing
         {}
+        >>> x.metadata = {'spam' : 'spam spam'}
+        >>> x.get_metadata()
+        {'spam': 'spam spam'}
+        >>> # Notice how the x.metadata is overridden here
         >>> x.get_metadata = lambda : {"foo":"bar"}
         >>> x.get_metadata()
         {'foo': 'bar'}
         """
 
-        return {}
+        return self.metadata
 
     def __init__(
         self,
@@ -56,7 +60,6 @@ class BaseAgent(DQN):
         softmax_temperature=None,
         loss_fn: torch.nn.Module | None = None,
     ):
-
         super().__init__(
             network=(
                 network
@@ -79,6 +82,8 @@ class BaseAgent(DQN):
             weight_decay=weight_decay,
             loss_fn=loss_fn,
         )
+
+        self.metadata = {}
 
     def __repr__(self) -> str:
         return self.file_display_name()
@@ -228,17 +233,27 @@ class ReluLossActivation(BaseAgent):
 
 
 class RehabiliationAgent(BaseAgent):
+    """
+    >>> x = RehabiliationAgent(weight_decay=0.3)
+    >>> x.get_metadata()['spine_loss']
+    0.3
+    >>> x.state_change(stage=1)
+    >>> x.get_metadata()['spine_loss']
+    0.0
+    >>> x.state_change(stage=0)
+    >>> x.get_metadata()['spine_loss']
+    0.3
+    """
+
     display_name = "RehabiliationAgent"
 
     def __init__(self, weight_decay=3e-3):
         super().__init__()
-        # This should not be changed overtime and is used to return to the original state
+        # This should not be changed overtime and is used to
+        # return to the original state
         self.weight_decay_amount = weight_decay
         self.weight_decay = self.weight_decay_amount
-
-    @override
-    def get_metadata(self) -> Dict[str, Any]:
-        return {"spine_loss": self.weight_decay}
+        self.metadata["spine_loss"] = self.weight_decay
 
     @override
     def state_change(self, **kwargs):
@@ -256,6 +271,8 @@ class RehabiliationAgent(BaseAgent):
             # "Recovery Phase"
             case 1:
                 self.weight_decay = 0.0
+
+        self.metadata["spine_loss"] = self.weight_decay
 
         self.optimizer = torch.optim.Adam(
             self.policy_net.parameters(), lr=self.lr, weight_decay=self.weight_decay

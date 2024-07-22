@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-import holoviews as hv
+import hvplot as hv
 import numpy as np
 import polars as pl
 import xxhash

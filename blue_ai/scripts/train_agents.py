@@ -61,8 +61,17 @@ def run_trial(
             agent=agent.__class__.__name__, env=env.__class__.__name__, trial=trial_id
         )
 
-    total_reward = sum([o.reward for o in env.unwrapped.obstacles])
-    total_penalties = sum([o.reward for o in env.unwrapped.penalties])
+    def get_total_reward(env):
+        return (
+            sum([o.reward for o in env.unwrapped.obstacles])
+            + +env.unwrapped.termination_reward
+        )
+
+    def get_total_penailties(env):
+        return sum([o.reward for o in env.unwrapped.penalties])
+
+    total_reward: float = get_total_reward(env)
+    total_penalties: float = get_total_penailties(env)
 
     previous_params = np.concatenate(
         [p.to("cpu").detach().numpy().flatten() for p in agent.policy_net.parameters()],
@@ -86,14 +95,10 @@ def run_trial(
             state, _ = env.reset()
             episode_num += 1
             steps_this_episode = 0
-            total_reward = (
-                sum([o.reward for o in env.unwrapped.obstacles])
-                + env.unwrapped.termination_reward
-            )
-            total_penalties = sum([o.reward for o in env.unwrapped.penalties])
+            total_reward = get_total_reward(env)
+            total_penalties = get_total_penailties(env)
         else:
             state = new_state
-
             total_reward = 0.0
             total_penalties = 0.0
 
