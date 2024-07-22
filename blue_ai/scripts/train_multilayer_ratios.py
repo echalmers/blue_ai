@@ -97,11 +97,12 @@ def trial(
             polars_ok=True,
         )
 
-        d.with_columns(
+        d = d.with_columns(
             stage=pl.lit(current),
             ratio_reward=pl.lit(env.get_reward_penalty()[0]),
             ratio_penalty=pl.lit(env.get_reward_penalty()[1]),
         )
+
         if data is not None:
             data.append(d)
         next_agents.append(post_train_agent)
