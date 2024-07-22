@@ -19,6 +19,12 @@ from tqdm import tqdm
 
 
 class RatioEnvironment(Image2VecWrapper):
+    def get_reward_penalty(self):
+        return self.ratio
+
+    def __repr__(self):
+        return f"{self.name} {hex(id(self))}"
+
     def __init__(self, ratio: Tuple[int, int]):
         super().__init__(
             TransientGoals(
@@ -29,12 +35,6 @@ class RatioEnvironment(Image2VecWrapper):
         )
         self.ratio = ratio
         self.name = f"Ratio(Rewards: {self.ratio[0]}, Lava: {self.ratio[1]})"
-
-    def get_reward_penalty(self):
-        return self.ratio
-
-    def __repr__(self):
-        return f"{self.name} {hex(id(self))}"
 
 
 def ratio_environments(start, end):

@@ -9,7 +9,6 @@ from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.constants import DATA_PATH
 from blue_ai.scripts.train_agents import (
-    categorize,
     categorize_pl,
     run_trial,
 )
@@ -25,7 +24,6 @@ from typing import List
 
 
 STEPS_PER_STAGE = [5000, 10_000]
-# STEPS_PER_STAGE = [s // 10 for s in STEPS_PER_STAGE]
 
 
 class NamedEnvironment(Image2VecWrapper):
