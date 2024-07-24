@@ -99,6 +99,7 @@ def main():
         groupby="agent",
     )
 
+    # save_if_not_exists((heatmap + exploration).cols(1), path("combined.html"))
 
     save_if_not_exists(exploration, path("exploration.html"))
 

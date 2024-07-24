@@ -1,9 +1,7 @@
-from typing import List
 from blue_ai.scripts.train_agents import load_trial
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.agents.agent_classes import (
-    BaseAgent,
     HealthyAgent,
     SpineLossDepression,
     ScaledTargets,
@@ -23,7 +21,7 @@ import pickle
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS, FIGURE_PATH
 
 
-all_agent_classes: List[type(BaseAgent)] = [
+all_agent_classes = [
     HealthyAgent,
     SpineLossDepression,
     ScaledTargets,
@@ -42,22 +40,15 @@ HighExploration.display_name = "high\nexploration"
 if (DATA_PATH / "compare_exploration.pkl").exists():
     with open(DATA_PATH / "compare_exploration.pkl", "rb") as f:
         results = pickle.load(f)
+
 else:
+
     from blue_ai.agents.dqn import softmax
 
-    for i in range(N_TRIALS):
-        try:
-            _, ref_agent, _ = load_trial(DATA_PATH / f"HealthyAgent_{i}.pkl")
-        except FileNotFoundError as e:
-            print(
-                "Failed open trials, continuing.",
-                "This probably mean the N_TRIALS is out of sync or that "
-                + " `train_agents.py` was not run",
-                {e},
-                sep="\n",
-            )
+    results = []
 
-        results = []
+    for i in range(N_TRIALS):
+        _, ref_agent, _ = load_trial(DATA_PATH / f"HealthyAgent_{i}.pkl")
 
         # this was previously set too 4, probably for performance reasons
         for j in range(N_TRIALS):

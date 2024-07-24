@@ -20,3 +20,5 @@ venv
 # Script Outputs
 blue_ai/scripts/img 
 blue_ai/scripts/data
+full_data.csv
+full_data.json

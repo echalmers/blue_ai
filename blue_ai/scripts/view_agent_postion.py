@@ -1,6 +1,6 @@
 import seaborn as sns
 import matplotlib.pyplot as plt
-from blue_ai.scripts.constants import DATA_PATH, FIGURE_PATH
+from constants import DATA_PATH, FIGURE_PATH
 import pandas as pd
 
 import numpy as np
