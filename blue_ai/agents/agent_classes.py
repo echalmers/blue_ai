@@ -68,8 +68,8 @@ class SpineLossDepression(BaseAgent):
 
     display_name = "simulated spine loss"
 
-    def __init__(self):
-        super().__init__(weight_decay=1e-3)
+    def __init__(self, weight_decay=1e-3):
+        super().__init__(weight_decay=weight_decay)
 
 
 class ContextDependentLearningRate(BaseAgent):
