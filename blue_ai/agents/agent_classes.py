@@ -29,17 +29,7 @@ class BaseAgent(DQN):
         """
 
     def get_metadata(self) -> Dict[str, Any]:
-        """
-        Allows for adding extra metadata to the pickle dumps this should always take the shape of dictionary of string -> Any
-        >>> x = BaseAgent()
-        >>> x.get_metadata() # Returns Nothing
-        {}
-        >>> x.get_metadata = lambda : {"foo":"bar"}
-        >>> x.get_metadata()
-        {'foo': 'bar'}
-        """
-
-        return {}
+        return self.metadata
 
     def __init__(
         self,
@@ -56,6 +46,8 @@ class BaseAgent(DQN):
         softmax_temperature=None,
         loss_fn: torch.nn.Module | None = None,
     ):
+
+        self.metadata: Dict[str, Any] = {}
 
         super().__init__(
             network=(
@@ -237,10 +229,6 @@ class RehabiliationAgent(BaseAgent):
         self.weight_decay = self.weight_decay_amount
 
     @override
-    def get_metadata(self) -> Dict[str, Any]:
-        return {"spine_loss": self.weight_decay}
-
-    @override
     def state_change(self, **kwargs):
         assert (
             "stage" in kwargs
@@ -256,6 +244,8 @@ class RehabiliationAgent(BaseAgent):
             # "Recovery Phase"
             case 1:
                 self.weight_decay = 0.0
+
+        self.metadata |= {"spine_loss": self.weight_decay}
 
         self.optimizer = torch.optim.Adam(
             self.policy_net.parameters(), lr=self.lr, weight_decay=self.weight_decay

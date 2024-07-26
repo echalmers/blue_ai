@@ -16,16 +16,16 @@ from blue_ai.scripts.train_agents import run_trial
 from blue_ai.scripts.train_ratio_agents import RatioEnvironment
 
 
+N_TRIALS = 20
+SUM = 8
+STEPS_PER_STAGE = np.array([5, 5]) * 2000
+
+
 def gen_ratios(start: int, end: int):
     forward = np.arange(start, end + 1)
     backward = np.flip(forward)
 
     return np.column_stack((forward, backward))
-
-
-N_TRIALS = 20
-SUM = 8
-STEPS_PER_STAGE = np.array([5, 5]) * 2000
 
 
 def main():
