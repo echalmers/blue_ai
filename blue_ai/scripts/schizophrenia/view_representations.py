@@ -38,7 +38,7 @@ if __name__ == '__main__':
                     layer.std = std
 
     if mode == 'interactive':
-        add_noise(0.25)
+        add_noise(0.15)
 
         def plot(state):
 
@@ -122,6 +122,8 @@ if __name__ == '__main__':
             pickle.dump(datapoints, f)
 
         sns.lineplot(data=pd.DataFrame(datapoints), x='std', y='mse', hue='agent')
+        plt.ylabel('error in reconstructing visual input')
+        plt.xlabel('std of added noise')
         plt.show()
 
     else:
