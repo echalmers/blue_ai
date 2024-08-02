@@ -69,6 +69,7 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
             "stuck": stuck,
             "mean_synapse": next(agent.policy_net.parameters()).mean().item(),
             "num_pos_synapse": (next(agent.policy_net.parameters()) > 0).sum().item(),
+            'position': tuple(env.unwrapped.agent_pos)
         }
 
         if tbar is not None:
@@ -138,8 +139,8 @@ def main():
     trial_num = 0
 
     agents: List[BaseAgent] = [
-        # HealthyAgent(),
-        # SpineLossDepression(),
+        HealthyAgent(),
+        SpineLossDepression(),
         # ContextDependentLearningRate(),
         # HighDiscountRate(),
         # ScaledTargets(),

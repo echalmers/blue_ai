@@ -36,13 +36,16 @@ class Image2VecWrapper(gym.ObservationWrapper):
         return np.moveaxis(vec, (2, 0, 1), (0, 1, 2))
 
     @staticmethod
-    def observation_to_image(observation):
+    def observation_to_image(observation, closest=False, threshold=0.25):
         """
         create an RGB image from the data provided by the observation method
         """
         rgb = np.zeros((observation.shape[1], observation.shape[2], 3))
+        maxes = np.r_[observation, threshold * np.ones((1, 5, 5))].argmax(axis=0)
+
         for obj, (index, color) in object_number_map.items():
-            rgb += np.tensordot(observation[index, :, :].T, color, axes=0)
+            slice = (maxes == index).T if closest else observation[index, :, :].T
+            rgb += np.tensordot(slice, color, axes=0)
         rgb /= 256
         return rgb
 
