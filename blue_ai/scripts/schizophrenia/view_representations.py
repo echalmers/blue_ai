@@ -16,12 +16,13 @@ import torch
 
 if __name__ == '__main__':
 
-    mode = 'interactive'  # interactive or datagen
+    mode = 'datagen'  # interactive or datagen
     include = ['Healthy', 'Schizophrenic']
 
     with open(DATA_PATH / 'interpretation_models.pkl', 'rb') as f:
         interpretation_models = pickle.load(f)
-        interpretation_models['agent_name'] = interpretation_models['agent'].astype(str).replace(
+        interpretation_models['agent_name'] = interpretation_models['agent']
+        interpretation_models['agent_name'] = interpretation_models['agent_name'].astype(str).replace(
             {'HealthyAgent': 'Healthy',
              'SpineLossDepression': 'Depressed',
              'SchizophrenicAgent': 'Schizophrenic'
