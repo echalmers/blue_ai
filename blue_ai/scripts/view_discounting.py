@@ -17,6 +17,7 @@ class DiscountAndCorrelationPlotter:
     def __init__(
         self,
         agent_classes=(agent_classes.HealthyAgent, agent_classes.SpineLossDepression),
+        save_filenames=None,
     ):
 
         class ActivationRecorder:
@@ -34,7 +35,7 @@ class DiscountAndCorrelationPlotter:
         self.task_correlations = []
 
         for trial in range(N_TRIALS):
-            for dataset in [
+            for dataset in save_filenames or [
                 f"{agent_class.__name__}_{trial}.pkl" for agent_class in agent_classes
             ]:
                 results, agent, _ = load_trial(DATA_PATH / dataset)
