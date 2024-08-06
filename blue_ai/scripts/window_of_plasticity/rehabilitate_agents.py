@@ -10,9 +10,9 @@ import pandas as pd
 import numpy as np
 
 
-good_env = Image2VecWrapper(TransientGoals(render_mode="none", n_transient_obstacles=1, n_transient_goals=3))
+good_env = Image2VecWrapper(TransientGoals(render_mode="none", n_transient_obstacles=1, n_transient_goals=8))
 good_env.max_reward = good_env.n_transient_goals * 0.25 + 1
-bad_env = Image2VecWrapper(TransientGoals(render_mode="none", n_transient_obstacles=3, n_transient_goals=1))
+bad_env = Image2VecWrapper(TransientGoals(render_mode="none", n_transient_obstacles=1, n_transient_goals=1))
 bad_env.max_reward = bad_env.n_transient_goals * 0.25 + 1
 
 all_results = pd.DataFrame()
@@ -36,7 +36,7 @@ for rep in range(3):
                     trial_id=rep,
                     agent=agent,
                     env=env2,
-                    steps=20_000,
+                    steps=25_000,
                 )
 
                 results1['env_max_reward'] = env1.max_reward

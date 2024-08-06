@@ -5,7 +5,7 @@ from blue_ai.scripts.constants import DATA_PATH
 pd.options.display.width = 0
 
 
-df = pd.read_csv(DATA_PATH / 'rehabilitation_tests.csv', index_col=None)
+df = pd.read_csv(DATA_PATH / 'rehabilitation_tests_2_8.csv', index_col=None)
 
 # normalize agent performance to healthy
 df['reward_normalized'] = df['reward'] / df['reward_healthy']
