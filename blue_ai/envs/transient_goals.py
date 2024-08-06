@@ -63,7 +63,7 @@ class TransientGoals(MiniGridEnv):
         self.replace_transient_obstacles = replace_transient_obstacles
 
         mission_space = MissionSpace(mission_func=self._gen_mission)
-        max_steps = 4 * len(self.im) ** 2
+        max_steps = max_steps
 
         super().__init__(
             mission_space=mission_space,

@@ -16,6 +16,7 @@ class PerceivedValuePlotter:
     def __init__(
         self,
         agent_classes=(agent_classes.HealthyAgent, agent_classes.SpineLossDepression),
+        save_filenames=None,
     ):
         self.env = Image2VecWrapper(
             TransientGoals(
@@ -29,6 +30,7 @@ class PerceivedValuePlotter:
         )
         self.state, _ = self.env.reset()
         self.agent_classes = agent_classes
+        self.save_filenames = save_filenames
 
     @staticmethod
     def plot_sample_envs():
@@ -67,11 +69,10 @@ class PerceivedValuePlotter:
         ax.set_yticks([])
 
     def plot_perceived_value(self, ax, palette=("skyblue", "salmon")):
-        assert len(palette) >= len(self.agent_classes)
         all_values = []
 
         for trial in range(N_TRIALS):
-            for dataset in [
+            for dataset in self.save_filenames or [
                 f"{agent_class.__name__}_{trial}.pkl"
                 for agent_class in self.agent_classes
             ]:
@@ -87,6 +88,8 @@ class PerceivedValuePlotter:
                 all_values.append([agent.display_name, "forward", this_agent_values[2]])
 
         all_values = pd.DataFrame(data=all_values, columns=["agent", "action", "value"])
+        num_agents = len(all_values['agent'].unique())
+        assert len(palette) >= num_agents
         print(all_values)
 
         plt.sca(ax)
@@ -106,10 +109,10 @@ class PerceivedValuePlotter:
         # p.patches[3].set_facecolor('salmon')
         # p.patches[5].set_facecolor('salmon')
         for i in range(len(p.patches)):
-            p.patches[i].set_facecolor(palette[i % len(self.agent_classes)])
+            p.patches[i].set_facecolor(palette[i % num_agents])
 
         plt.legend([], [], frameon=False)
-        for i in range(len(self.agent_classes)):
+        for i in range(num_agents):
             plt.text(
                 x=p.patches[i].get_center()[0],
                 y=0.1,
@@ -119,7 +122,7 @@ class PerceivedValuePlotter:
                 ha="center",
             )
             plt.text(
-                x=p.patches[i + len(self.agent_classes)].get_center()[0],
+                x=p.patches[i + num_agents].get_center()[0],
                 y=0.1,
                 s="↑",
                 fontsize="x-large",
@@ -127,7 +130,7 @@ class PerceivedValuePlotter:
                 ha="center",
             )
             plt.text(
-                x=p.patches[i + 2 * len(self.agent_classes)].get_center()[0],
+                x=p.patches[i + 2 * num_agents].get_center()[0],
                 y=0.1,
                 s="↷",
                 fontsize="x-large",

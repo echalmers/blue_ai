@@ -15,6 +15,7 @@ class PerceivedFearPlotter:
     def __init__(
         self,
         agent_classes=(agent_classes.HealthyAgent, agent_classes.SpineLossDepression),
+        save_filenames=None,
     ):
         self.all_values = []
 
@@ -35,7 +36,7 @@ class PerceivedFearPlotter:
             # plt.imshow(env.render())
 
             for trial in range(N_TRIALS):
-                for dataset in [
+                for dataset in save_filenames or [
                     f"{agent_class.__name__}_{trial}.pkl"
                     for agent_class in agent_classes
                 ]:

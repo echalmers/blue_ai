@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from train_agents import load_dataset
+from blue_ai.scripts.train_agents import load_dataset
 from blue_ai.envs.transient_goals import TransientGoals
-import blue_ai.agents.agent_classes as agent_classes
+import blue_ai.agents.agent_classes as classes
 
 from blue_ai.scripts.constants import FIGURE_PATH
 
@@ -12,18 +12,29 @@ class PerformancePlotter:
 
     def __init__(
         self,
-        agent_classes=(
-            agent_classes.HealthyAgent,
-            agent_classes.SpineLossDepression,
-        ),
+        agent_classes=None,
+        results_dataframe=None
     ):
 
-        self.agent_classes = agent_classes
-        self.high_terminal_results = load_dataset(
-            [f"{cls.__name__}_[!s]*.pkl" for cls in agent_classes]
-        )
+        if agent_classes is None and results_dataframe is None:
+            agent_classes = (
+                classes.HealthyAgent,
+                classes.SpineLossDepression,
+                classes.SchizophrenicAgent,
+                # agent_classes.PrunedAgent
+            )
 
-        print(self.high_terminal_results)
+        if results_dataframe is not None:
+            self.high_terminal_results = results_dataframe
+            self.agent_classes = None
+
+        else:
+            self.agent_classes = agent_classes
+            self.high_terminal_results = load_dataset(
+                [f"{cls.__name__}_[!s]*.pkl" for cls in agent_classes]
+            )
+
+            print(self.high_terminal_results)
 
     @staticmethod
     def plot_sample_env(ax):
@@ -110,11 +121,12 @@ class PerformancePlotter:
         plt.ylabel("")
         plt.xlabel("time (steps in environment)")
 
-    def plot_goals_per_episode(self, ax, n_boot=1):
+    def plot_goals_per_episode(self, ax, n_boot=1, last_n_steps=None):
         plt.sca(ax)
 
         high_terminal_goals = self.aggregate_goals(
-            type="episode", data=self.high_terminal_results
+            type="episode",
+            data=self.high_terminal_results.groupby(['trial_id', 'agent']).tail(last_n_steps or self.high_terminal_results.shape[0])
         )
         sns.barplot(
             data=high_terminal_goals,
@@ -123,7 +135,7 @@ class PerformancePlotter:
             hue="object",
             n_boot=n_boot,
             palette=["tab:green", "tab:blue", "tab:red"],
-            order=[a.display_name for a in self.agent_classes],
+            order=[a.display_name for a in self.agent_classes] if self.agent_classes else None,
         )
         plt.title("objects reached per episode")
         plt.ylabel("")
