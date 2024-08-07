@@ -235,7 +235,7 @@ class RehabiliationAgent(BaseAgent):
         ), f"{self.__class__.__name__}.state_change requires kwarg 'stage'"
 
         stage: int = kwargs["stage"]
-        assert stage in range(0, 2), "Stage outside required range (0,2]"
+        assert stage in range(0, 3), "Stage outside required range (0,2]"
 
         match stage:
             # Depressive Stage
@@ -243,6 +243,9 @@ class RehabiliationAgent(BaseAgent):
                 self.weight_decay = self.weight_decay_amount
             # "Recovery Phase"
             case 1:
+                self.weight_decay = 0.0
+            # "Post-Recovery"
+            case 2:
                 self.weight_decay = 0.0
 
         self.metadata |= {"spine_loss": self.weight_decay}
