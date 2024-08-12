@@ -11,7 +11,7 @@ from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.agents.agent_classes import *
 
 
-def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
+def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None, callbacks=(), learning=True):
     state, _ = env.reset()
     # setup variables to track progress
     steps_this_episode = 0
@@ -39,7 +39,14 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
         new_state, reward, done, truncated, _ = env.step(action)
 
         # use this experience to update agent
-        agent.update(state, action, reward, new_state, done=False)
+        if learning:
+            agent.update(state, action, reward, new_state, done=False)
+
+        # run any callbacks
+        callback_results = {}
+        for callback in callbacks:
+            if step % callback['period'] == 0:
+                callback_results[callback['name']] = callback['function'](agent, state)
 
         # reset environment if done (ideally env would do this itself)
         if truncated or done:
@@ -56,7 +63,7 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
         stuck = max(pos.values()) > 2000
         cumulative_reward += reward
 
-        results[step] = {
+        this_results = {
             "trial_id": trial_id,
             "agent": agent.__class__.__name__,
             "step": step,
@@ -71,6 +78,9 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
             "num_pos_synapse": (next(agent.policy_net.parameters()) > 0).sum().item(),
             'position': tuple(env.unwrapped.agent_pos)
         }
+        this_results.update(callback_results)
+
+        results[step] = this_results
 
         if tbar is not None:
             tbar.update()

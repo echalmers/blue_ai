@@ -36,7 +36,7 @@ class RepresentationProbe:
             nn.Linear(state.numel()*2, state.numel()),
             nn.Unflatten(1, state.shape)
         )
-        print(self.model)
+        # print(self.model)
         self.model.to(self.agent.device)
 
     def fit(self):
