@@ -1,6 +1,7 @@
-from blue_ai.scripts.train_agents import load_dataset, run_trial
+from blue_ai.scripts.train_agents import load_dataset, run_trial, load_trial
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
+from blue_ai.scripts.constants import DATA_PATH
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -14,23 +15,25 @@ noise_std = 0.0
 
 fig, axes = plt.subplots(1, 4)
 
-df, agents = load_dataset(filename_patterns=[
-    'HealthyAgent_*.pkl',
-    'SpineLossDepression_*.pkl',
-    'SchizophrenicAgent_*.pkl'
-], return_agents=True)
+# df, agents = load_dataset(filename_patterns=[
+#     'HealthyAgent_*.pkl',
+#     'SpineLossDepression_*.pkl',
+#     'SchizophrenicAgent_*.pkl'
+# ], return_agents=True)
+_, agent, env = load_trial(DATA_PATH / 'HealthyAgent_0.pkl')
+agents = {'file': agent}
 
 results = []
-for filename, agent in agents.items():
-    for rep in range(1):
+for rep in range(1):
+    for filename, agent in agents.items():
         # instantiate env
         env = Image2VecWrapper(TransientGoals(
-            render_mode="rgb_array", transient_reward=0.25, termination_reward=1,
+            render_mode="human", transient_reward=0.25, termination_reward=1,
             transient_locations=[(6, 3), (4, 5)], transient_obstacles=[(4, 4)],
             agent_start_pos=(3, 4)
         ))
         state, _ = env.reset()
-        axes[0].imshow(env.render())
+        # axes[0].imshow(env.render())
 
         # add noise
         for layer in agent.policy_net:
@@ -39,6 +42,8 @@ for filename, agent in agents.items():
                 layer.std = noise_std
 
         for step in range(100):
+            print(step)
+
             # get & execute action
             action = agent.select_action(state)
             new_state, reward, done, truncated, _ = env.step(action)
@@ -53,6 +58,8 @@ for filename, agent in agents.items():
 
             if truncated or done:
                 break
+            else:
+                state = new_state
 
 
 results = pd.DataFrame(results)

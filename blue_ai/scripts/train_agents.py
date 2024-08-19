@@ -139,7 +139,7 @@ def main():
     trial_num = 0
 
     agents: List[BaseAgent] = [
-        HealthyAgent(),
+        # HealthyAgent(),
         SpineLossDepression(),
         # ContextDependentLearningRate(),
         # HighDiscountRate(),
