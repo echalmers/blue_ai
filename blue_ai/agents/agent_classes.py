@@ -165,7 +165,7 @@ class ShiftedTargets(BaseAgent):
 
 
 class SchizophrenicAgent(BaseAgent):
-    display_name = "Schizophrenic Agent"
+    display_name = "schizophrenic"
 
     def __init__(self, alpha=5e-3, embed_alpha_in_filename=False):
         self.embed_alpha_in_filename = embed_alpha_in_filename
