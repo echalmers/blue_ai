@@ -1,16 +1,10 @@
 import os
 from pathlib import Path
-
 import holoviews as hv
-import numpy as np
 import polars as pl
 import xxhash
 from hvplot.polars import hvPlotTabularPolars as plot
 from blue_ai.scripts.constants import DATA_PATH, FIGURE_PATH
-
-# import matplotlib
-# hv.extension("matplotlib")
-# matplotlib.use("agg")
 
 
 def save_if_not_exists(graph, filepath):
@@ -21,14 +15,13 @@ def save_if_not_exists(graph, filepath):
         print(f"Skipping saving {filepath}")
 
 
-def list_to_number(digit_list):
-    place_values = 10 ** np.arange(len(digit_list) - 1, -1, -1)
-    number = np.dot(digit_list, place_values)
-
-    return number
-
-
 def heatmap(data: pl.DataFrame):
+    """
+    Takes a polars dataframe expects to following columns:
+        - position: agent_pos_x, agent_pos_y
+        - category: ratio_reward, agent
+    The heat map will be calculated based on the count of unique (x,y) pairs
+    """
     heatmap_args = dict(
         x="agent_pos_x",
         y="agent_pos_y",
@@ -67,14 +60,19 @@ def heatmap(data: pl.DataFrame):
     )
 
 
+# Enable string caching, this allows for the string manips we do later on to
+# not overflow memory or drasticly slow us down
 @pl.StringCache()
 def main():
     disk_data = pl.scan_parquet(DATA_PATH / "full.parquet")
-
+    # Create a hash instance to be used for indefying this dataset
     hash = xxhash.xxh32()
+    # Get the widest amount sub array of ratios
     max_width = disk_data.select(pl.col("ratios").list.len().max()).collect().item()
 
+    # Break the ratios in to more useful columns for graphing
     data = disk_data.with_columns(
+        # A pair of Good:Bad for the each stage
         *[
             (
                 pl.col("ratios").list.get(x).cast(pl.String)
@@ -85,19 +83,24 @@ def main():
             .alias(f"stage_{x // 2}_ratio")
             for x in range(0, max_width, 2)
         ],
+        # Break the rewards into its own column
         *[
             pl.col("ratios").list.get(x).alias(f"stage_{x // 2}_reward")
             for x in range(0, max_width, 2)
         ],
+        # Break the lavas into its own column
         *[
             pl.col("ratios").list.get(x + 1).alias(f"stage_{x // 2}_penalty")
             for x in range(0, max_width, 2)
         ],
         ratio=pl.col("ratio_reward") / pl.col("ratio_penalty"),
+        # '-' separated list of all the ratios for each line
         str_ratios=pl.col("ratios")
         .list.eval(pl.element().cast(pl.String))
         .list.join("-"),
     ).drop("ratios")
+
+    hash.update(data.head(100).collect().hash_rows().to_numpy().tobytes())
 
     def path(path):
         p = path if type(path) is Path else Path(path)
@@ -105,10 +108,7 @@ def main():
         name = str(p).rstrip(ext)
         return FIGURE_PATH / f"{name}_{hash.hexdigest()}{ext}"
 
-    hash.update(data.head(100).collect().hash_rows().to_numpy().tobytes())
-
-    id_select = pl.col("agent"), pl.selectors.matches("stage_[0-9]+_(reward|penalty)")
-    data = data.with_columns(id=pl.struct(*id_select))
+    util = pl.col("reward").cum_sum() / pl.col("total_reward").cum_sum()
 
     by_trial = (
         data.group_by(
@@ -120,40 +120,13 @@ def main():
         )
         .agg(
             pl.col("spine_loss"),
-            (pl.col("reward").cum_sum() / pl.col("total_reward").cum_sum())
-            .alias("util")
-            .rolling_mean(200),
             pl.col("step"),
+            util=util,
         )
         .explode("util", "step", "spine_loss")
     )
 
-    util = (
-        by_trial.sort("agent", "stage_0_ratio", "stage_1_ratio", "step")
-        .filter(pl.col("util").is_finite())
-        .with_columns(
-            util=pl.col("util")
-            .mean()
-            .over("agent", "stage_0_ratio", "stage_1_ratio", "step"),
-            agent=pl.col("agent").cast(pl.String),
-        )
-    )
-
     breakpoint()
-
-    utilization = plot(util).line(
-        x="step",
-        y="util",
-        by="agent",
-        row="stage_0_ratio",
-        col="stage_1_ratio",
-        ylim=(-1, 1),
-        datashade=True,
-        rasterize=True,
-        line_width=5,
-    )
-
-    save_if_not_exists(utilization, path("util.html"))
 
 
 if __name__ == "__main__":
