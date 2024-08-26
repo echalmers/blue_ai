@@ -16,6 +16,9 @@ environments_cache: Dict[str, Grid] = {}
 
 
 class Actions(IntEnum):
+    """
+    Defines action state values.
+    """
     left = 0
     right = 1
     forward = 2
@@ -25,6 +28,9 @@ class Actions(IntEnum):
 
 
 class TransientGoals(MiniGridEnv):
+    """
+    Implements parameters for agent environment interactions
+    """
     gird_cache = None
 
     def __init__(
@@ -44,7 +50,22 @@ class TransientGoals(MiniGridEnv):
         max_steps=500,
         **kwargs,
     ):
-
+        """
+        :param agent_start_pos: Sets agents starting coordinates 
+        :param agent_start_dir: Agent starting alignment 
+        :param termination_reward: Final goal value
+        :param transient_reward: Opitional goal value
+        :param n_transient_goals: # of optional goals to populate in environment
+        :param img_filename: Environment file naming convention
+        :param transient_locations: To predetermine optional goal locality
+        :param replace_transient_goals: ???
+        :param transient_penalty: Penalty value of obstacle upon agent contact
+        :param n_transient_obstacles: # of obstacles to populate in environment
+        :param transient_obstacles: To predetermine obstacle locality?
+        :param replace_transient_obstacles: ???
+        :param max_steps: Max # of steps agents can take in environment
+        """
+        
         # In order to prevent patthing issues we need to ensure that we path
         # relative to the location of this file rather than the run location
         image_path = Path(__file__).parent / img_filename
@@ -76,6 +97,11 @@ class TransientGoals(MiniGridEnv):
         )
 
     def _replace_transient_obstacles(self, reward):
+        """
+        Agent obstacle interaction penalty 
+
+        :param reward: action reward value
+        """
         self.penalties.append(ObstacleNoTerminate(reward=reward))
         self.place_obj(self.penalties[-1], max_tries=100)
 
@@ -94,6 +120,8 @@ class TransientGoals(MiniGridEnv):
     def _check_termination_conditions(self, cell_type: str):
         """
         Determines if the current state is a end state
+
+        :param cell_type: environment cell type
         """
         termination_conditions = ["goal", "lava"]
 
@@ -154,6 +182,11 @@ class TransientGoals(MiniGridEnv):
         return terminated, reward
 
     def step(self, action):
+        """
+        Agent movement actualization 
+
+        :param action: agent movement orientation 
+        """
         self.step_count += 1
 
         reward = 0
@@ -184,6 +217,12 @@ class TransientGoals(MiniGridEnv):
         return "get to the green goal square"
 
     def _gen_grid(self, width, height):
+        """
+        Generates environment grid
+
+        :param width: range of x coordinates within grid
+        :param hieght: range of y coordinates within grid
+        """
         # Create an empty grid
         self.grid = Grid(width, height)
         hasGoal = False

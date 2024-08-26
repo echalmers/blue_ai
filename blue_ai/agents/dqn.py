@@ -22,6 +22,9 @@ def softmax(values, t=1.0):
     
 
 def softmax_selection(values, t=1.0):
+    """
+    Returns a multinomial output of the values input tensor in the shape of (input rows x num_samples)
+    """
     return torch.multinomial(softmax(values, t=t), 1).item()
 
 
@@ -172,6 +175,11 @@ class DQN:
         self.softmax_temp = softmax_temp
 
     def get_action_values(self, state):
+        """
+        Fetches value of future env state and expands array shape.
+
+        :param state: Current state of agent.
+        """
         with torch.no_grad():
             return self.policy_net(
                 torch.tensor(
@@ -180,6 +188,11 @@ class DQN:
             )[0]
 
     def select_action(self, state):
+        """
+        Creates parameters for random action or induces action based on policy values.
+
+        :param state: Current state of agent.
+        """
         if self.softmax_temp is None and random.random() < self.epsilon:
             return np.random.choice(self.n_outputs)
 
@@ -197,6 +210,15 @@ class DQN:
         return index.item()
 
     def update(self, state, action, reward, new_state, done):
+        """
+        Updates policy values upon a new agent state.  
+
+        :param state: Current state of agent.
+        :param action: Action taken relative to current state.
+        :param reward: Actual reward agent action results in.
+        :param new_state: New state as a consequence of action.
+        :param done: Boolean identifies complete policy transition.
+        """
 
         self.transition_memory.add(state, action, reward, new_state, done)
         self.update_counter += 1
@@ -229,6 +251,15 @@ class DQN:
             return loss.item()
 
     def update_single(self, state, action, reward, new_state, done):
+        """
+        Not sure what this does, does not seem to be in use. >.< 
+
+        :param state: Current state of agent.
+        :param action: Action taken relative to current state.
+        :param reward: Actual reward agent action results in.
+        :param new_state: New state as a consequence of action.
+        :param done: Boolean identifies complete policy transition.
+        """
 
         state = torch.tensor(
             np.expand_dims(state, 0).astype(np.float32), device=self.device
