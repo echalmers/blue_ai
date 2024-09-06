@@ -3,6 +3,8 @@ import pandas as pd
 import pickle
 from copy import deepcopy
 
+import torch.nn
+import polars as pl
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from tqdm import tqdm
@@ -11,7 +13,15 @@ from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.agents.agent_classes import *
 
 
-def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
+activations = []
+
+
+def create_hook(name):
+    def hook(module, input, output):
+        activations.append({"activations": pl.Series(output.detach().cpu().numpy()), "name": name})
+    return hook
+
+def run_trial(agent: BaseAgent, env, steps=30, trial_id="", tbar=None, filename=None):
     state, _ = env.reset()
     # setup variables to track progress
     steps_this_episode = 0
@@ -20,6 +30,15 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
 
     # setup results dataframe
     results = [None] * steps
+
+    # Setup for storing activations
+    hooks = []
+
+    for name, layer in agent.policy_net.named_modules():
+        if isinstance(layer, torch.nn.Linear):
+            hook = layer.register_forward_hook(create_hook(name))
+            hooks.append(hook)
+            print(hex(id(hook)))
 
     # track agent positions to see if they get stuck
     pos: Dict[Tuple[int, int], int] = {}
@@ -39,7 +58,7 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
         new_state, reward, done, truncated, _ = env.step(action)
 
         # use this experience to update agent
-        agent.update(state, action, reward, new_state, done=False)
+        loss = agent.update(state, action, reward, new_state, done=False)
 
         # reset environment if done (ideally env would do this itself)
         if truncated or done:
@@ -69,12 +88,27 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
             "stuck": stuck,
             "mean_synapse": next(agent.policy_net.parameters()).mean().item(),
             "num_pos_synapse": (next(agent.policy_net.parameters()) > 0).sum().item(),
+
+
         }
 
         if tbar is not None:
             tbar.update()
 
+
     results = pd.DataFrame(results)
+
+    if filename is not None:
+        activation_filename = DATA_PATH / f"{filename}_{trial_id}_activations.pkl"
+    else:
+        activation_filename = DATA_PATH / f"{agent.__class__.__name__}_{trial_id}_activations.pkl"
+    neuron_activations = pl.DataFrame(activations)
+
+    # Cleanup hooks
+    for hook in hooks:
+        hook.remove()
+
+
     return results, agent, env
 
 
@@ -119,8 +153,8 @@ def trial(agent: BaseAgent, env, rep, trial_num, tbar=None, steps=30_000):
     )
 
     filename = (
-        DATA_PATH
-        / f'{agent.file_display_name()}_{"swapped_" if env.unwrapped.transient_reward > 0.25 else ""}{rep}.pkl'
+            DATA_PATH
+            / f'{agent.file_display_name()}_{"swapped_" if env.unwrapped.transient_reward > 0.25 else ""}{rep}.pkl'
     )
 
     save_trial(results, agent, env, filename)
@@ -128,7 +162,7 @@ def trial(agent: BaseAgent, env, rep, trial_num, tbar=None, steps=30_000):
 
 
 def main():
-    iterations_per_trial = 30_000
+    iterations_per_trial = 50
     trial_num = 0
 
     agents: List[BaseAgent] = [
@@ -159,25 +193,19 @@ def main():
     #     for x in range(1, 6)
     # ]
 
-    tbar = tqdm(
-        total=(len(agents) * len(envs) * N_TRIALS * iterations_per_trial), initial=0
-    )
 
     for rep in range(N_TRIALS):
         for env in envs:
             for agent in agents:
-                tbar.set_postfix(
-                    agent=agent.__class__.__name__, env=env.__class__.__name__, rep=rep
-                )
                 trial(
                     deepcopy(agent),
                     env,
                     rep,
                     trial_num,
-                    tbar=tbar,
                     steps=iterations_per_trial,
                 )
                 trial_num += 1
+    print(len(activations))
 
 
 if __name__ == "__main__":

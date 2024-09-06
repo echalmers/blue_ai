@@ -18,6 +18,7 @@ def main():
             agent=HealthyAgent(),
             env=Image2VecWrapper(TransientGoals(render_mode="none")),
             steps=40_000,
+            filename="rehabilitate_healthy"
         )
 
         agent.optimizer = torch.optim.Adam(
@@ -29,6 +30,8 @@ def main():
             agent=agent,
             env=env,
             steps=40_000,
+            filename="rehabilitate_depressed"
+
         )
 
         agent.optimizer = torch.optim.Adam(
@@ -39,7 +42,8 @@ def main():
             trial_id=rep,
             agent=agent,
             env=env,
-            steps=30_000,
+            steps=40_000,
+            filename="rehabilitate_treated"
         )
 
         results = pd.concat([results1, results2, results3], ignore_index=True)
