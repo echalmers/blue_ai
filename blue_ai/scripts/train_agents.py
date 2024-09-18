@@ -39,10 +39,7 @@ def save_activations_to_parquet(filename):
         for layer_name, dfs in activations.items():
             activation_dfs.extend(dfs)
 
-        # Concatenate all DataFrames into a single DataFrame
         activation_df = pl.concat(activation_dfs)
-
-        # Save to Parquet using the 'snappy' compression
         activation_df.write_parquet(filename, compression='gzip')
         activations.clear()
         print(f"Activations successfully saved to {filename}")

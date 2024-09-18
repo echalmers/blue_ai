@@ -68,25 +68,25 @@ def calculate_sliced_entropies(df, slices):
             sliced_entropy = (calculate_ngram_entropy(layer_slice))
             entropy_list = list(sliced_entropy.values())
             entropies[layer].append(entropy_list[0])
-    print(entropies)
     return entropies
 
 
 def main():
-    patterns = ["healthy", "depressed", "treated"]
+    stages = ["healthy", "depressed", "treated"]
 
     for i in range(9):
-        for p in patterns:
-            filename = DATA_PATH / f'rehabilitate_{p}_{i}_activations.parquet'
-            pattern = pl.read_parquet(filename)
-            sliced_entropies = pl.DataFrame(calculate_sliced_entropies(pattern, slices=6))
-            sliced_entropies.write_parquet(DATA_PATH / f"{p}_{i}_sliced_entropies.parquet")
+        for stage in stages:
+            filename = DATA_PATH / f'rehabilitate_{stage}_{i}_activations.parquet'
+            datafile = pl.read_parquet(filename)
+            slices = len(datafile)//10_000
+            sliced_entropies = pl.DataFrame(calculate_sliced_entropies(datafile, slices=slices))
+            sliced_entropies.write_parquet(DATA_PATH / f"{stage}_{i}_sliced_entropies.parquet")
 
-    for p in patterns:
-        rehab_paths = DATA_PATH.glob(f'rehabilitate_{p}_*_activations.parquet')
+    for stage in stages:
+        rehab_paths = DATA_PATH.glob(f'rehabilitate_{stage}_*_activations.parquet')
         entropies = [calculate_ngram_entropy(pl.read_parquet(rehab_stage)) for rehab_stage in rehab_paths]
         entropy_df = pl.DataFrame(entropies)
-        entropy_df.write_parquet(DATA_PATH / f"{p}_entropies.parquet")
+        entropy_df.write_parquet(DATA_PATH / f"{stage}_entropies.parquet")
 
 
 if __name__ == '__main__':

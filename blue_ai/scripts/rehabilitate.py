@@ -17,7 +17,7 @@ def main():
             trial_id=rep,
             agent=HealthyAgent(),
             env=Image2VecWrapper(TransientGoals(render_mode="none")),
-            steps=40_000,
+            steps=60_000,
             filename="rehabilitate_healthy"
         )
 
@@ -42,7 +42,7 @@ def main():
             trial_id=rep,
             agent=agent,
             env=env,
-            steps=40_000,
+            steps=60_000,
             filename="rehabilitate_treated"
         )
 
