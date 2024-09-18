@@ -3,16 +3,15 @@ from scipy.stats import entropy
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pickle
+import polars as pl
 
-
-def calculate_variance(filepath, layer_of_interest):
-    with open(filepath, "rb") as f:
-        activations = pickle.load(f)
-
-    filtered_activations = activations[layer_of_interest]
-    return filtered_activations.var(dim=1).numpy()
-
+def calculate_variance(neurons):
+    # Use dictionary comprehension to compute variances for each layer
+    variances = {
+        layer: neurons.filter(pl.col('layer') == layer)['activation'].apply(lambda x: pl.Series(x).var())
+        for layer in neurons['layer'].unique()
+    }
+    return variances
 
 def calculate_distance_from_mean(variances):
     mean_variance = np.mean(variances)

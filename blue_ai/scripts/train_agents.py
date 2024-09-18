@@ -12,14 +12,43 @@ from tqdm import tqdm
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.agents.agent_classes import *
 
+activations = {}
 
-activations = []
-
-
-def create_hook(name):
+def create_hook(name, record_activations_flag, step_idx):
     def hook(module, input, output):
-        activations.append({"activations": pl.Series(output.detach().cpu().numpy()), "name": name})
+
+        if record_activations_flag[0]:
+            if name not in activations:
+                activations[name] = []  # Initialize list for this layer
+
+            # Store activation data in a structured way
+            step = step_idx[0]
+            output_np = output.detach().cpu().numpy()
+            layer_activations = pl.DataFrame({
+                "step": [step] * output_np.shape[0],
+                "layer": [name] * output_np.shape[0],
+                "activation": output_np.tolist()
+            })
+            activations[name].append(layer_activations)
     return hook
+
+
+def save_activations_to_parquet(filename):
+    if activations:
+        activation_dfs = []
+        for layer_name, dfs in activations.items():
+            activation_dfs.extend(dfs)
+
+        # Concatenate all DataFrames into a single DataFrame
+        activation_df = pl.concat(activation_dfs)
+
+        # Save to Parquet using the 'snappy' compression
+        activation_df.write_parquet(filename, compression='gzip')
+        activations.clear()
+        print(f"Activations successfully saved to {filename}")
+    else:
+        print("No activations to save.")
+
 
 def run_trial(agent: BaseAgent, env, steps=30, trial_id="", tbar=None, filename=None):
     state, _ = env.reset()
@@ -33,12 +62,13 @@ def run_trial(agent: BaseAgent, env, steps=30, trial_id="", tbar=None, filename=
 
     # Setup for storing activations
     hooks = []
+    record_activations_flag = [False]
+    step_idx = [0]
 
     for name, layer in agent.policy_net.named_modules():
         if isinstance(layer, torch.nn.Linear):
-            hook = layer.register_forward_hook(create_hook(name))
+            hook = layer.register_forward_hook(create_hook(name, record_activations_flag, step_idx))
             hooks.append(hook)
-            print(hex(id(hook)))
 
     # track agent positions to see if they get stuck
     pos: Dict[Tuple[int, int], int] = {}
@@ -49,14 +79,17 @@ def run_trial(agent: BaseAgent, env, steps=30, trial_id="", tbar=None, filename=
 
     for step in range(steps):
         steps_this_episode += 1
+        step_idx[0] = step
 
         # record position
         pos[env.unwrapped.agent_pos] = pos.get(env.unwrapped.agent_pos, 0) + 1
 
         # get & execute action
+        record_activations_flag[0] = True
         action = agent.select_action(state)
-        new_state, reward, done, truncated, _ = env.step(action)
+        record_activations_flag[0] = False
 
+        new_state, reward, done, truncated, _ = env.step(action)
         # use this experience to update agent
         loss = agent.update(state, action, reward, new_state, done=False)
 
@@ -89,25 +122,20 @@ def run_trial(agent: BaseAgent, env, steps=30, trial_id="", tbar=None, filename=
             "mean_synapse": next(agent.policy_net.parameters()).mean().item(),
             "num_pos_synapse": (next(agent.policy_net.parameters()) > 0).sum().item(),
 
-
         }
 
         if tbar is not None:
             tbar.update()
 
-
     results = pd.DataFrame(results)
 
-    if filename is not None:
-        activation_filename = DATA_PATH / f"{filename}_{trial_id}_activations.pkl"
-    else:
-        activation_filename = DATA_PATH / f"{agent.__class__.__name__}_{trial_id}_activations.pkl"
-    neuron_activations = pl.DataFrame(activations)
+    # Save activations periodically
+    activation_filename = DATA_PATH / f"{filename or agent.__class__.__name__}_{trial_id}_activations.parquet"
+    save_activations_to_parquet(activation_filename)
 
     # Cleanup hooks
     for hook in hooks:
         hook.remove()
-
 
     return results, agent, env
 
@@ -162,7 +190,7 @@ def trial(agent: BaseAgent, env, rep, trial_num, tbar=None, steps=30_000):
 
 
 def main():
-    iterations_per_trial = 50
+    iterations_per_trial = 30_000
     trial_num = 0
 
     agents: List[BaseAgent] = [
@@ -193,15 +221,22 @@ def main():
     #     for x in range(1, 6)
     # ]
 
+    tbar = tqdm(
+        total=(len(agents) * len(envs) * N_TRIALS * iterations_per_trial), initial=0
+    )
 
     for rep in range(N_TRIALS):
         for env in envs:
             for agent in agents:
+                tbar.set_postfix(
+                    agent=agent.__class__.__name__, env=env.__class__.__name__, rep=rep
+                )
                 trial(
                     deepcopy(agent),
                     env,
                     rep,
                     trial_num,
+                    tbar=tbar,
                     steps=iterations_per_trial,
                 )
                 trial_num += 1

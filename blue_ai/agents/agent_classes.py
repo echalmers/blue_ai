@@ -26,7 +26,7 @@ class BaseAgent(DQN):
         sync_frequency=25,
         gamma=0.9,
         epsilon=0.05,
-        batch_size=30_000,
+        batch_size=1,
         weight_decay=0.0,
         softmax_temperature=None,
         loss_fn: torch.nn.Module | None = None,
