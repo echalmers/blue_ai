@@ -8,6 +8,7 @@ from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.agents.dqn import DQN
 import pandas as pd
+from constants import DATA_PATH
 
 # Set the device to GPU if available, otherwise CPU
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -138,6 +139,7 @@ agent = DQN(
     weight_decay=weight_decay,  # we've been using 3e-3 for depression
 )
 
+results = []
 
 for trial in range(3):
 
@@ -152,7 +154,7 @@ for trial in range(3):
         # create the environment
         env = Image2VecWrapper(
             TransientGoals(
-                render_mode="none", transient_reward=0.25, termination_reward=1, img_filename='env5.png'
+                render_mode="none", transient_reward=0.25, termination_reward=1, img_filename='env1.png', n_transient_obstacles=6
             )
         )  # set render mode to "human" to see the agent moving around
 
@@ -181,9 +183,9 @@ for trial in range(3):
         # Reset the environment and get the initial state
         state = env.reset()[0]
 
-        agent.optimizer = torch.optim.Adam(
-            agent.policy_net.parameters(), lr=agent.lr, weight_decay=weight_decay
-        )
+        # agent.optimizer = torch.optim.Adam(
+        #     agent.policy_net.parameters(), lr=agent.lr, weight_decay=weight_decay
+        # )
 
         # Track state-action sequence
         state_action_sequence = []
@@ -221,6 +223,16 @@ for trial in range(3):
                 action=action,
             )
 
+            # record results
+            results.append({
+                'trial': trial,
+                'episode': episode,
+                'step': steps,
+                'cumulative_steps': len(results),
+                'reward': reward,
+                'expected_short': expected_reward_shortterm,
+                'expected_long': expected_reward_longterm,
+            })
 
             #weight_decay = expected_reward_difference_list[-1] * 0.01
 
@@ -280,7 +292,8 @@ for trial in range(3):
         ax.set_xlabel('Episode')
         ax.set_ylabel('Weight Decay')
 
-
+pd.DataFrame(results).to_csv(DATA_PATH / 'stress.csv', index=False)
+print('done')
 
 # try to adjust to get the bar that shows the percentage and current episode
 #tbar = tqdm(
