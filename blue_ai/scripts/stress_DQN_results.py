@@ -10,6 +10,8 @@ results['cumulative_reward'] = results['reward'].cumsum()
 
 plt.subplot(2,1,1)
 plt.plot(results['cumulative_reward'])
+plt.ylabel('cumulative reward')
+plt.xlabel('step #')
 
 plt.subplot(2,1,2)
 plt.plot(results['longterm_avg'])
