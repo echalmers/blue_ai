@@ -8,6 +8,7 @@ from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.agents.dqn import DQN
 import pandas as pd
+from constants import DATA_PATH
 
 # Set the device to GPU if available, otherwise CPU
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -138,6 +139,11 @@ agent = DQN(
     weight_decay=weight_decay,  # we've been using 3e-3 for depression
 )
 
+# Initialize reward variables - do this outside the trial loop, so they don't get reset to 0 each time
+total_reward = 0
+expected_reward_longterm = 0
+expected_reward_shortterm = 0
+results = []
 
 for trial in range(3):
 
@@ -156,11 +162,6 @@ for trial in range(3):
             )
         )  # set render mode to "human" to see the agent moving around
 
-
-    # Initialize reward variables
-    total_reward = 0
-    expected_reward_longterm = 0
-    expected_reward_shortterm = 0
 
     # Initializing lists to store the rewards
     average_reward = []
@@ -181,9 +182,9 @@ for trial in range(3):
         # Reset the environment and get the initial state
         state = env.reset()[0]
 
-        agent.optimizer = torch.optim.Adam(
-            agent.policy_net.parameters(), lr=agent.lr, weight_decay=weight_decay
-        )
+        # agent.optimizer = torch.optim.Adam(
+        #     agent.policy_net.parameters(), lr=agent.lr, weight_decay=weight_decay
+        # )
 
         # Track state-action sequence
         state_action_sequence = []
@@ -208,8 +209,8 @@ for trial in range(3):
             #alpha_longterm = max(0.75, 1 * 0.95)
             #expected_reward_longterm = expected_reward_longterm * alpha_longterm + reward * (1 - alpha_longterm)
 
-            expected_reward_longterm = expected_reward_longterm * 0.95 + reward * 0.05
-            expected_reward_shortterm = expected_reward_shortterm * 0.75 + reward * 0.25
+            expected_reward_longterm = expected_reward_longterm * 0.9999 + reward * 0.0001
+            expected_reward_shortterm = expected_reward_shortterm * 0.999 + reward * 0.001
 
             # Update the Q-network with the observed transition
             #update_network(network, state, action, reward, next_state, gamma, weight_decay)
@@ -221,7 +222,6 @@ for trial in range(3):
                 action=action,
             )
 
-
             #weight_decay = expected_reward_difference_list[-1] * 0.01
 
             steps += 1
@@ -229,58 +229,69 @@ for trial in range(3):
             # Move to the next state
             state = next_state
 
-        # Update epsilon
-        epsilon = max(epsilon * 0.99, 0.01)
+            # record data
+            results.append({
+                'trial': trial,
+                'episode': episode,
+                'step': steps,
+                'cumulative_steps': len(results),
+                'reward': reward,
+                'longterm_avg': expected_reward_longterm,
+                'shortterm_avg': expected_reward_shortterm,
+            })
 
-        # Track cumulative and average rewards
-        total_reward_list.append(total_reward)
-        average_reward.append(total_reward / (episode + 1))
-        expected_reward_longterm_list.append(expected_reward_longterm)
-        expected_reward_shortterm_list.append(expected_reward_shortterm)
-        expected_reward_difference_list.append(expected_reward_longterm - expected_reward_shortterm)
-
-
-        weight_decay += expected_reward_difference_list[-1] * 0.01
-        weight_decay = max(0, weight_decay)
-        weight_decay_list.append(weight_decay)
-
-
-
-        steps_list.append(steps)
+        # # Update epsilon
+        # epsilon = max(epsilon * 0.99, 0.01)
+        #
+        # # Track cumulative and average rewards
+        # total_reward_list.append(total_reward)
+        # average_reward.append(total_reward / (episode + 1))
+        # expected_reward_longterm_list.append(expected_reward_longterm)
+        # expected_reward_shortterm_list.append(expected_reward_shortterm)
+        # expected_reward_difference_list.append(expected_reward_longterm - expected_reward_shortterm)
+        #
+        #
+        # weight_decay += expected_reward_difference_list[-1] * 0.01
+        # weight_decay = max(0, weight_decay)
+        # weight_decay_list.append(weight_decay)
+        #
+        #
+        #
+        # steps_list.append(steps)
 
         if episode % 100 == 0:
             print(f"episode {episode}")
 
-    # Calculate average reward
-    average_expected_reward = sum(expected_reward_difference_list) / len(expected_reward_difference_list)
-
-    # Smooth reward lists using rolling mean
-    expected_reward_longterm_list = pd.Series(expected_reward_longterm_list).rolling(window=500).mean()
-    expected_reward_shortterm_list = pd.Series(expected_reward_shortterm_list).rolling(window=500).mean()
-    expected_reward_difference_list = pd.Series(expected_reward_difference_list).rolling(window=500).mean()
-    weight_decay_list = pd.Series(weight_decay_list).rolling(window=500).mean()
-
-    # Print the total and average rewards
-    print(f"Total reward: {total_reward}")
-    print(f"Average reward: {average_reward[-1]}")
-    print(f"Average Expected Reward {average_expected_reward}")
-    print(f"Average steps {sum(steps_list) / len(steps_list)} ")
-    if trial == 2:
-        print(f"Weight decay {weight_decay}")
-
-
-    # Plot the results over episodes of the total, average and expected reward
-    plot_results(total_reward_list, average_reward, expected_reward_shortterm_list, expected_reward_longterm_list,
-                 expected_reward_difference_list, trial)
-
-    if trial == 1:
-        fig, ax = plt.subplots(nrows=1, ncols=1)
-        ax.plot(weight_decay_list)
-        ax.set_title('Weight Decay')
-        ax.set_xlabel('Episode')
-        ax.set_ylabel('Weight Decay')
+    # # Calculate average reward
+    # average_expected_reward = sum(expected_reward_difference_list) / len(expected_reward_difference_list)
+    #
+    # # Smooth reward lists using rolling mean
+    # expected_reward_longterm_list = pd.Series(expected_reward_longterm_list).rolling(window=500).mean()
+    # expected_reward_shortterm_list = pd.Series(expected_reward_shortterm_list).rolling(window=500).mean()
+    # expected_reward_difference_list = pd.Series(expected_reward_difference_list).rolling(window=500).mean()
+    # weight_decay_list = pd.Series(weight_decay_list).rolling(window=500).mean()
+    #
+    # # Print the total and average rewards
+    # print(f"Total reward: {total_reward}")
+    # print(f"Average reward: {average_reward[-1]}")
+    # print(f"Average Expected Reward {average_expected_reward}")
+    # print(f"Average steps {sum(steps_list) / len(steps_list)} ")
+    # if trial == 2:
+    #     print(f"Weight decay {weight_decay}")
 
 
+    # # Plot the results over episodes of the total, average and expected reward
+    # plot_results(total_reward_list, average_reward, expected_reward_shortterm_list, expected_reward_longterm_list,
+    #              expected_reward_difference_list, trial)
+
+    # if trial == 1:
+    #     fig, ax = plt.subplots(nrows=1, ncols=1)
+    #     ax.plot(weight_decay_list)
+    #     ax.set_title('Weight Decay')
+    #     ax.set_xlabel('Episode')
+    #     ax.set_ylabel('Weight Decay')
+
+pd.DataFrame(results).to_csv(DATA_PATH / 'stress.csv', index=False)
 
 # try to adjust to get the bar that shows the percentage and current episode
 #tbar = tqdm(
