@@ -76,17 +76,11 @@ def main():
 
     for i in range(9):
         for stage in stages:
-            filename = DATA_PATH / f'rehabilitate_{stage}_{i}_activations.parquet'
+            filename = DATA_PATH / f'long_depression_{stage}_{i}_activations.parquet'
             datafile = pl.read_parquet(filename)
             slices = len(datafile)//10_000
             sliced_entropies = pl.DataFrame(calculate_sliced_entropies(datafile, slices=slices))
-            sliced_entropies.write_parquet(DATA_PATH / f"{stage}_{i}_sliced_entropies.parquet")
-
-    for stage in stages:
-        rehab_paths = DATA_PATH.glob(f'rehabilitate_{stage}_*_activations.parquet')
-        entropies = [calculate_ngram_entropy(pl.read_parquet(rehab_stage)) for rehab_stage in rehab_paths]
-        entropy_df = pl.DataFrame(entropies)
-        entropy_df.write_parquet(DATA_PATH / f"{stage}_entropies.parquet")
+            sliced_entropies.write_parquet(DATA_PATH / f"long_depression_{stage}_{i}_sliced_entropies.parquet")
 
 
 if __name__ == '__main__':

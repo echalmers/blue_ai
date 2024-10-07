@@ -1,3 +1,4 @@
+import math
 from numbers import Number
 import copy
 import random
@@ -71,6 +72,68 @@ class TransitionMemory:
         )
 
 
+class SpinelossLayer (nn.Module):
+    def __init__(self, in_features, out_features, dropout_rate=0.0):
+        super(SpinelossLayer, self).__init__()
+        self.input_size = in_features
+        self.output_size = out_features
+        self.dropout_rate = dropout_rate
+        self.weights = nn.Parameter(torch.randn(out_features, in_features))
+        self.bias = nn.Parameter(torch.Tensor(out_features))
+        self.mask = None
+        self.binary_mask = None
+        self.noise = False
+        self.noise_max = None
+        self.noise_min = None
+
+        # initialize weights and biases
+        nn.init.kaiming_uniform_(self.weights, a=math.sqrt(5))  # weight init
+        fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.weights)
+        bound = 1 / math.sqrt(fan_in)
+        nn.init.uniform_(self.bias, -bound, bound)  # bias init
+
+    def forward(self, x):
+
+        if self.mask is None:
+            self.set_mask()
+
+        #init binary_mask from percentage mask
+        self.binary_mask = (self.mask > self.dropout_rate).float()
+
+        #add noise to the weights themselves
+        if self.noise:
+            random_noise_scale = torch.rand_like(self.weights) * (self.noise_max - self.noise_min) + self.noise_min
+            weight_noise = torch.randn_like(self.weights) * random_noise_scale
+            noisy_weights = self.weights + weight_noise
+            masked_weights = noisy_weights * self.binary_mask
+        else:
+            masked_weights = self.weights * self.binary_mask
+
+        x = x.reshape(x.size(0), -1)
+
+        return torch.nn.functional.linear(x, masked_weights, self.bias)
+
+    def set_mask(self):
+        # with torch.no_grad():
+        self.mask = torch.rand_like(self.weights).detach()
+
+    def set_dropout_rate(self, dropout_rate):
+        self.dropout_rate = dropout_rate
+
+    def set_noise_scale(self, noise_min, noise_max):
+        self.noise_min = noise_min
+        self.noise_max = noise_max
+
+    def add_noise(self):
+        self.noise = True
+    def remove_noise(self):
+        self.noise = False
+
+
+
+
+
+
 class DQN:
     """
     A deep Q network that optionally implements the rule from our paper:
@@ -86,6 +149,8 @@ class DQN:
         input_shape,
         batch_size,
         replay_buffer_size,
+        hidden_size=10,
+        output_size=3,
         update_frequency=10,
         lr=1e-3,
         sync_frequency=5,

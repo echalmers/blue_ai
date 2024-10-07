@@ -1,4 +1,4 @@
-from blue_ai.agents.dqn import DQN
+from blue_ai.agents.dqn import DQN, SpinelossLayer
 from torch import nn
 import numpy as np
 import torch
@@ -26,7 +26,7 @@ class BaseAgent(DQN):
         sync_frequency=25,
         gamma=0.9,
         epsilon=0.05,
-        batch_size=1,
+        batch_size=1500,
         weight_decay=0.0,
         softmax_temperature=None,
         loss_fn: torch.nn.Module | None = None,
@@ -194,3 +194,17 @@ class ReluLossActivation(BaseAgent):
         super().__init__(loss_fn=custom_loss_function, network=network)
 
         custom_loss_function.policy_hook = self.policy_net
+
+
+class WeightDropAgent(BaseAgent):
+    display_name = "Weight Dropout as spineloss "
+
+    def __init__(self, p=0.0):
+        network = nn.Sequential(
+            nn.Flatten(1, -1),
+            SpinelossLayer(100, 10, dropout_rate=p),
+            nn.ReLU(),
+            nn.Linear(10, 3)
+        )
+
+        super().__init__(network=network)
