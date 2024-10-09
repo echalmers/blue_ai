@@ -21,7 +21,7 @@ if __name__ == "__main__":
     agent = DQN(
         network=network,
         input_shape=(4, 5, 5),
-        replay_buffer_size=10000,
+        replay_buffer_size=100000,
         update_frequency=5,
         lr=0.01,
         sync_frequency=25,
@@ -81,8 +81,8 @@ if __name__ == "__main__":
         trial_id='n/a',
         agent=agent,
         env=env,
-        steps=50_000,
-        tbar=tqdm(total=50_000),
+        steps=60_000,
+        tbar=tqdm(total=60_000),
         save_activations=False,
     )
     results3['cumulative_reward'] += results2['cumulative_reward'].values[-1]
