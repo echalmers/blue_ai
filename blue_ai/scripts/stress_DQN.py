@@ -113,9 +113,10 @@ def plot_results(total_reward_list,
 
 # Training
 # Set general parameters
-gamma = 0.99
-epsilon = 0.001
+gamma = 0.9
+epsilon = 0.05
 weight_decay = 0
+episodes_per_trial = [500, 200, 400]
 
 # Initialize network
 #network = QNetwork(state_dim=100, action_dim=3)
@@ -132,7 +133,7 @@ agent = DQN(
     update_frequency=5,
     lr=0.01,
     sync_frequency=25,
-    gamma=0.99,  # discount factor
+    gamma=gamma,  # discount factor
     epsilon=epsilon,  # random exploration rate
     batch_size=1500,
     weight_decay=weight_decay,  # we've been using 3e-3 for depression
@@ -140,6 +141,7 @@ agent = DQN(
 
 expected_reward_longterm = 0
 expected_reward_shortterm = 0
+diff = 0
 # Initializing lists to store the rewards
 expected_reward_longterm_list = []
 expected_reward_shortterm_list = []
@@ -163,7 +165,10 @@ for trial in range(3):
         # create the environment
         env = Image2VecWrapper(
             TransientGoals(
-                render_mode="none", transient_reward=0.25, termination_reward=1, n_transient_obstacles=5
+                # trying a few different "bad" environments
+                # render_mode="none", transient_reward=0.1, termination_reward=0.1, n_transient_obstacles=1, n_transient_goals=3
+                render_mode="none", transient_reward=0.25, termination_reward=1, n_transient_obstacles=6, n_transient_goals=0
+                # render_mode="none", transient_reward=0.0, termination_reward=0.1, n_transient_obstacles=6, n_transient_goals=3
             )
         )  # set render mode to "human" to see the agent moving around
 
@@ -171,18 +176,12 @@ for trial in range(3):
     # Initialize reward variables
 
 
-
-
     steps_list = []
 
     # Training loop
-    for episode in range(1500):
+    for episode in range(episodes_per_trial[trial]):
         # Reset the environment and get the initial state
         state = env.reset()[0]
-
-        agent.optimizer = torch.optim.Adam(
-            agent.policy_net.parameters(), lr=agent.lr, weight_decay=weight_decay
-        )
 
         # Track state-action sequence
         state_action_sequence = []
@@ -190,9 +189,9 @@ for trial in range(3):
         steps = 0
 
         # Add a maximum of steps within an episode to be faster
-        terminated = False
+        terminated = truncated = False
 
-        while not terminated and steps < 1000:
+        while not (terminated or truncated) and steps < 200:
             # Choose action using epsilon-greedy strategy
             #action = get_action(network, state, epsilon)
             action = agent.select_action(state)
@@ -200,7 +199,7 @@ for trial in range(3):
             state_action_sequence.append((state, action))
 
             # Take the action and observe the next state and reward
-            next_state, reward, terminated, _, _ = env.step(action)
+            next_state, reward, terminated, truncated, _ = env.step(action)
 
             # Accumulate the total reward and memory
             total_reward += reward
@@ -235,17 +234,18 @@ for trial in range(3):
 
         expected_reward_longterm_list.append(expected_reward_longterm)
         expected_reward_shortterm_list.append(expected_reward_shortterm)
-        expected_reward_difference_list.append(expected_reward_longterm - expected_reward_shortterm)
+        diff = 0.5 * diff + 0.5 * (expected_reward_longterm - expected_reward_shortterm)
+        expected_reward_difference_list.append(diff)
 
         # Track cumulative and average rewards
         total_reward_list.append(total_reward)
         average_reward.append(total_reward / (episode + 1))
 
-
-        weight_decay += expected_reward_difference_list[-1] * 0.01
+        weight_decay += expected_reward_difference_list[-1] * 0.005
         weight_decay = max(0, weight_decay)
         weight_decay_list.append(weight_decay)
-
+        if weight_decay != agent.optimizer.param_groups[0]['weight_decay']:
+            agent.optimizer.param_groups[0]['weight_decay'] = weight_decay  # this seems to be faster than re-initializing the optimizer
 
 
         steps_list.append(steps)
@@ -265,25 +265,29 @@ for trial in range(3):
     print(f"Average steps {sum(steps_list) / len(steps_list)} ")
 
 # Smooth reward lists using rolling mean
-expected_reward_longterm_list = pd.Series(expected_reward_longterm_list).rolling(window=100).mean()
-expected_reward_shortterm_list = pd.Series(expected_reward_shortterm_list).rolling(window=100).mean()
-weight_decay_list = pd.Series(weight_decay_list).rolling(window=100).mean()
+# expected_reward_longterm_list = pd.Series(expected_reward_longterm_list).rolling(window=100).mean()
+# expected_reward_shortterm_list = pd.Series(expected_reward_shortterm_list).rolling(window=100).mean()
+# weight_decay_list = pd.Series(weight_decay_list).rolling(window=100).mean()
 
 fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(10, 8))
 axes[0].plot(total_reward_list, color='orange')
 axes[1].plot(expected_reward_shortterm_list, color='red', label='shortterm')
 axes[1].plot(expected_reward_longterm_list, color='green', label='longterm')
+axes[1].plot(expected_reward_difference_list, color='black', label='difference')
 axes[2].plot(weight_decay_list, color='purple')
 axes[0].set_title('Cumulative Reward')
 axes[0].set(xlabel='Episode', ylabel='Cumulative Reward')
-axes[0].axvspan(1500, 3000, color='purple', alpha=0.15)
+axes[0].axvspan(episodes_per_trial[0], sum(episodes_per_trial[:2]), color='purple', alpha=0.15)
 axes[1].set_title('Expected Reward')
 axes[1].set(xlabel='Episode', ylabel='Expected Reward')
-axes[1].axvspan(1500, 3000, color='purple', alpha=0.15)
+axes[1].axvspan(episodes_per_trial[0], sum(episodes_per_trial[:2]), color='purple', alpha=0.15)
 axes[1].legend()
 axes[2].set_title('Weight Decay')
 axes[2].set(xlabel='Episode', ylabel='Weight Decay')
-axes[2].axvspan(1500, 3000, color='purple', alpha=0.15)
+axes[2].axvspan(episodes_per_trial[0], sum(episodes_per_trial[:2]), color='purple', alpha=0.15)
+axes[0].grid()
+axes[1].grid()
+axes[2].grid()
 fig.tight_layout()
 plt.show()
 
