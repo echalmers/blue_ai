@@ -47,7 +47,7 @@ def save_activations_to_parquet(filename):
         print("No activations to save.")
 
 
-def run_trial(agent: BaseAgent, env, steps=30, trial_id="", tbar=None, filename=None):
+def run_trial(agent: BaseAgent, env, steps=30, trial_id="", tbar=None, filename=None, save_activations=True):
     state, _ = env.reset()
     # setup variables to track progress
     steps_this_episode = 0
@@ -127,8 +127,9 @@ def run_trial(agent: BaseAgent, env, steps=30, trial_id="", tbar=None, filename=
     results = pd.DataFrame(results)
 
     # Save activations periodically
-    activation_filename = DATA_PATH / f"{filename or agent.__class__.__name__}_{trial_id}_activations.parquet"
-    save_activations_to_parquet(activation_filename)
+    if save_activations:
+        activation_filename = DATA_PATH / f"{filename or agent.__class__.__name__}_{trial_id}_activations.parquet"
+        save_activations_to_parquet(activation_filename)
 
     # Cleanup hooks
     for hook in hooks:
