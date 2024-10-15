@@ -13,6 +13,7 @@ from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.agents.agent_classes import *
 
 activations = {}
+weights_data = []
 
 def create_hook(name, record_activations_flag, step_idx):
     def hook(module, input, output):
@@ -63,7 +64,7 @@ def run_trial(agent: BaseAgent, env, steps=30, trial_id="", tbar=None, filename=
     step_idx = [0]
 
     for name, layer in agent.policy_net.named_modules():
-        if isinstance(layer, torch.nn.Linear):
+        if isinstance(layer, torch.nn.Linear) or isinstance(layer, SpinelossLayer):
             hook = layer.register_forward_hook(create_hook(name, record_activations_flag, step_idx))
             hooks.append(hook)
 
@@ -121,8 +122,31 @@ def run_trial(agent: BaseAgent, env, steps=30, trial_id="", tbar=None, filename=
 
         }
 
+        if step % 500 == 0:
+            state_dict = agent.policy_net.state_dict()
+
+            # Create a dictionary entry for this step with all layer weights
+            step_data = {"step": step}
+            for layer_name, weights in state_dict.items():
+                step_data[layer_name] = weights.cpu().numpy().flatten().tolist()  # Store as a list
+
+            # Append the step data to the list
+            weights_data.append(step_data)
+
         if tbar is not None:
             tbar.update()
+
+
+    #save weights
+    df = pl.DataFrame(weights_data)
+    weights_file = DATA_PATH / f"{filename or agent.__class__.__name__}_{trial_id}_weights.parquet"
+    df.write_parquet(weights_file)
+    print(f"weights saved as: {weights_file} ")
+
+    #save model
+    model_filename = DATA_PATH / f"{filename or agent.__class__.__name__}_{trial_id}_model.pth"
+    torch.save(agent.policy_net.state_dict(), model_filename)
+
 
     results = pd.DataFrame(results)
 
@@ -134,6 +158,8 @@ def run_trial(agent: BaseAgent, env, steps=30, trial_id="", tbar=None, filename=
     # Cleanup hooks
     for hook in hooks:
         hook.remove()
+
+
 
     return results, agent, env
 

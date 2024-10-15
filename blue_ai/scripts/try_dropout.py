@@ -21,7 +21,7 @@ if __name__ == "__main__":
     agent = DQN(
         network=network,
         input_shape=(4, 5, 5),
-        replay_buffer_size=100000,
+        replay_buffer_size=100_000,
         update_frequency=5,
         lr=0.01,
         sync_frequency=25,

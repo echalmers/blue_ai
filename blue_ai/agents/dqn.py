@@ -100,7 +100,15 @@ class SpinelossLayer (nn.Module):
         #init binary_mask from percentage mask
         self.binary_mask = (self.mask > self.dropout_rate).float()
 
-        #add noise to the weights themselves
+        # masked_weights = self.weights * self.binary_mask
+        #
+        # if self.noise:
+        #     random_noise_scale = torch.rand_like(self.weights) * (self.noise_max - self.noise_min) + self.noise_min
+        #     weight_noise = torch.randn_like(self.weights) * random_noise_scale
+        #     masked_weights = masked_weights + weight_noise
+        #
+
+        # #add noise to the weights themselves
         if self.noise:
             random_noise_scale = torch.rand_like(self.weights) * (self.noise_max - self.noise_min) + self.noise_min
             weight_noise = torch.randn_like(self.weights) * random_noise_scale

@@ -8,17 +8,18 @@ from blue_ai.scripts.constants import DATA_PATH
 
 
 def main():
-
+    id = "4"
     stages = ["healthy", "depressed", "treated"]
     all_trials_data = []
 
     for i in range(9):
-        trial_data = pl.DataFrame()  # Initialize an empty DataFrame for each trial
+        trial_data = pl.DataFrame()
         stages_length = []
         for stage in stages:
-            stage_data = pl.read_parquet(DATA_PATH / f"long_depression_{stage}_{i}_sliced_entropies.parquet")[["1"]]
-            num_rows = stage_data.shape[0]
-            stages_length.append(num_rows)
+            stage_data = pl.read_parquet(DATA_PATH / f"{id}_{stage}_{i}_sliced_entropies.parquet")
+            breakpoint()
+            # num_rows = stage_data.shape[0]
+            # stages_length.append(num_rows)
 
             if trial_data.is_empty():
                 trial_data = stage_data
@@ -33,14 +34,14 @@ def main():
         ])
 
         all_trials_data.append(trial_data)
-        cumulative_time_points = [sum(stages_length[:j+1]) for j in range(len(stages_length))]
+        # cumulative_time_points = [sum(stages_length[:j+1]) for j in range(len(stages_length))]
 
     combined_data = pl.concat(all_trials_data)
 
     sns.lineplot(data=combined_data, x="time point", y="1", errorbar="sd", estimator="mean")
 
-    for i, time_point in enumerate(cumulative_time_points[:-1]):
-        plt.axvline(x=time_point, color='red', linestyle='--')
+    # for i, time_point in enumerate(cumulative_time_points[:-1]):
+    #     plt.axvline(x=time_point, color='red', linestyle='--')
 
     plt.title("connectivity entropy long depression")
     plt.xlabel("Time Point")

@@ -20,7 +20,7 @@ class BaseAgent(DQN):
         self,
         network: nn.Sequential | None = None,
         input_shape=(4, 5, 5),
-        replay_buffer_size=10000,
+        replay_buffer_size=100_000,
         update_frequency=5,
         lr=0.01,
         sync_frequency=25,
@@ -203,7 +203,7 @@ class WeightDropAgent(BaseAgent):
         network = nn.Sequential(
             nn.Flatten(1, -1),
             SpinelossLayer(100, 10, dropout_rate=p),
-            nn.ReLU(),
+            nn.Sigmoid(),
             nn.Linear(10, 3)
         )
 
