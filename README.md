@@ -1,4 +1,5 @@
 # BLUE AI
+Authors: Eric Chalmers, Jesse Viehweger
 
 See [Docs](./docs/index.md)
 
