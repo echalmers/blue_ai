@@ -61,7 +61,6 @@ def calculate_sliced_entropies(df, slices):
         layer_neurons = df.filter(pl.col('layer') == layer)
         entropies[layer] = []
         rows_per_slice = len(layer_neurons) // slices
-        breakpoint()
         for slice in range(slices):
             start_index = slice * rows_per_slice
             end_index = None if slice == slices - 1 else (slice + 1) * rows_per_slice
@@ -74,16 +73,19 @@ def calculate_sliced_entropies(df, slices):
 
 def main():
     stages = ["healthy", "depressed", "entropic", "treated"]
-    id = "4"
-
-    for i in range(9):
+    id = "3"
+    slice_sizes = []
+    for i in range(0, 5):
         for stage in stages:
-            filename = DATA_PATH / f'{id}_{stage}_{i}_{i}_activations.parquet'
-            datafile = pl.read_parquet(filename)
-            slices = len(datafile)//5_000
-            sliced_entropies = pl.DataFrame(calculate_sliced_entropies(datafile, slices=slices))
+            filename = DATA_PATH / f'{id}_{stage}_{i}_activations.parquet'
+            stage_data = pl.read_parquet(filename)
+            layer_amount = len(stage_data['layer'].unique())
+            slices = len(stage_data)//(4_500 * layer_amount)
+            print(f"{stage}: {len(stage_data)}, {slices} slices")
+            slice_sizes.append(slices)
+            sliced_entropies = pl.DataFrame(calculate_sliced_entropies(stage_data, slices=slices))
             sliced_entropies.write_parquet(DATA_PATH / f"{id}_{stage}_{i}_sliced_entropies.parquet")
 
-
+    print(slice_sizes)
 if __name__ == '__main__':
     main()

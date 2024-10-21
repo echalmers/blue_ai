@@ -25,13 +25,13 @@ def save_rehab_trial(results, agent, env, weight_dropout, noise_range, phase_dur
 
 def main():
 
-    id = "5"
-    initial_dropout = 0.2
-    min_noise = 0.7
+    id = "4"
+    initial_dropout = 0.1
+    min_noise = 0.8
     max_noise = 1.5
-    phase_durations = (30_000, 20_000, 10_000, 40_000)
+    phase_durations = (30_000, 20_000, 15_000, 40_000)
 
-    for rep in range(2, 10):
+    for rep in range(5, 10):
 
         #healthy phase
         results1, agent, env = run_trial(
@@ -78,10 +78,11 @@ def main():
             results = pd.concat([results, results3], ignore_index=True)
 
 
-        #rehab-phase
-        dropout = initial_dropout
-        repetitions = int(phase_durations[3]/10_000)
-
+        # #rehab-phase
+        # dropout = initial_dropout
+        # repetitions = int(phase_durations[3]/10_000)
+        repetitions = 1
+        dropout = 0
         for i in range(repetitions):
             if dropout > 0:
                 dropout -= 0.1
@@ -100,7 +101,7 @@ def main():
                 trial_id=rep,
                 agent=agent,
                 env=env,
-                steps=10_000,
+                steps=phase_durations[3],
                 filename=f"{id}_treated"
             )
             results = pd.concat([results, results3], ignore_index=True)
@@ -119,15 +120,6 @@ def main():
             phase_durations=phase_durations,
             filename=DATA_PATH / f"rehab_nr_{id}_trial_{rep}.pkl",
             )
-
-    # plt.plot(results["rolling_avg_reward"])
-    # plt.suptitle("rolling average of reward per step")
-    # plt.title(f"dropout: {initial_dropout}, noise: {min_noise, max_noise}")
-    # plt.grid()
-
-
-    # sns.lineplot(data=rolling_rewards, x="step", y="reward", errorbar="sd", estimator="mean")
-    # plt.show()
 
 
 if __name__ == "__main__":

@@ -1,10 +1,9 @@
-from glob import glob
 from scipy.stats import entropy
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import polars as pl
-
+import seaborn as sns
 from blue_ai.scripts.constants import DATA_PATH
 
 
@@ -52,7 +51,7 @@ def calculate_variance_entropy(data, layer, num_bins=10):
     return entropy(histograms[layer]["probabilities"], base=2)
 
 
-def plot_variance_distributions(data, layer_of_interest, agent_type):
+def plot_variance_distributions(data, layer_of_interest, id):
     var = calculate_variance(data)
     distances = calculate_distance_from_mean(var)
 
@@ -60,7 +59,7 @@ def plot_variance_distributions(data, layer_of_interest, agent_type):
 
     plt.subplot(1, 2, 1)
     plt.hist(distances["distance_from_mean"], bins=10, edgecolor='k', alpha=0.7)
-    plt.title(f'Normalized Variance Distribution for {agent_type} agent Layer {layer_of_interest}')
+    plt.title(f'Normalized Variance Distribution for {id} agent Layer {layer_of_interest}')
     plt.xlabel('Distance from Mean')
     plt.ylabel('Frequency')
 
@@ -68,12 +67,12 @@ def plot_variance_distributions(data, layer_of_interest, agent_type):
     plt.show()
 
 
-def plot_variance_over_time(data, layer_of_interest, agent_type):
+def plot_variance_over_time(data, layer_of_interest, id):
     var = calculate_variance(data)
     distances = calculate_distance_from_mean(var)
     distances = pd.Series(distances["distance_from_mean"]).rolling(7000).mean()
     fig, ax = plt.subplots(figsize=(10, 6))
-    ax.plot(distances, label=f'{agent_type}', color='blue')
+    ax.plot(distances, label=f'{id}', color='blue')
     ax.set_title(f'Normalized Variance Over Time of Layer {layer_of_interest}')
     ax.set_xlabel('Time Step')
     ax.set_ylabel('Distance from Mean')
@@ -82,19 +81,23 @@ def plot_variance_over_time(data, layer_of_interest, agent_type):
 
 
 def main():
-    stages = ["healthy", "depressed", "treated"]
-    all_entropy = []
+    id = "3"
+    stages = ["healthy", "depressed", "entropic", "treated"]
+    all_entropy = pd.DataFrame()
     for stage in stages:
         stage_entropy = []
-        for i in range(9):
-            filename = DATA_PATH / f'rehabilitate_{stage}_{i}_activations.parquet'
+        for i in range(5):
+            filename = DATA_PATH / f'{id}_{stage}_{i}_activations.parquet'
             datafile = pl.read_parquet(filename)
             stage_entropy.append(calculate_variance_entropy(datafile, "1"))
-        all_entropy.append(stage_entropy)
+        all_entropy[stage] = stage_entropy
 
-    data = pl.read_parquet(DATA_PATH/"rehabilitate_treated_7_activations.parquet")
-    # plot_variance_distributions(data, "1", "depressed")
-    plot_variance_over_time(data, "1", "depressed")
+    # plot_variance_distributions(data, "1", id)
+    # plot_variance_over_time(data, "1", id)
+    plt.style.use('seaborn-v0_8')
+    sns.boxplot(data=all_entropy)
+    plt.title(f"variance entropy for trial nr. {id}")
+    plt.show()
 
 
 

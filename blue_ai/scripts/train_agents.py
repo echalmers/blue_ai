@@ -13,7 +13,6 @@ from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.agents.agent_classes import *
 
 activations = {}
-weights_data = []
 
 def create_hook(name, record_activations_flag, step_idx):
     def hook(module, input, output):
@@ -49,6 +48,7 @@ def save_activations_to_parquet(filename):
 
 
 def run_trial(agent: BaseAgent, env, steps=30, trial_id="", tbar=None, filename=None, save_activations=True):
+    weights_data = []
     state, _ = env.reset()
     # setup variables to track progress
     steps_this_episode = 0
@@ -122,7 +122,7 @@ def run_trial(agent: BaseAgent, env, steps=30, trial_id="", tbar=None, filename=
 
         }
 
-        if step % 500 == 0:
+        if step % 200 == 0:
             state_dict = agent.policy_net.state_dict()
 
             # Create a dictionary entry for this step with all layer weights
@@ -135,7 +135,6 @@ def run_trial(agent: BaseAgent, env, steps=30, trial_id="", tbar=None, filename=
 
         if tbar is not None:
             tbar.update()
-
 
     #save weights
     df = pl.DataFrame(weights_data)
