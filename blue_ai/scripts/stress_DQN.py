@@ -20,7 +20,7 @@ gamma = 0.9
 epsilon = 0.05
 learning_rate = 0.01
 weight_decay = 0
-episodes_per_trial = [500, 500, 500]
+episodes_per_trial = [500, 200, 500]
 
 weight_decay_multiplier = 0.0005
 
