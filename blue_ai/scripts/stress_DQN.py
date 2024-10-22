@@ -20,7 +20,7 @@ gamma = 0.9
 epsilon = 0.01
 learning_rate = 0.01
 weight_decay = 0
-episodes_per_trial = [500, 10, 500]  # set middle section to 200 for permanent depression
+episodes_per_trial = [500, 10, 500]  # set middle section to 50 for permanent depression
 
 weight_decay_multiplier = 0.005
 
