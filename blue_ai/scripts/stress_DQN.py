@@ -17,12 +17,12 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Set general parameters
 gamma = 0.9
-epsilon = 0.05
+epsilon = 0.01
 learning_rate = 0.01
 weight_decay = 0
-episodes_per_trial = [500, 200, 500]
+episodes_per_trial = [500, 10, 500]  # set middle section to 200 for permanent depression
 
-weight_decay_multiplier = 0.0005
+weight_decay_multiplier = 0.005
 
 # Initialize reward variables
 total_reward = 0
@@ -66,7 +66,7 @@ for trial in range(3):
         # create the environment
         env = Image2VecWrapper(
             TransientGoals(
-                render_mode="none", transient_reward=0.25, termination_reward=1, transient_locations=[(3, 3), (5, 4)])
+                render_mode="none", transient_reward=0.25, termination_reward=1)  #, transient_locations=[(3, 3), (5, 4)])
         )  # set render mode to "human" to see the agent moving around
     else:
         # create the environment
@@ -76,7 +76,8 @@ for trial in range(3):
                 transient_reward=0.25,
                 termination_reward=1,
                 n_transient_obstacles=10,
-                transient_locations=[(3, 3), (5, 4)]
+                n_transient_goals=0
+                # transient_locations=[(3, 3), (5, 4)]
             )
         )  # set render mode to "human" to see the agent moving around
 
@@ -101,22 +102,22 @@ for trial in range(3):
 
 
 
-        if len(weight_decay_list) > 1: #and trial != 0:
-            #if (weight_decay_list[-1] > weight_decay_list[-2] and episode % 15 == 0):
-            if (trial == 1 and episode % 15 == 0):
-                reward_responsiveness_shortterm = reward_responsiveness_shortterm - 0.00001
-                reward_responsiveness_longterm = reward_responsiveness_longterm - 0.000001
-                learning_rate = learning_rate - 0.002
-
-            elif (trial == 2 and episode % 15 == 0):
-            #elif (weight_decay_list[-1] < weight_decay_list[-2] and episode % 15 == 0):
-                reward_responsiveness_shortterm = reward_responsiveness_shortterm + 0.00001
-                #reward_responsiveness_shortterm = min(reward_responsiveness_shortterm, 0.001)
-                reward_responsiveness_longterm = reward_responsiveness_longterm + 0.000001
-                #reward_responsiveness_longterm = min(reward_responsiveness_longterm, 0.0001)
-                learning_rate = learning_rate + 0.001
-
-            agent.lr = learning_rate
+        # if len(weight_decay_list) > 1: #and trial != 0:
+        #     #if (weight_decay_list[-1] > weight_decay_list[-2] and episode % 15 == 0):
+        #     if (trial == 1 and episode % 15 == 0):
+        #         reward_responsiveness_shortterm = reward_responsiveness_shortterm - 0.00001
+        #         reward_responsiveness_longterm = reward_responsiveness_longterm - 0.000001
+        #         learning_rate = learning_rate - 0.002
+        #
+        #     elif (trial == 2 and episode % 15 == 0):
+        #     #elif (weight_decay_list[-1] < weight_decay_list[-2] and episode % 15 == 0):
+        #         reward_responsiveness_shortterm = reward_responsiveness_shortterm + 0.00001
+        #         #reward_responsiveness_shortterm = min(reward_responsiveness_shortterm, 0.001)
+        #         reward_responsiveness_longterm = reward_responsiveness_longterm + 0.000001
+        #         #reward_responsiveness_longterm = min(reward_responsiveness_longterm, 0.0001)
+        #         learning_rate = learning_rate + 0.001
+        #
+        #     agent.lr = learning_rate
 
         while not (terminated or truncated) and steps < 200:
             # Choose action using epsilon-greedy strategy
@@ -171,21 +172,21 @@ for trial in range(3):
         #if trial != 0:
 
 
-        if expected_reward_difference_list[-1] > 0 and episode % 20 == 0:
-        #if trial == 1 and episode % 10 == 0:
-            weight_decay_multiplier += 0.00001
-
-        #elif episode % 25 == 0:
-        elif trial == 2 and episode % 10 == 0:
-            weight_decay_multiplier -= 0.0005
-
-        weight_decay_multiplier = max(0.0005, weight_decay_multiplier)
+        # if expected_reward_difference_list[-1] > 0 and episode % 20 == 0:
+        # #if trial == 1 and episode % 10 == 0:
+        #     weight_decay_multiplier += 0.00001
+        #
+        # #elif episode % 25 == 0:
+        # elif trial == 2 and episode % 10 == 0:
+        #     weight_decay_multiplier -= 0.0005
+        #
+        # weight_decay_multiplier = max(0.0005, weight_decay_multiplier)
 
         weight_decay += expected_reward_difference_list[-1] * weight_decay_multiplier
 
-        #if expected_reward_shortterm - expected_reward_longterm < 0:
+        # if expected_reward_shortterm - expected_reward_longterm < 0:
         #    weight_decay += expected_reward_difference_list[-1] * 0.0005
-        #else:
+        # else:
         #    weight_decay += expected_reward_difference_list[-1] * 0.0001
 
         weight_decay = max(0, weight_decay)
