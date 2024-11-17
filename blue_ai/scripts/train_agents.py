@@ -1,3 +1,5 @@
+import os
+import sys
 from typing import Any, Dict, List, Tuple, TypedDict
 import pandas as pd
 import pickle
@@ -34,12 +36,19 @@ def create_hook(name, record_activations_flag, step_idx):
 
 
 def save_activations_to_parquet(filename):
+    #concat activations of all existing layers for this trial
     if activations:
         activation_dfs = []
         for layer_name, dfs in activations.items():
             activation_dfs.extend(dfs)
 
         activation_df = pl.concat(activation_dfs)
+
+        #if the stage has multiple progressive runs, extend previous activations
+        if os.path.exists(filename):
+            existing_df = pl.read_parquet(filename)
+            activation_df = pl.concat([existing_df, activation_df])
+
         activation_df.write_parquet(filename, compression='gzip')
         activations.clear()
         print(f"Activations successfully saved to {filename}")
@@ -139,8 +148,13 @@ def run_trial(agent: BaseAgent, env, steps=30, trial_id="", tbar=None, filename=
     #save weights
     df = pl.DataFrame(weights_data)
     weights_file = DATA_PATH / f"{filename or agent.__class__.__name__}_{trial_id}_weights.parquet"
-    df.write_parquet(weights_file)
-    print(f"weights saved as: {weights_file} ")
+    if os.path.exists(weights_file):
+        existing_weights = pl.read_parquet(weights_file)
+        new_weights = pl.concat([existing_weights, pl.DataFrame(weights_data)])
+    else:
+        new_weights = pl.DataFrame(weights_data)
+    new_weights.write_parquet(weights_file)
+    print(f"weights saved as: {weights_file}")
 
     #save model
     model_filename = DATA_PATH / f"{filename or agent.__class__.__name__}_{trial_id}_model.pth"

@@ -4,6 +4,8 @@ from tqdm.auto import tqdm
 
 from blue_ai.scripts.constants import DATA_PATH
 
+#calculates the connectivity entropy by first building a connectivity n-gram for each 4500-5000 steps of a rep.
+#specify in main what files should be used for the calculation
 
 def build_ngrams(neurons, thresholds=None, n=2, split=False):
     layers_ngrams = {}
@@ -72,9 +74,15 @@ def calculate_sliced_entropies(df, slices):
 
 
 def main():
+    # specify here the id of the files you want to use
+    id = "9"
+
+    #alter this list if the stages in your file are different
     stages = ["healthy", "depressed", "entropic", "treated"]
-    id = "3"
+
     slice_sizes = []
+
+    # change the range for the  number of reps you ran in rehabilate.py
     for i in range(0, 5):
         for stage in stages:
             filename = DATA_PATH / f'{id}_{stage}_{i}_activations.parquet'

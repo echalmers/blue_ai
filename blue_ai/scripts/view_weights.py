@@ -33,12 +33,12 @@ def generate_heatmap(index, df, input_size, output_size, layer):
 
 
 def main():
-    id = "3"
+    id = "4"
     all_dfs = []
     stages = ["healthy", "depressed", "entropic", "treated"]
 
     for stage in stages:
-        filename = DATA_PATH / f'{id}_{stage}_1_weights.parquet'
+        filename = DATA_PATH / f'{id}_{stage}_5_weights.parquet'
         datafile = pl.read_parquet(filename)
         datafile = datafile.with_columns([pl.lit(stage).alias("stage")])
         # datafile["stage"] = stage
@@ -60,7 +60,7 @@ def main():
 
     # Save the images as a GIF
     gif_path = DATA_PATH / f"test_{id}_weights_heatmap.gif"
-    imageio.mimsave(gif_path, images, fps=10)
+    imageio.mimsave(gif_path, images, fps=13)
 
     print(f"GIF saved at {gif_path}")
 

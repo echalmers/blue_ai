@@ -6,12 +6,20 @@ import pandas as pd
 import matplotlib.cm as cm
 from blue_ai.scripts.constants import DATA_PATH
 
+#vizualises the connectivity entropy throughout the rehabilitate.py stages
+#to run this script, first calculate the connectivity entropy slices with  calculate_connectivity_entropy.py
 
 def main():
-    id = "3"
+    # specify here the id of the files you want to use
+    id = "9"
+
+    # alter this list if the stages in your file are different
     stages = ["healthy", "depressed", "entropic", "treated"]
+
     all_trials_data = pd.DataFrame()
     stages_length = {}
+
+    # change the range for the  number of reps you ran in rehabilate.py
     for i in range(0, 5):
         trial_data = pd.DataFrame()
         for stage in stages:
@@ -37,14 +45,14 @@ def main():
     phase_colors = [cmap(i) for i in range(len(stages_length))]
     xmin = 0
 
-    for i, stage in enumerate(stages):
+    for i, stage in enumerate(stages):w
         xmax = xmin + stages_length[stage]
         ax.axvspan(xmin=xmin, xmax=xmax, facecolor=phase_colors[i], alpha=0.3)
         xmin = xmax
 
 
     plt.title(f"connectivity entropy throughout the rehab stages. Id: {id}")
-    plt.xlabel("Time Point")
+    plt.xlabel("ngrams (5000 steps each)")
     plt.ylabel("Entropy")
     plt.legend()
     plt.show()
