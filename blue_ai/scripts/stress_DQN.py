@@ -13,14 +13,14 @@ from constants import DATA_PATH
 results = pd.DataFrame()
 
 for rep in range(10):
-    for stress_length in [10, 50]:
+    for stress_length in [20, 50]:
 
         # Set general parameters
         gamma = 0.9
         epsilon = 0.01
         learning_rate = 0.01
         weight_decay = 0
-        episodes_per_trial = [500, stress_length, 550 - stress_length]
+        episodes_per_trial = [400, stress_length, 400 - stress_length]
 
         weight_decay_multiplier = 0.005
 
