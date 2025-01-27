@@ -1,13 +1,19 @@
 from blue_ai.scripts.view_discounting import DiscountAndCorrelationPlotter
-from blue_ai.scripts.constants import DATA_PATH
+from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 import matplotlib.pyplot as plt
+
+
 
 plotter = DiscountAndCorrelationPlotter(
     save_filenames=[
-        # DATA_PATH / 'addNoise_HealthyAgent_0.pkl',
-        DATA_PATH / 'HealthyAgent_0.pkl',
-        DATA_PATH / 'addNoise_SchizophrenicAgent_0.pkl',
-        DATA_PATH / 'SpineLossDepression_0.pkl',
+        filename
+        for trial in range(N_TRIALS)
+        for filename in [
+            # DATA_PATH / 'addNoise_HealthyAgent_0.pkl',
+            DATA_PATH / f'HealthyAgent_{trial}.pkl',
+            DATA_PATH / f'addNoise_SchizophrenicAgent_{trial}.pkl',
+            DATA_PATH / f'SpineLossDepression_{trial}.pkl'
+        ]
     ]
 )
 

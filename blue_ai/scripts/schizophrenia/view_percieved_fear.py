@@ -1,12 +1,17 @@
 from blue_ai.scripts.view_perceived_fear_2 import PerceivedFearPlotter
-from blue_ai.scripts.constants import DATA_PATH
+from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 import matplotlib.pyplot as plt
 
 
 plotter = PerceivedFearPlotter(
-    save_filenames=[DATA_PATH / 'HealthyAgent_0.pkl',
-                    DATA_PATH / 'addNoise_SchizophrenicAgent_0.pkl'
-                    ]
+    save_filenames=[
+        filename
+        for trial in range(N_TRIALS)
+        for filename in [
+            DATA_PATH / f'HealthyAgent_{trial}.pkl',
+            DATA_PATH / f'addNoise_SchizophrenicAgent_{trial}.pkl'
+        ]
+    ]
 )
 
 fig, ax = plt.subplots(1, 2)

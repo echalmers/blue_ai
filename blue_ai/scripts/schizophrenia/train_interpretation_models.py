@@ -1,6 +1,6 @@
 from blue_ai.scripts.train_agents import load_trial
 from blue_ai.agents.dqn import DQN
-from blue_ai.scripts.constants import DATA_PATH
+from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 
 import pandas as pd
 import torch.nn as nn
@@ -69,7 +69,13 @@ class RepresentationProbe:
 
 if __name__ == '__main__':
 
-    files = ['HealthyAgent_0.pkl', 'SpineLossDepression_0.pkl', 'SchizophrenicAgent_0.pkl']
+    files = [
+        filename
+        for trial in range(N_TRIALS)
+        for filename in [
+            f'HealthyAgent_{trial}.pkl', f'SpineLossDepression_{trial}.pkl', f'SchizophrenicAgent_{trial}.pkl'
+            ]
+    ]
 
     interpretation_models = pd.DataFrame({
         'filename': files,

@@ -43,7 +43,7 @@ axes['a'].set_yticks([])
 env.env.render_mode = 'none'
 
 # load agent
-_, agent, env = load_trial(DATA_PATH / 'HealthyAgent_0.pkl')
+_, agent, env = load_trial(DATA_PATH / 'SchizophrenicAgent_0.pkl')
 
 
 results = []
