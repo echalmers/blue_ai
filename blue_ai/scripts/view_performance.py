@@ -136,6 +136,7 @@ class PerformancePlotter:
             n_boot=n_boot,
             palette=["tab:green", "tab:blue", "tab:red"],
             order=[a.display_name for a in self.agent_classes] if self.agent_classes else None,
+            errorbar=('pi', 95)
         )
         plt.title("objects reached per episode")
         plt.ylabel("")

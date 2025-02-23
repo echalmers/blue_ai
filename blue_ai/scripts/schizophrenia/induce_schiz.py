@@ -11,7 +11,7 @@ files = [
     for trial in range(N_TRIALS)
     for filename in [
         f'HealthyAgent_{trial}.pkl',
-        f'SpineLossDepression_{trial}.pkl',
+        # f'SpineLossDepression_{trial}.pkl',
         f'SchizophrenicAgent_{trial}.pkl'
     ]
 ]
@@ -29,7 +29,7 @@ for i in range(len(files)):
 
     noise_layer = agent.policy_net[1]
     assert hasattr(noise_layer, 'std')
-    noise_layer.std = 0.25
+    noise_layer.std = 0.3
 
     new_results, agent, env = run_trial(agent, env, trial_id=i)
     # p2 = PerformancePlotter(results_dataframe=new_results)
