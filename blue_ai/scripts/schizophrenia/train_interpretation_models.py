@@ -73,7 +73,9 @@ if __name__ == '__main__':
         filename
         for trial in range(N_TRIALS)
         for filename in [
-            f'HealthyAgent_{trial}.pkl', f'SpineLossDepression_{trial}.pkl', f'SchizophrenicAgent_{trial}.pkl'
+            f'HealthyAgent_{trial}.pkl',
+            # f'SpineLossDepression_{trial}.pkl',
+            f'SchizophrenicAgent_{trial}.pkl'
             ]
     ]
 

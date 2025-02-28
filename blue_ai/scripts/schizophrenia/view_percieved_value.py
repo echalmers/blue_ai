@@ -16,7 +16,7 @@ plotter = PerceivedValuePlotter(
 
 fig, ax = plt.subplots(1, 2)
 plotter.plot_perceived_value_env(ax[0])
-plotter.plot_perceived_value(ax[1])
+plotter.plot_perceived_value(ax[1], palette=['skyblue', 'orange'])
 
 plt.savefig(_CURRENT_DIR / 'schizophrenia' / 'img' / 'anhedonia.png', dpi=400)
 plt.show()
