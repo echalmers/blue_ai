@@ -19,7 +19,7 @@ plotter = DiscountAndCorrelationPlotter(
 
 fig, ax = plt.subplots(1, 2)
 plotter.plot_env_locations(ax[0])
-plotter.plot_inferred_discount(ax[1])
+plotter.plot_inferred_discount(ax[1], palette=['blue', 'orange'])
 # plotter.plot_neuron_correlations(ax[2])
 
 plt.savefig(_CURRENT_DIR / 'schizophrenia' / 'img' / 'discounting.png', dpi=400)
