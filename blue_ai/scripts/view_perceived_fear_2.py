@@ -1,6 +1,6 @@
 import pandas as pd
 
-from blue_ai.envs.transient_goals import TransientGoals
+from blue_ai.envs.transient_goals import TransientGoals, Actions
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.train_agents import load_trial
 import matplotlib.pyplot as plt
@@ -16,6 +16,7 @@ class PerceivedFearPlotter:
         self,
         agent_classes=(agent_classes.HealthyAgent, agent_classes.SpineLossDepression),
         save_filenames=None,
+        actions_included=(Actions.forward,),
     ):
         self.all_values = []
 
@@ -44,21 +45,26 @@ class PerceivedFearPlotter:
 
                     this_agent_values = agent.get_action_values(state).cpu().numpy()
 
-                    self.all_values.append(
-                        [trial, agent.display_name, agent_pos, this_agent_values[2]]
-                    )
+                    for action in actions_included:
+                        self.all_values.append(
+                            {
+                                'trial': trial,
+                                'agent': agent.display_name,
+                                'position': agent_pos,
+                                'value': this_agent_values[action.value],
+                                'direction': action.name
+                            }
+                        )
 
-        self.all_values = pd.DataFrame(
-            data=self.all_values, columns=["trial", "agent", "position", "value"]
-        )
+        self.all_values = pd.DataFrame(data=self.all_values)
         initial_values = (
-            self.all_values.groupby(["trial", "agent"])
+            self.all_values.groupby(["trial", "agent", 'direction'])
             .first()["value"]
             .reset_index()
             .rename({"value": "initial"}, axis=1)
         )
         self.all_values = pd.merge(
-            self.all_values, initial_values, on=["trial", "agent"]
+            self.all_values, initial_values, on=["trial", "agent", 'direction']
         )
         self.all_values["value"] = (self.all_values["value"] + 0.1) / (
             self.all_values["initial"] + 0.1
@@ -88,7 +94,7 @@ class PerceivedFearPlotter:
     def plot_value_of_forward(self, ax, **kwargs):
         plt.sca(ax)
         sns.lineplot(
-            self.all_values, x="position", y="value", hue="agent", n_boot=10, **kwargs
+            self.all_values, x="position", y="value", hue="agent", style='direction' if 'direction' in self.all_values else None, n_boot=10, **kwargs
         )
         plt.xticks([1, 2, 3, 4])
         plt.title("perceived value of moving forward\n(normalized to position 1 value)")

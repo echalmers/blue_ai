@@ -140,7 +140,7 @@ def main():
 
     agents: List[BaseAgent] = [
         HealthyAgent(),
-        SpineLossDepression(),
+        # SpineLossDepression(),
         # ContextDependentLearningRate(),
         # HighDiscountRate(),
         # ScaledTargets(),

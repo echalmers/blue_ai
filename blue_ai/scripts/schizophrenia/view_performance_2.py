@@ -8,13 +8,13 @@ import pandas as pd
 
 
 mosaic = """
-    abc
-    ade
+    bc
+    de
     """
 fig, axes = plt.subplot_mosaic(
     mosaic,
     figsize=(11, 8),
-    # width_ratios=[10, 10, 1, 10],
+    # width_ratios=[10, 10],
     # height_ratios=[47.5, 5, 47.5],
 )
 
@@ -40,6 +40,11 @@ for result_set in result_sets:
     plt.xlabel('')
     plt.ylim([0, 2.2])
 
+    if result_set[1] in ['b', 'd']:
+        plt.ylabel('number of objects found per episode')
+    else:
+        y_ticks = plt.yticks()[0]
+        plt.yticks(y_ticks, labels=['' for _ in range(len(y_ticks))])
 
     if result_set[3]:
         # sns.move_legend()
@@ -48,13 +53,6 @@ for result_set in result_sets:
         plt.legend([], [], frameon=False)
 
 
-datapoints = pd.read_csv(_CURRENT_DIR / 'schizophrenia' / 'img' / 'recon_error_data.csv')
-datapoints['agent'] = datapoints['agent'].str.lower()
-plt.sca(axes['a'])
-sns.lineplot(data=datapoints, x='std', y='mse', hue='agent', palette=['blue', 'orange'])
-plt.ylabel('mean-squared error of reconstruction')
-plt.xlabel('standard deviation of added noise')
-plt.title('error in reconstructing visual input')
-
-plt.savefig(_CURRENT_DIR / 'schizophrenia' / 'img' / 'recon_performance.png', dpi=400)
+plt.tight_layout()
+plt.savefig(_CURRENT_DIR / 'schizophrenia' / 'img' / 'effect_of_noise.png', dpi=400)
 plt.show()
