@@ -16,7 +16,7 @@ import torch
 
 if __name__ == '__main__':
 
-    mode = 'interactive'  # interactive or datagen
+    mode = 'datagen'  # interactive or datagen
     include = ['Healthy', 'Schizophrenic']  #, 'Depressed']
 
     with open(DATA_PATH / 'interpretation_models.pkl', 'rb') as f:
