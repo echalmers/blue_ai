@@ -139,17 +139,19 @@ def main():
     trial_num = 0
 
     agents: List[BaseAgent] = [
-        HealthyAgent(),
+        # HealthyAgent(),
         # SpineLossDepression(),
         # ContextDependentLearningRate(),
         # HighDiscountRate(),
         # ScaledTargets(),
         # HighExploration(),
         # ShiftedTargets(),
-        SchizophrenicAgent(),
+        # SchizophrenicAgent(),
+        # SchizophrenicAgentWithNoise(),
         # ReluActivation(),
         # ReluLossActivation(),
         # PrunedAgent(),
+        ReverseImbalanceAgent()
     ]
     envs = [
         Image2VecWrapper(

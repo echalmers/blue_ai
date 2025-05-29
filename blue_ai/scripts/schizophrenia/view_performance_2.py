@@ -8,8 +8,8 @@ import pandas as pd
 
 
 mosaic = """
-    bc
-    de
+    bcf
+    deg
     """
 fig, axes = plt.subplot_mosaic(
     mosaic,
@@ -24,6 +24,8 @@ result_sets = [
     ('healthy after noise', 'd', 'addNoise_HealthyAgent_*.pkl', False),
     ('E/I imbalance before noise', 'c', 'SchizophrenicAgent_*.pkl', False),
     ('E/I imbalance after noise', 'e', 'addNoise_SchizophrenicAgent_*.pkl', False),
+    ('opposite E/I imbalance before noise', 'f', 'ReverseImbalanceAgent_*.pkl', False),
+    ('opposite E/I imbalance after noise', 'g', 'addNoise_ReverseImbalanceAgent_*.pkl', False),
 ]
 
 for result_set in result_sets:
@@ -45,6 +47,7 @@ for result_set in result_sets:
     else:
         y_ticks = plt.yticks()[0]
         plt.yticks(y_ticks, labels=['' for _ in range(len(y_ticks))])
+        plt.ylim([0, 2.2])
 
     if result_set[3]:
         # sns.move_legend()

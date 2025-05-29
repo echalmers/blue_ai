@@ -5,7 +5,7 @@ import torch
 from copy import deepcopy
 
 
-from blue_ai.envs.custom_decay import PositivePenaltyLoss
+from blue_ai.envs.custom_decay import PositivePenaltyLoss, NegativePenaltyLoss
 
 
 class NoiseLayer(nn.Module):
@@ -189,3 +189,37 @@ class SchizophrenicAgent(BaseAgent):
 
         return f"{super().file_display_name()}_{self.alpha}"
 
+class SchizophrenicAgentWithNoise(SchizophrenicAgent):
+
+    def __init__(self, alpha=5e-3, embed_alpha_in_filename=False):
+        super().__init__(alpha, embed_alpha_in_filename)
+        for layer in self.policy_net:
+            if hasattr(layer, 'std'):
+                print(f'starting noise layer std at 0.05')
+                layer.std = 0.01
+
+
+class ReverseImbalanceAgent(BaseAgent):
+    display_name = "opposite imbalance"
+
+    def __init__(self, alpha=5e-3, embed_alpha_in_filename=False):
+        self.embed_alpha_in_filename = embed_alpha_in_filename
+        self.alpha = alpha
+        custom_loss_function = NegativePenaltyLoss(alpha=self.alpha)
+
+        pruned_net = deepcopy(common_network)
+        for paramset in pruned_net.parameters():
+            if paramset.dim() == 2:
+                p = torch.softmax(-paramset.flatten(), dim=0)
+                indices = np.random.choice(paramset.numel(), size=paramset.numel()//4, replace=False, p=p.detach().numpy())
+                indices = np.unravel_index(indices, paramset.shape)
+                paramset.data[indices[0], indices[1]] = 0
+
+        super().__init__(loss_fn=custom_loss_function, weight_decay=0)
+        custom_loss_function.params = [x for x in self.policy_net.parameters() if x.dim() > 0]
+
+    def file_display_name(self):
+        if not self.embed_alpha_in_filename:
+            return super().file_display_name()
+
+        return f"{super().file_display_name()}_{self.alpha}"

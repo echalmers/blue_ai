@@ -10,9 +10,11 @@ files = [
     filename
     for trial in range(N_TRIALS)
     for filename in [
-        f'HealthyAgent_{trial}.pkl',
+        # f'HealthyAgent_{trial}.pkl',
         # f'SpineLossDepression_{trial}.pkl',
-        f'SchizophrenicAgent_{trial}.pkl'
+        # f'SchizophrenicAgent_{trial}.pkl',
+        f'ReverseImbalanceAgent_{trial}.pkl'
+
     ]
 ]
 
@@ -27,9 +29,13 @@ for i in range(len(files)):
     # plt.title(f'{filename}, before noise')
     # plt.ylim((0, 2))
 
-    noise_layer = agent.policy_net[1]
-    assert hasattr(noise_layer, 'std')
-    noise_layer.std = 0.3
+    # noise_layer = agent.policy_net[1]
+    # assert hasattr(noise_layer, 'std')
+    # noise_layer.std = 0.3
+    for layer in agent.policy_net:
+        if hasattr(layer, 'std'):
+            print(f'changing std from {layer.std}')
+            layer.std = 0.3
 
     new_results, agent, env = run_trial(agent, env, trial_id=i)
     # p2 = PerformancePlotter(results_dataframe=new_results)
