@@ -223,3 +223,11 @@ class ReverseImbalanceAgent(BaseAgent):
             return super().file_display_name()
 
         return f"{super().file_display_name()}_{self.alpha}"
+    
+
+class PTSDAgent(BaseAgent):
+
+    display_name = "simulated ptsd"
+
+    def __init__(self):
+        super().__init__(weight_decay=1e-3)
