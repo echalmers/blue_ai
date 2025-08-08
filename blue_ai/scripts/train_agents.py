@@ -44,7 +44,7 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
         # reset environment if done (ideally env would do this itself)
         if truncated or done:
             state, _ = env.reset()
-            episode_num += 1
+            episode_num = 0
             steps_this_episode = 0
         else:
             state = new_state
@@ -139,7 +139,7 @@ def main():
     trial_num = 0
 
     agents: List[BaseAgent] = [
-        # HealthyAgent(),
+        HealthyAgent(),
         # SpineLossDepression(),
         # ContextDependentLearningRate(),
         # HighDiscountRate(),
@@ -151,14 +151,17 @@ def main():
         # ReluActivation(),
         # ReluLossActivation(),
         # PrunedAgent(),
-        ReverseImbalanceAgent()
+        # ReverseImbalanceAgent(),
+        PTSDAgent()
     ]
+
     envs = [
         Image2VecWrapper(
             TransientGoals(
-                render_mode="none", transient_reward=0.25, termination_reward=1
+                render_mode="none", transient_reward=0.25, termination_reward=1, n_transient_obstacles=0, n_transient_goals=3,
+                wall_locations =[[3,1],[3,2],[3,3],[3,5],[3,6]]
             ),
-            noise_level=0.0
+            #noise_level=0.0
         ),
         # swapped reward structure
         # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),
