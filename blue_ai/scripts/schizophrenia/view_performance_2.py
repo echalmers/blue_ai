@@ -8,8 +8,8 @@ import pandas as pd
 
 
 mosaic = """
-    bcf
-    deg
+    bc
+    de
     """
 fig, axes = plt.subplot_mosaic(
     mosaic,
@@ -24,8 +24,8 @@ result_sets = [
     ('healthy after noise', 'd', 'addNoise_HealthyAgent_*.pkl', False),
     ('E/I imbalance before noise', 'c', 'SchizophrenicAgent_*.pkl', False),
     ('E/I imbalance after noise', 'e', 'addNoise_SchizophrenicAgent_*.pkl', False),
-    ('opposite E/I imbalance before noise', 'f', 'ReverseImbalanceAgent_*.pkl', False),
-    ('opposite E/I imbalance after noise', 'g', 'addNoise_ReverseImbalanceAgent_*.pkl', False),
+    # ('opposite E/I imbalance before noise', 'f', 'ReverseImbalanceAgent_*.pkl', False),
+    # ('opposite E/I imbalance after noise', 'g', 'addNoise_ReverseImbalanceAgent_*.pkl', False),
 ]
 
 for result_set in result_sets:
@@ -43,7 +43,7 @@ for result_set in result_sets:
     plt.ylim([0, 2.2])
 
     if result_set[1] in ['b', 'd']:
-        plt.ylabel('number of objects found per episode')
+        plt.ylabel('number found per episode')
     else:
         y_ticks = plt.yticks()[0]
         plt.yticks(y_ticks, labels=['' for _ in range(len(y_ticks))])

@@ -11,7 +11,7 @@ for file in [
     'HealthyAgent_0.pkl',
     # 'SpineLossDepression_0.pkl',
     'SchizophrenicAgent_0.pkl',
-    'ReverseImbalanceAgent_0.pkl'
+    # 'ReverseImbalanceAgent_0.pkl'
 ]:
     _, agent, _ = load_trial(DATA_PATH / file)
 
