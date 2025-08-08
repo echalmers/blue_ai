@@ -19,9 +19,10 @@ class PerformancePlotter:
         if agent_classes is None and results_dataframe is None:
             agent_classes = (
                 classes.HealthyAgent,
-                classes.SpineLossDepression,
-                classes.SchizophrenicAgent,
+                #classes.SpineLossDepression,
+                #classes.SchizophrenicAgent,
                 # agent_classes.PrunedAgent
+                classes.PTSDAgent
             )
 
         if results_dataframe is not None:
@@ -156,7 +157,8 @@ if __name__ == "__main__":
 
     plt.subplot(1, 2, 2)
     plotter.plot_goals_per_episode(ax[1])
-
-    plt.show()
+    
     plt.savefig(FIGURE_PATH / "performance.png")
+    plt.show()
+
     exit()
