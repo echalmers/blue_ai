@@ -1,0 +1,116 @@
+import pandas as pd
+from typing import Any, Dict, List, Tuple, TypedDict
+
+from blue_ai.scripts.train_agents import load_trial, run_trial, save_trial
+from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
+from blue_ai.envs.transient_goals import TransientGoals
+from blue_ai.envs.custom_wrappers import Image2VecWrapper
+import matplotlib.pyplot as plt
+from blue_ai.scripts.view_performance import PerformancePlotter
+from blue_ai.agents.agent_classes import *
+from copy import deepcopy
+
+def main():
+
+    files = [
+        filename
+        for trial in range(N_TRIALS)
+        for filename in [
+            f'HealthyAgent_{trial}.pkl',
+            # f'SpineLossDepression_{trial}.pkl',
+            # f'SchizophrenicAgent_{trial}.pkl',
+            # f'ReverseImbalanceAgent_{trial}.pkl',
+            f'PTSDAgent_{trial}.pkl'
+
+        ]
+    ]
+
+    traumatic_env = Image2VecWrapper(
+                TransientGoals(
+                    render_mode="human", transient_reward=0.25, termination_reward=1, agent_start_pos=(3, 4),
+                    n_transient_obstacles=1,transient_penalty=-100, transient_locations=[[1,4],[5,3],[5,5]], transient_obstacles=[[4,4]],
+                    wall_locations =[[3,1],[3,2],[3,3],[3,5],[3,6]], env_name='trauma_env'
+                )
+            )
+
+
+    for i in range(len(files)):
+        filename = files[i]
+        print(f'old filename: {filename}')
+        results, agent, env = load_trial(DATA_PATH / filename)
+
+        new_results, agent, env = run_trauma(agent, traumatic_env, n_trauma_updates=1, trial_id=i)
+        print(new_results)
+
+        filename = filename.replace(".pkl", "_traumatized.pkl")
+        print(f'new filename: {filename}')
+        #print(f'environment type: {type(env)}')
+        save_trial(results, agent, env, filename)
+
+
+def run_trauma(agent: BaseAgent, env: Image2VecWrapper, n_trauma_updates: int, trial_id=""):
+    state, _ = env.reset()
+    episode_num = 0
+    cumulative_reward = 0
+    reward = 0
+    step = -1
+
+    results = []
+
+    # track agent positions to see if they get stuck
+    pos: Dict[Tuple[int, int], int] = {}
+
+    while True:
+        step +=1
+        # record position
+        pos[env.unwrapped.agent_pos] = pos.get(env.unwrapped.agent_pos, 0) + 1
+
+        action = agent.select_action(state)
+        new_state, reward, done, truncated, _ = env.step(action)
+
+        if reward == env.unwrapped.transient_penalty:
+            for _ in range(n_trauma_updates):
+                agent.update_single(state, action, reward, new_state, done=False)
+        
+        if truncated or done:
+            state, _ = env.reset()
+            episode_num +=1
+            if truncated:
+                print('truncated')
+        else:
+            state = new_state
+
+        # add results to the history
+        transient_goal = reward == env.unwrapped.transient_reward
+        terminal_goal = reward == env.unwrapped.termination_reward
+        lava = reward < 0
+        stuck = max(pos.values()) > 2000
+        cumulative_reward += reward
+
+        result =  {
+            "trial_id": trial_id,
+            "agent": agent.__class__.__name__,
+            "step": step,
+            "episode": episode_num,
+            "reward": reward,
+            "cumulative_reward": cumulative_reward,
+            "terminal_goal": terminal_goal,
+            "transient_goal": transient_goal,
+            "lava": lava,
+            "stuck": stuck,
+            "mean_synapse": next(agent.policy_net.parameters()).mean().item(),
+            "num_pos_synapse": (next(agent.policy_net.parameters()) > 0).sum().item(),
+            'position': tuple(env.unwrapped.agent_pos)
+        }
+
+        results.append(result)
+
+        if reward == env.unwrapped.transient_penalty:
+            break
+    
+    results = pd.DataFrame(results)
+    return results, agent, env
+
+if __name__ == "__main__":
+    main()
+
