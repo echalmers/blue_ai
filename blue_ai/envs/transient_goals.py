@@ -19,9 +19,10 @@ class Actions(IntEnum):
     left = 0
     right = 1
     forward = 2
+    stand = 3
 
     # Done completing task
-    done = 3
+    done = 4
 
 
 class TransientGoals(MiniGridEnv):
@@ -171,6 +172,9 @@ class TransientGoals(MiniGridEnv):
                 self._turn_right()
             case Actions.forward:
                 terminated, reward = self._handle_forward()
+            case Actions.stand:
+                #print('standing still')
+                pass
             case Actions.done:
                 terminated = True
             case action:

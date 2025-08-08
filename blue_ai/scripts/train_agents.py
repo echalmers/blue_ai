@@ -2,6 +2,8 @@ from typing import Any, Dict, List, Tuple, TypedDict
 import pandas as pd
 import pickle
 from copy import deepcopy
+import torch
+from torch import nn
 
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
@@ -9,6 +11,13 @@ from tqdm import tqdm
 
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.agents.agent_classes import *
+
+# test a fourth action 'stand' 
+ptsd_network = nn.Sequential(
+    nn.Flatten(1, -1),
+    nn.Linear(100, 25), nn.Sigmoid(),
+    nn.Linear(25, 4)
+)
 
 
 def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
@@ -139,7 +148,7 @@ def main():
     trial_num = 0
 
     agents: List[BaseAgent] = [
-        HealthyAgent(),
+        HealthyAgent(network= ptsd_network),
         # SpineLossDepression(),
         # ContextDependentLearningRate(),
         # HighDiscountRate(),
@@ -152,7 +161,7 @@ def main():
         # ReluLossActivation(),
         # PrunedAgent(),
         # ReverseImbalanceAgent(),
-        PTSDAgent()
+        PTSDAgent(network= ptsd_network)
     ]
 
     envs = [

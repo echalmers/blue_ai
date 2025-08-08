@@ -75,8 +75,8 @@ class HealthyAgent(BaseAgent):
 
     display_name = "healthy"
 
-    def __init__(self):
-        super().__init__(weight_decay=1e-5)
+    def __init__(self, network: nn.Sequential | None = None):
+        super().__init__(network = network ,weight_decay=1e-5)
 
 
 class SpineLossDepression(BaseAgent):
@@ -229,5 +229,5 @@ class PTSDAgent(BaseAgent):
 
     display_name = "simulated ptsd"
 
-    def __init__(self):
-        super().__init__(weight_decay=1e-3)
+    def __init__(self, network: nn.Sequential | None = None):
+        super().__init__(network = network , weight_decay=1e-3)

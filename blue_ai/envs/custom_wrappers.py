@@ -20,7 +20,7 @@ class Image2VecWrapper(gym.ObservationWrapper):
 
     def observation(self, observation):
         """
-        create a new 3x7x7 state vector out of the image the env returns:
+        create a new 3x5x5 state vector out of the image the env returns:
         vector[0, i, j] is 1 if the object at (i,j) is a wall
         vector[1, i, j] is 1 if the object at (i,j) is a goal
         vector[2, i, j] is 1 if the object at (i,j) is a transient goal
