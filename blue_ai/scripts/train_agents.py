@@ -15,7 +15,7 @@ from blue_ai.agents.agent_classes import *
 # test a fourth action 'stand' 
 ptsd_network = nn.Sequential(
     nn.Flatten(1, -1),
-    nn.Linear(100, 25), nn.Sigmoid(),
+    nn.Linear(100, 25), nn.Tanh(),
     nn.Linear(25, 4)
 )
 
@@ -136,7 +136,7 @@ def trial(agent: BaseAgent, env, rep, trial_num, tbar=None, steps=30_000):
 
     filename = (
         DATA_PATH
-        / f'{agent.file_display_name()}_{"swapped_" if env.unwrapped.transient_reward > 0.25 else ""}{rep}.pkl'
+        / f'{agent.file_display_name()}_{rep}_tanh.pkl'
     )
 
     save_trial(results, agent, env, filename)
@@ -144,7 +144,7 @@ def trial(agent: BaseAgent, env, rep, trial_num, tbar=None, steps=30_000):
 
 
 def main():
-    iterations_per_trial = 30_000
+    iterations_per_trial = 80_000
     trial_num = 0
 
     agents: List[BaseAgent] = [
@@ -165,13 +165,21 @@ def main():
     ]
 
     envs = [
+        # Image2VecWrapper(
+        #     TransientGoals(
+        #         render_mode="human", transient_reward=0.25, termination_reward=1, n_transient_obstacles=0, n_transient_goals=3,
+        #         #wall_locations =[[3,1],[3,2],[3,3],[3,5],[3,6]]
+        #     ),
+        #     #noise_level=0.0
+        # ),
         Image2VecWrapper(
-            TransientGoals(
-                render_mode="none", transient_reward=0.25, termination_reward=1, n_transient_obstacles=0, n_transient_goals=3,
-                wall_locations =[[3,1],[3,2],[3,3],[3,5],[3,6]]
-            ),
-            #noise_level=0.0
-        ),
+                TransientGoals(
+                    render_mode="none", transient_reward=0.25, termination_reward=1,
+                    n_transient_obstacles = 0,
+                    wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]],
+                    # see_through_walls = False IS NOT WORKING?
+                )
+            )
         # swapped reward structure
         # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),
     ]

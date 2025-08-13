@@ -12,28 +12,31 @@ from copy import deepcopy
 
 def main():
 
+    # get the file names of the right agents
     files = [
         filename
         for trial in range(N_TRIALS)
         for filename in [
-            f'HealthyAgent_{trial}.pkl',
+            f'top_opening_tanh/HealthyAgent_{trial}_tanh.pkl',
             # f'SpineLossDepression_{trial}.pkl',
             # f'SchizophrenicAgent_{trial}.pkl',
             # f'ReverseImbalanceAgent_{trial}.pkl',
-            f'PTSDAgent_{trial}.pkl'
+            f'top_opening_tanh/PTSDAgent_{trial}_tanh.pkl'
 
         ]
     ]
 
+    # create the environment which is used to induce the ptsd
     traumatic_env = Image2VecWrapper(
                 TransientGoals(
-                    render_mode="human", transient_reward=0.25, termination_reward=1, agent_start_pos=(3, 4),
-                    n_transient_obstacles=1,transient_penalty=-100, transient_locations=[[1,4],[5,3],[5,5]], transient_obstacles=[[4,4]],
-                    wall_locations =[[3,1],[3,2],[3,3],[3,5],[3,6]], env_name='trauma_env'
+                    render_mode="none", transient_reward=0.25, termination_reward=1, agent_start_pos=(3,1),
+                    n_transient_obstacles=1, transient_penalty=-100, transient_locations=[[1,4],[4,2],[5,1]], transient_obstacles=[[4,1]],
+                    wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]], env_name='trauma_env'
                 )
             )
 
 
+    # induce the trauma to each agent trial independently
     for i in range(len(files)):
         filename = files[i]
         print(f'old filename: {filename}')
@@ -41,10 +44,12 @@ def main():
 
         new_results, agent, env = run_trauma(agent, traumatic_env, n_trauma_updates=1, trial_id=i)
         print(new_results)
-
-        filename = filename.replace(".pkl", "_traumatized.pkl")
+        
+        filename = ( DATA_PATH / filename.replace(".pkl", "_traumatized.pkl") )
         print(f'new filename: {filename}')
         #print(f'environment type: {type(env)}')
+
+        # save the new agent with the old results
         save_trial(results, agent, env, filename)
 
 
@@ -68,6 +73,7 @@ def run_trauma(agent: BaseAgent, env: Image2VecWrapper, n_trauma_updates: int, t
         action = agent.select_action(state)
         new_state, reward, done, truncated, _ = env.step(action)
 
+        # only update the traumatic event
         if reward == env.unwrapped.transient_penalty:
             for _ in range(n_trauma_updates):
                 agent.update_single(state, action, reward, new_state, done=False)
