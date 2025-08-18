@@ -3,7 +3,7 @@ from blue_ai.envs.custom_world_objects import ObstacleNoTerminate
 from enum import IntEnum
 from minigrid.core.grid import Grid, WorldObj
 from minigrid.core.mission import MissionSpace
-from minigrid.core.world_object import Goal, Wall, Lava, Floor
+from minigrid.core.world_object import Goal, Wall, Floor #, Lava
 
 from minigrid.minigrid_env import MiniGridEnv
 
@@ -45,6 +45,9 @@ class TransientGoals(MiniGridEnv):
         max_steps=500,
         wall_locations = None,
         env_name = None,
+        see_through_walls = True,
+        standing_penalty = False,
+        standing_penalty_value = 0.01,
         **kwargs,
     ):
 
@@ -66,6 +69,9 @@ class TransientGoals(MiniGridEnv):
         self.replace_transient_obstacles = replace_transient_obstacles
         self.wall_locations = wall_locations
         self.env_name = env_name
+        self.see_through_walls = see_through_walls
+        self.standing_penalty = standing_penalty
+        self.standing_penalty_value = standing_penalty_value
 
         mission_space = MissionSpace(mission_func=self._gen_mission)
         max_steps = 4 * len(self.im) ** 2
@@ -74,7 +80,7 @@ class TransientGoals(MiniGridEnv):
             mission_space=mission_space,
             width=len(self.im[0]),
             height=len(self.im),
-            see_through_walls=True,
+            see_through_walls=see_through_walls,
             max_steps=max_steps,
             agent_view_size=5,
             **kwargs,
@@ -174,6 +180,8 @@ class TransientGoals(MiniGridEnv):
                 terminated, reward = self._handle_forward()
             case Actions.stand:
                 #print('standing still')
+                if self.standing_penalty:
+                    reward-= self.standing_penalty_value
                 pass
             case Actions.done:
                 terminated = True

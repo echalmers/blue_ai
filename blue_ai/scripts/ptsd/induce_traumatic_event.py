@@ -1,54 +1,38 @@
 import pandas as pd
-from typing import Any, Dict, List, Tuple, TypedDict
+from typing import Dict, Tuple
+import sys
+from pathlib import Path
 
-from blue_ai.scripts.train_agents import load_trial, run_trial, save_trial
+from blue_ai.scripts.train_agents import load_trial, save_trial
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
-import matplotlib.pyplot as plt
-from blue_ai.scripts.view_performance import PerformancePlotter
-from blue_ai.agents.agent_classes import *
-from copy import deepcopy
+from blue_ai.agents.agent_classes import BaseAgent
 
-def main():
+
+def induce_traumatic_event(directory: Path, trauma_env: Image2VecWrapper):
 
     # get the file names of the right agents
     files = [
         filename
         for trial in range(N_TRIALS)
         for filename in [
-            f'top_opening_tanh/HealthyAgent_{trial}_tanh.pkl',
-            # f'SpineLossDepression_{trial}.pkl',
-            # f'SchizophrenicAgent_{trial}.pkl',
-            # f'ReverseImbalanceAgent_{trial}.pkl',
-            f'top_opening_tanh/PTSDAgent_{trial}_tanh.pkl'
+            f'{directory.name}/HealthyAgent_{trial}.pkl',
+            f'{directory.name}/PTSDAgent_{trial}.pkl'
 
         ]
     ]
 
-    # create the environment which is used to induce the ptsd
-    traumatic_env = Image2VecWrapper(
-                TransientGoals(
-                    render_mode="none", transient_reward=0.25, termination_reward=1, agent_start_pos=(3,1),
-                    n_transient_obstacles=1, transient_penalty=-100, transient_locations=[[1,4],[4,2],[5,1]], transient_obstacles=[[4,1]],
-                    wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]], env_name='trauma_env'
-                )
-            )
-
-
     # induce the trauma to each agent trial independently
     for i in range(len(files)):
         filename = files[i]
-        print(f'old filename: {filename}')
         results, agent, env = load_trial(DATA_PATH / filename)
 
-        new_results, agent, env = run_trauma(agent, traumatic_env, n_trauma_updates=1, trial_id=i)
+        new_results, agent, env = run_trauma(agent, trauma_env, n_trauma_updates=1, trial_id=i)
         print(new_results)
         
         filename = ( DATA_PATH / filename.replace(".pkl", "_traumatized.pkl") )
-        print(f'new filename: {filename}')
-        #print(f'environment type: {type(env)}')
-
+        
         # save the new agent with the old results
         save_trial(results, agent, env, filename)
 
@@ -65,6 +49,7 @@ def run_trauma(agent: BaseAgent, env: Image2VecWrapper, n_trauma_updates: int, t
     # track agent positions to see if they get stuck
     pos: Dict[Tuple[int, int], int] = {}
 
+    # run loop until the agent gets traumatized
     while True:
         step +=1
         # record position
@@ -81,8 +66,6 @@ def run_trauma(agent: BaseAgent, env: Image2VecWrapper, n_trauma_updates: int, t
         if truncated or done:
             state, _ = env.reset()
             episode_num +=1
-            if truncated:
-                print('truncated')
         else:
             state = new_state
 
@@ -111,6 +94,7 @@ def run_trauma(agent: BaseAgent, env: Image2VecWrapper, n_trauma_updates: int, t
 
         results.append(result)
 
+        # break once the agent is traumatized
         if reward == env.unwrapped.transient_penalty:
             break
     
@@ -118,5 +102,14 @@ def run_trauma(agent: BaseAgent, env: Image2VecWrapper, n_trauma_updates: int, t
     return results, agent, env
 
 if __name__ == "__main__":
-    main()
+    # create the environment which is used to induce the ptsd
+    traumatic_env = Image2VecWrapper(
+                TransientGoals(
+                    render_mode="none", transient_reward=0.25, termination_reward=1, agent_start_pos=(3,1),
+                    n_transient_obstacles=1, transient_penalty=-100, transient_locations=[[1,4],[4,2],[5,1]], transient_obstacles=[[4,1]],
+                    wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]], env_name='trauma_env'
+                )
+            )
+
+    induce_traumatic_event(DATA_PATH / sys.argv[1], traumatic_env)
 
