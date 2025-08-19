@@ -1,6 +1,7 @@
 import sys
 # from pathlib import Path
 from typing import List
+from copy import deepcopy
 
 from torch import nn
 
@@ -58,6 +59,10 @@ def main():
                 )
             )
     
+    post_trauma_env = deepcopy(trauma_env)
+    post_trauma_env.unwrapped.n_transient_obstacles = 0
+    post_trauma_env.unwrapped.transient_obstacles = None
+    
     
     # -- OTHER HYPERPARAMETERS --
     iter_per_trial = 80_000
@@ -72,19 +77,23 @@ def main():
     # -- INDUCE THE TRAUMATIV EVENT TO ALL AGENTS --
     induce_traumatic_event(folder_path, trauma_env)
 
-    # -- INVESTIGATE THE Q-VALUES IN THE TRAUMA ENV BUT WITHOUT THE HAZARD
+    # -- INVESTIGATE THE Q-VALUES IN THE TRAUMA ENV BUT WITHOUT THE HAZARD --
     # Das gefällt mir noch nicht so gut, wäre schöner, wenn es einfach ein plot wäre
-    investigate_Qvalues(folder_path, trauma_env, show_plots, trauma = False,)
-    investigate_Qvalues(folder_path, trauma_env, show_plots, trauma = True)
+    investigate_Qvalues(folder_path, post_trauma_env, show_plots, trauma = False,)
+    investigate_Qvalues(folder_path, post_trauma_env, show_plots, trauma = True)
 
-    # -- TRAIN THE MODLES WHICH RECONSTRUCT THE VISUAL INPUT
+    # -- TRAIN THE MODLES WHICH RECONSTRUCT THE VISUAL INPUT --
     train_interpretation_models(folder_path, trauma = False)
     train_interpretation_models(folder_path, trauma = True)
 
-    # -- RENDER THE RECONSTRUCTIONS
+    # -- RENDER THE RECONSTRUCTIONS --
     if show_plots:
-        view_reconstruction(folder_path, trauma = False)
-        view_reconstruction(folder_path, trauma = True)
+        view_reconstruction(folder_path, post_trauma_env, trauma = False, mode = 'interactive')
+        view_reconstruction(folder_path, post_trauma_env, trauma = True, mode = 'interactive')
+    
+    # -- ANALYSE THE RECONSTRUCTIONS
+    view_reconstruction(folder_path, post_trauma_env, trauma = False, mode = 'statistical')
+    view_reconstruction(folder_path, post_trauma_env, trauma = True, mode = 'statistical')
 
 
 

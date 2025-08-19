@@ -3,6 +3,8 @@ from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.scripts.constants import DATA_PATH
 
 import numpy as np
+import pandas as pd
+import seaborn as sns
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
@@ -13,8 +15,9 @@ from pathlib import Path
 import time
 import sys
 
-def view_reconstruction(directory: Path, trauma: bool):
-    mode = 'interactive' # there is also datagen in the schizophrenia files
+def view_reconstruction(directory: Path ,env: Image2VecWrapper, trauma: bool, mode: str):
+    if mode not in ['interactive', 'statistical']:
+        raise ValueError("There are just two valid modes: interactive and statistical")
 
     with open(DATA_PATH / f'{directory.name}/interpretation_models{"_traumatized" if trauma else ""}.pkl', 'rb') as f:
         interpretation_models = pickle.load(f)
@@ -25,7 +28,7 @@ def view_reconstruction(directory: Path, trauma: bool):
              }
         )
     
-    def plot(state):
+    def plot_interactive(state):
         for i in range(3):
             ax[i].cla()
 
@@ -39,6 +42,8 @@ def view_reconstruction(directory: Path, trauma: bool):
             mse = nn.MSELoss()(recon, state)
             print(row['filename'], mse)
             recon[recon < 0] = 0
+            #print(f'{recon} from {row['agent_name']}' )
+            #print(Image2VecWrapper.observation_to_image(recon.cpu() ** 1.5, closest=True))
             ax[2 + index].imshow(Image2VecWrapper.observation_to_image(recon.cpu() ** 1.5, closest=True))
             ax[2 + index].set_title(f"{row['agent_name']} reconstructed")  # ({round(float(mse), 2)})")
 
@@ -53,18 +58,44 @@ def view_reconstruction(directory: Path, trauma: bool):
         ax[1].set_title('visual input')
         plt.pause(0.01)
     
+    def plot_objects(df: pd.DataFrame):
+
+            # create the image folder, if it doesn't exist yet
+            folder_path = directory / "img"
+            folder_path.mkdir(parents=True, exist_ok=True)
+
+            # Reset index so that the categories become a column
+            df_reset = df.reset_index().rename(columns={'index': 'Group'})
+
+            # Melt the DataFrame to long format
+            df_melted = df_reset.melt(id_vars='Group', var_name='Metric', value_name='Count')
+
+            # assign the right colors
+            colors = {
+                '# Goals': 'tab:green',
+                 '# Transient Goals': 'tab:blue',
+                 '# Hazards': 'tab:red'
+            }
+
+            # Create bar plot
+            plt.figure(figsize=(10, 6))
+            sns.barplot(data=df_melted, x='Group', y='Count', hue='Metric', palette=colors)
+            
+            # Add titles and labels
+            plt.title(f'Objects reconstructed {'after' if trauma else 'before'} trauma', fontsize=16)
+            plt.xlabel('Group', fontsize=12)
+            plt.ylabel('Count', fontsize=12)
+            plt.legend(title='Metrics')
+            
+            # Show plot
+            plt.tight_layout()
+            plt.savefig(folder_path/f"object_recon_{'after' if trauma else 'before'}_trauma.png")
+            plt.show()
+    
     if mode == 'interactive':
 
-        # create an environment
-        env = Image2VecWrapper(
-                TransientGoals(
-                    render_mode="rgb_array", transient_reward=0.25, termination_reward=1,
-                    #n_transient_obstacles=1, transient_penalty=-100, transient_obstacles=[[4,1]]
-                    transient_locations=[[1,4],[4,2],[5,1]],
-                    wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]],
-                    n_transient_obstacles=0
-                )
-            )
+        # make sure that the render mode is set to human
+        env.unwrapped.render_mode = 'rgb_array'
         state, _ = env.reset()
 
         def process(event):
@@ -87,16 +118,64 @@ def view_reconstruction(directory: Path, trauma: bool):
             state, _, done, _, _ = env.step(action)
             if done:
                 state, _ = env.reset()
-            plot(state)
+            plot_interactive(state)
 
 
         # create figure window
         fig, ax = plt.subplots(1, 4, figsize=(10, 4))
         fig.canvas.mpl_connect('key_press_event', process)
         fig.suptitle(f'Reconstructions {'after' if trauma else 'before'} trauma')
-        plot(state)
+        plot_interactive(state)
 
         plt.show()
+
+    if mode == 'statistical':
+        # create an dictionary to keep track of the number of items in the reconstructions
+        recon_dict = {agent: {"# Goals": 0,  "# Transient Goals": 0, "# Hazards": 0,} for agent in interpretation_models['agent_name'].unique()}
+
+        # the target values for important world objects
+        hazard_target = torch.tensor([0.99609375, 0.0, 0.0])
+        t_goal_target = torch.tensor([0.0, 0.0, 0.99609375])
+        goal_target = torch.tensor([0.0, 0.99609375, 0.0])
+
+
+        state, _ = env.reset()
+        
+        for _ in range(1_000):
+            # place the agent in a random free position and direction
+            env.unwrapped.place_agent(rand_dir = True)
+            state = env.observation(env.unwrapped.gen_obs())
+            state = torch.tensor(np.expand_dims(state, 0).astype(np.float32),
+                                device=interpretation_models['agent'][0].device)
+            # env.render()
+            # time.sleep(10)
+            for _, row in interpretation_models.iterrows():
+                # get the reconstruction
+                recon = row['interpretation_model'].get_reconstructions(observations=state)[1][0]
+                recon[recon < 0] = 0
+
+                # convert it to an image
+                rgb = Image2VecWrapper.observation_to_image(recon.cpu() ** 1.5, closest=True)
+                #print(row['agent_name'], rgb)
+
+                # update the counter inside the dictionary
+                recon_dict[row['agent_name']]["# Goals"] += torch.all(rgb == goal_target, dim=-1).sum().item()
+                recon_dict[row['agent_name']]["# Transient Goals"] += torch.all(rgb == t_goal_target, dim=-1).sum().item()
+                recon_dict[row['agent_name']]["# Hazards"] += torch.all(rgb == hazard_target, dim=-1).sum().item()
+
+        df = pd.DataFrame.from_dict(recon_dict, orient="index")
+        print(df)
+        plot_objects(df)
+
     
 if __name__ == "__main__":
-    view_reconstruction(DATA_PATH / sys.argv[1], trauma=True)
+
+    env = Image2VecWrapper(
+                TransientGoals(
+                    render_mode="none", transient_reward=0.25, termination_reward=1, 
+                    transient_locations=[[1,4],[4,2],[5,1]],
+                    wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]]
+                )
+            )
+    
+    view_reconstruction(DATA_PATH / sys.argv[1], env, trauma=True, mode= 'statistical')
