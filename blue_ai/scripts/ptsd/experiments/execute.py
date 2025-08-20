@@ -1,9 +1,11 @@
 import sys
-# from pathlib import Path
 from typing import List
 from copy import deepcopy
+#from pathlib import Path
+#import time
 
 from torch import nn
+import matplotlib.pyplot as plt
 
 from blue_ai.agents.agent_classes import BaseAgent, HealthyAgent, PTSDAgent
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
@@ -44,12 +46,15 @@ def main():
                     render_mode="none", transient_reward=0.25, termination_reward=1,
                     n_transient_obstacles = 1,
                     wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]],
-                    #standing_penalty=True, standing_penalty_value = 0.25
+                    # hiding_penalty=True, hiding_penalty_value = 0.25
                     # see_through_walls = False IS NOT WORKING?
                 )
             )
     ]
-    
+    for env in learning_envs:
+        save_env(env, 'environment_during_learning', folder_path)
+
+
     trauma_env = Image2VecWrapper(
                 TransientGoals(
                     render_mode="none", transient_reward=0.25, termination_reward=1, 
@@ -58,14 +63,16 @@ def main():
                     wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]]
                 )
             )
-    
+    save_env(trauma_env, 'environment_during_trauma_experience', folder_path)
+
+
     post_trauma_env = deepcopy(trauma_env)
     post_trauma_env.unwrapped.n_transient_obstacles = 0
     post_trauma_env.unwrapped.transient_obstacles = None
-    
+    save_env(post_trauma_env, 'environment_after_trauma_experience', folder_path)
     
     # -- OTHER HYPERPARAMETERS --
-    iter_per_trial = 80_000
+    iter_per_trial = 1_000
     show_plots = True
 
     # -- TRAIN THE AGENTS --
@@ -97,7 +104,19 @@ def main():
 
 
 
+def save_env(env: Image2VecWrapper, name: str, directory):
+    # create the image folder, if it doesn't exist yet
+    folder_path = directory / "img"
+    folder_path.mkdir(parents=True, exist_ok=True)
 
+    env.unwrapped.render_mode = 'rgb_array'
+    _, _ = env.reset()
+
+    fig, ax = plt.subplots(1, 1)
+    ax.axis('off')
+    ax.imshow(env.render())
+    ax.set_title(name)
+    plt.savefig(folder_path/f'{name}.png')
 
 
 
