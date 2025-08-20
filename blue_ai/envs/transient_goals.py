@@ -19,7 +19,7 @@ class Actions(IntEnum):
     left = 0
     right = 1
     forward = 2
-    stand = 3
+    hide = 3
 
     # Done completing task
     done = 4
@@ -46,8 +46,8 @@ class TransientGoals(MiniGridEnv):
         wall_locations = None,
         env_name = None,
         see_through_walls = True,
-        standing_penalty = False,
-        standing_penalty_value = 0.01,
+        hiding_penalty = False,
+        hiding_penalty_value = 0.01,
         **kwargs,
     ):
 
@@ -70,8 +70,8 @@ class TransientGoals(MiniGridEnv):
         self.wall_locations = wall_locations
         self.env_name = env_name
         self.see_through_walls = see_through_walls
-        self.standing_penalty = standing_penalty
-        self.standing_penalty_value = standing_penalty_value
+        self.hiding_penalty = hiding_penalty
+        self.hiding_penalty_value = hiding_penalty_value
 
         mission_space = MissionSpace(mission_func=self._gen_mission)
         max_steps = 4 * len(self.im) ** 2
@@ -178,10 +178,9 @@ class TransientGoals(MiniGridEnv):
                 self._turn_right()
             case Actions.forward:
                 terminated, reward = self._handle_forward()
-            case Actions.stand:
-                #print('standing still')
-                if self.standing_penalty:
-                    reward-= self.standing_penalty_value
+            case Actions.hide:
+                if self.hiding_penalty:
+                    reward-= self.hiding_penalty_value
                 pass
             case Actions.done:
                 terminated = True

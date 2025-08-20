@@ -54,7 +54,7 @@ def plotting(df: pd.DataFrame, directory: Path, show_plots: bool, trauma: bool):
     folder_path.mkdir(parents=True, exist_ok=True)
 
     # Expand Q_values into columns
-    q_df = pd.DataFrame(df['qvalues'].tolist(), columns=['left', 'right', 'forward', 'stand'])
+    q_df = pd.DataFrame(df['qvalues'].tolist(), columns=['left', 'right', 'forward', 'hide'])
     df = pd.concat([df[['agent']], q_df], axis=1)
 
     # Average per agent
@@ -90,4 +90,4 @@ if __name__ == "__main__":
                     wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]], env_name='trauma_env'
                 )
             )
-    investigate_Qvalues(DATA_PATH / sys.argv[1], env, trauma=True)
+    investigate_Qvalues(DATA_PATH / sys.argv[1], env, show_plots=True, trauma=False)
