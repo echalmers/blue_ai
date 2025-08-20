@@ -46,7 +46,7 @@ class Image2VecWrapper(gym.ObservationWrapper):
         for obj, (index, color) in object_number_map.items():
             slice = (maxes == index).T if closest else observation[index, :, :].T
             rgb += np.tensordot(slice, color, axes=0)
-        rgb /= 256
+        rgb /= 255
         return rgb
 
 

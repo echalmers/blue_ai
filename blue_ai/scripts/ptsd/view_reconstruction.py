@@ -134,9 +134,9 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, trauma: bool, mo
         recon_dict = {agent: {"# Goals": 0,  "# Transient Goals": 0, "# Hazards": 0,} for agent in interpretation_models['agent_name'].unique()}
 
         # the target values for important world objects
-        hazard_target = torch.tensor([0.99609375, 0.0, 0.0])
-        t_goal_target = torch.tensor([0.0, 0.0, 0.99609375])
-        goal_target = torch.tensor([0.0, 0.99609375, 0.0])
+        hazard_target = torch.tensor([1.0, 0.0, 0.0])
+        t_goal_target = torch.tensor([0.0, 0.0, 1.0])
+        goal_target = torch.tensor([0.0, 1.0, 0.0])
 
 
         state, _ = env.reset()
