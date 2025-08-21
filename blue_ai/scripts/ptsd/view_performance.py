@@ -1,13 +1,14 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+
 from pathlib import Path
 import sys
-from blue_ai.scripts.train_agents import load_dataset
-from blue_ai.envs.transient_goals import TransientGoals
-import blue_ai.agents.agent_classes as classes
 
+import blue_ai.agents.agent_classes as classes
+from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.scripts.constants import DATA_PATH
+from blue_ai.scripts.ptsd.train_agents import load_dataset
 
 
 class PerformancePlotter:

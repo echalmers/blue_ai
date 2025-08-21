@@ -8,7 +8,7 @@ from torch import nn
 import pandas as pd
 
 from blue_ai.agents.agent_classes import BaseAgent, HealthyAgent, PTSDAgent
-from blue_ai.envs.transient_goals import TransientGoals
+from blue_ai.envs.transient_goals import TransientGoals, Actions
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 
@@ -21,10 +21,9 @@ ptsd_network = nn.Sequential(
 )
 
 
-def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
+def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None, trauma = False, exposure_therapy = False):
     state, _ = env.reset()
     # setup variables to track progress
-    steps_this_episode = 0
     episode_num = 0
     cumulative_reward = 0
 
@@ -40,23 +39,25 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
 
     # actual training loop
     for step in range(steps):
-        steps_this_episode += 1
 
         # record position
         pos[env.unwrapped.agent_pos] = pos.get(env.unwrapped.agent_pos, 0) + 1
 
         # get & execute action
-        action = agent.select_action(state)
-        new_state, reward, done, truncated, _ = env.step(action)
-
-        # use this experience to update agent
-        agent.update(state, action, reward, new_state, done=False)
+        if trauma or exposure_therapy:
+            action = Actions.forward
+            new_state, reward, done, truncated, _ = env.step(action)
+            agent.update_single(state, action, reward, new_state, done=False)
+            done = True
+        else:
+            action = agent.select_action(state)
+            new_state, reward, done, truncated, _ = env.step(action)
+            agent.update(state, action, reward, new_state, done=False)
 
         # reset environment if done (ideally env would do this itself)
         if truncated or done:
             state, _ = env.reset()
-            episode_num = 0
-            steps_this_episode = 0
+            episode_num += 1
         else:
             state = new_state
 

@@ -17,6 +17,7 @@ from blue_ai.scripts.ptsd.induce_traumatic_event import induce_traumatic_event
 from blue_ai.scripts.ptsd.investigate_Qvalues import investigate_Qvalues
 from blue_ai.scripts.ptsd.train_interpretation_models import train_interpretation_models
 from blue_ai.scripts.ptsd.view_reconstruction import view_reconstruction 
+from blue_ai.scripts.ptsd.post_ptsd import post_ptsd
 
 
 
@@ -98,9 +99,12 @@ def main():
         view_reconstruction(folder_path, post_trauma_env, trauma = False, mode = 'interactive')
         view_reconstruction(folder_path, post_trauma_env, trauma = True, mode = 'interactive')
     
-    # -- ANALYSE THE RECONSTRUCTIONS
+    # -- ANALYSE THE RECONSTRUCTIONS --
     view_reconstruction(folder_path, post_trauma_env, trauma = False, mode = 'statistical')
     view_reconstruction(folder_path, post_trauma_env, trauma = True, mode = 'statistical')
+
+    # -- EXPOSURE THERAPY --
+    post_ptsd(folder_path, post_trauma_env, 5)
 
 
 
@@ -117,7 +121,6 @@ def save_env(env: Image2VecWrapper, name: str, directory):
     ax.imshow(env.render())
     ax.set_title(name)
     plt.savefig(folder_path/f'{name}.png')
-
 
 
 if __name__ == "__main__":

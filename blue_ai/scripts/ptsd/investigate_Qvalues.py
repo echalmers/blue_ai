@@ -8,8 +8,8 @@ from pathlib import Path
 
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
-from blue_ai.scripts.train_agents import load_trial
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
+from blue_ai.scripts.ptsd.train_agents import load_trial
 
 
 
@@ -21,7 +21,6 @@ def investigate_Qvalues(directory: Path, env: Image2VecWrapper, show_plots: bool
         for filename in [
             f'{directory.name}/HealthyAgent_{trial}{"_traumatized" if trauma else ""}.pkl',
             f'{directory.name}/PTSDAgent_{trial}{"_traumatized" if trauma else ""}.pkl'
-
         ]
     ]
 
@@ -90,4 +89,4 @@ if __name__ == "__main__":
                     wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]], env_name='trauma_env'
                 )
             )
-    investigate_Qvalues(DATA_PATH / sys.argv[1], env, show_plots=True, trauma=False)
+    investigate_Qvalues(DATA_PATH / sys.argv[1], env, show_plots=True, trauma=True)

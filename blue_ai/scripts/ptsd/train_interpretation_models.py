@@ -1,5 +1,5 @@
 from blue_ai.agents.dqn import DQN
-from blue_ai.scripts.train_agents import load_trial
+from blue_ai.scripts.ptsd.train_agents import load_trial
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 
 import pandas as pd
