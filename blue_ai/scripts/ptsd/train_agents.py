@@ -21,7 +21,7 @@ ptsd_network = nn.Sequential(
 )
 
 
-def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None, trauma = False, exposure_therapy = False):
+def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None, trauma = False, exposure_therapy = False, testing = False):
     state, _ = env.reset()
     # setup variables to track progress
     episode_num = 0
@@ -52,7 +52,8 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None, trauma
         else:
             action = agent.select_action(state)
             new_state, reward, done, truncated, _ = env.step(action)
-            agent.update(state, action, reward, new_state, done=False)
+            if not testing :
+                agent.update(state, action, reward, new_state, done=False)
 
         # reset environment if done (ideally env would do this itself)
         if truncated or done:

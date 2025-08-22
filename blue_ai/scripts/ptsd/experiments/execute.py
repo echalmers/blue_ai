@@ -18,6 +18,7 @@ from blue_ai.scripts.ptsd.investigate_Qvalues import investigate_Qvalues
 from blue_ai.scripts.ptsd.train_interpretation_models import train_interpretation_models
 from blue_ai.scripts.ptsd.view_reconstruction import view_reconstruction 
 from blue_ai.scripts.ptsd.post_ptsd import post_ptsd
+from blue_ai.scripts.ptsd.test_performance import test_performance
 
 
 
@@ -88,8 +89,8 @@ def main():
     train_agents(agents, learning_envs, iter_per_trial, folder_path)
 
 
-    # -- PLOT AND SAVE THE PERFORMANCE --
-    view_performance(folder_path, "in_learning_env", show_plots)
+    # -- PLOT AND SAVE THE TRAINING PERFORMANCE --
+    view_performance(folder_path, "_training_in_learning_env", show_plots, '')
 
 
     # -- INDUCE THE TRAUMATIV EVENT TO ALL AGENTS --
@@ -125,6 +126,15 @@ def main():
         view_reconstruction(folder_path, post_trauma_env, agent_state = after_therapy, mode = 'interactive')
     view_reconstruction(folder_path, post_trauma_env, agent_state = after_therapy, mode = 'statistical')
 
+
+    # -- TEST THE PERFORMANCE DURING THE DIFFERENT STAGES --
+    test_performance(folder_path, learning_envs[0], before_trauma, iter_per_trial)
+    test_performance(folder_path, learning_envs[0], after_trauma, iter_per_trial)
+    test_performance(folder_path, learning_envs[0], after_therapy, iter_per_trial)
+
+    view_performance(folder_path, "testing_in_learning_env_before_trauma", show_plots, '_testing')
+    view_performance(folder_path, "testing_in_learning_env_after_trauma", show_plots, '_traumatized_testing')
+    view_performance(folder_path, "testing_in_learning_env_after_therapy", show_plots, '_exposure_therapy_testing')
 
 
 

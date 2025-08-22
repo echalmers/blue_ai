@@ -15,7 +15,8 @@ class PerformancePlotter:
 
     def __init__(
         self,
-        directory : str,
+        directory: Path,
+        agent_state: str,
         agent_classes=None,
         results_dataframe=None
     ):
@@ -23,9 +24,6 @@ class PerformancePlotter:
         if agent_classes is None and results_dataframe is None:
             agent_classes = (
                 classes.HealthyAgent,
-                #classes.SpineLossDepression,
-                #classes.SchizophrenicAgent,
-                # agent_classes.PrunedAgent
                 classes.PTSDAgent
             )
 
@@ -36,7 +34,7 @@ class PerformancePlotter:
         else:
             self.agent_classes = agent_classes
             self.high_terminal_results = load_dataset(
-                [f"{directory}/{cls.__name__}_[!s].pkl" for cls in agent_classes]
+                [f"{directory.name}/{cls.__name__}_[!s]{agent_state}.pkl" for cls in agent_classes]
             )
 
             print(self.high_terminal_results)
@@ -149,8 +147,8 @@ class PerformancePlotter:
         plt.xlabel("type of goal")
         plt.xlabel("")
 
-def view_performance(directory: Path, name_suffix: str, show_plots: bool):
-    plotter = PerformancePlotter(directory.name)
+def view_performance(directory: Path, name_suffix: str, show_plots: bool, agent_state: str):
+    plotter = PerformancePlotter(directory, agent_state)
 
     folder_path = directory / "img"
     folder_path.mkdir(parents=True, exist_ok=True)
@@ -171,4 +169,4 @@ def view_performance(directory: Path, name_suffix: str, show_plots: bool):
 
 
 if __name__ == "__main__":
-    view_performance(DATA_PATH / sys.argv[1], sys.argv[2])
+    view_performance(DATA_PATH / sys.argv[1], 'test', True, '_testing')
