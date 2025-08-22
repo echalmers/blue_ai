@@ -24,11 +24,14 @@ from blue_ai.scripts.ptsd.post_ptsd import post_ptsd
 # before using this script, get yourself familiar with the README in the ptsd folder
 def main():
     # -- HYPERPARAMETERS --
-    iter_per_trial = 1_000
+    iter_per_trial = 80_000
     show_plots = True
     trauma_penalty = -100
     n_trauma_updates = 1
     n_exposure_updates = 10
+    before_trauma = ''
+    after_trauma = '_traumatized'
+    after_therapy = '_exposure_therapy'
     
 
     # -- CREATE THE DIRECTORY --
@@ -95,26 +98,33 @@ def main():
 
     # -- INVESTIGATE THE Q-VALUES IN THE TRAUMA ENV BUT WITHOUT THE HAZARD --
     # Das gefällt mir noch nicht so gut, wäre schöner, wenn es einfach ein plot wäre
-    investigate_Qvalues(folder_path, post_trauma_env, show_plots, trauma = False,)
-    investigate_Qvalues(folder_path, post_trauma_env, show_plots, trauma = True)
+    investigate_Qvalues(folder_path, post_trauma_env, show_plots, agent_state = before_trauma)
+    investigate_Qvalues(folder_path, post_trauma_env, show_plots, agent_state = after_trauma)
 
 
     # -- TRAIN THE MODLES WHICH RECONSTRUCT THE VISUAL INPUT --
-    train_interpretation_models(folder_path, trauma = False)
-    train_interpretation_models(folder_path, trauma = True)
+    train_interpretation_models(folder_path, agent_state = before_trauma)
+    train_interpretation_models(folder_path, agent_state = after_trauma)
 
 
     # -- RECONSTRUCT WHAT THE AGENTS SEE --
     if show_plots:
-        view_reconstruction(folder_path, post_trauma_env, trauma = False, mode = 'interactive')
-        view_reconstruction(folder_path, post_trauma_env, trauma = True, mode = 'interactive')
+        view_reconstruction(folder_path, post_trauma_env, agent_state = before_trauma, mode = 'interactive')
+        view_reconstruction(folder_path, post_trauma_env, agent_state = after_trauma, mode = 'interactive')
     
-    view_reconstruction(folder_path, post_trauma_env, trauma = False, mode = 'statistical')
-    view_reconstruction(folder_path, post_trauma_env, trauma = True, mode = 'statistical')
+    view_reconstruction(folder_path, post_trauma_env, agent_state = before_trauma, mode = 'statistical')
+    view_reconstruction(folder_path, post_trauma_env, agent_state = after_trauma, mode = 'statistical')
 
 
     # -- EXPOSURE THERAPY --
     post_ptsd(folder_path, post_trauma_env, n_exposure_updates)
+
+    investigate_Qvalues(folder_path, post_trauma_env, show_plots, agent_state = after_therapy)
+    train_interpretation_models(folder_path, agent_state = after_therapy)
+    if show_plots:
+        view_reconstruction(folder_path, post_trauma_env, agent_state = after_therapy, mode = 'interactive')
+    view_reconstruction(folder_path, post_trauma_env, agent_state = after_therapy, mode = 'statistical')
+
 
 
 

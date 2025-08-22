@@ -15,11 +15,11 @@ from pathlib import Path
 import time
 import sys
 
-def view_reconstruction(directory: Path ,env: Image2VecWrapper, trauma: bool, mode: str):
+def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: bool, mode: str):
     if mode not in ['interactive', 'statistical']:
         raise ValueError("There are just two valid modes: interactive and statistical")
 
-    with open(DATA_PATH / f'{directory.name}/interpretation_models{"_traumatized" if trauma else ""}.pkl', 'rb') as f:
+    with open(DATA_PATH / f'{directory.name}/interpretation_models{agent_state}.pkl', 'rb') as f:
         interpretation_models = pickle.load(f)
         interpretation_models['agent_name'] = interpretation_models['agent']
         interpretation_models['agent_name'] = interpretation_models['agent_name'].astype(str).replace(
@@ -27,6 +27,17 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, trauma: bool, mo
              'PTSDAgent': 'PTSD'
              }
         )
+    
+    match agent_state:
+        case "_traumatized":
+            title = 'Objects reconstructed after trauma'
+            subpath = "object_recon_after_trauma.png"
+        case "_exposure_therapy":
+            title = 'Objects reconstructed after exposure therapy'
+            subpath = "object_recon_after_exposure_therapy.png"
+        case _:
+            title= 'Objects reconstructed before trauma'
+            subpath = "object_recon_before_trauma.png"
     
     def plot_interactive(state):
         for i in range(3):
@@ -37,7 +48,7 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, trauma: bool, mo
         state = torch.tensor(np.expand_dims(state, 0).astype(np.float32),
                                 device=interpretation_models['agent'][0].device)
 
-        for index, row in interpretation_models[interpretation_models['filename'].str.contains(f'_0{'_traumatized'if trauma else ''}.pkl')].iterrows():
+        for index, row in interpretation_models[interpretation_models['filename'].str.contains(f'_0{agent_state}.pkl')].iterrows():
             recon = row['interpretation_model'].get_reconstructions(observations=state)[1][0]
             mse = nn.MSELoss()(recon, state)
             print(row['filename'], mse)
@@ -82,14 +93,14 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, trauma: bool, mo
             sns.barplot(data=df_melted, x='Group', y='Count', hue='Metric', palette=colors)
             
             # Add titles and labels
-            plt.title(f'Objects reconstructed {'after' if trauma else 'before'} trauma', fontsize=16)
+            plt.title(title, fontsize=16)
             plt.xlabel('Group', fontsize=12)
             plt.ylabel('Count', fontsize=12)
             plt.legend(title='Metrics')
             
             # Show plot
             plt.tight_layout()
-            plt.savefig(folder_path/f"object_recon_{'after' if trauma else 'before'}_trauma.png")
+            plt.savefig(folder_path/subpath)
             plt.show()
     
     if mode == 'interactive':
@@ -124,7 +135,7 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, trauma: bool, mo
         # create figure window
         fig, ax = plt.subplots(1, 4, figsize=(10, 4))
         fig.canvas.mpl_connect('key_press_event', process)
-        fig.suptitle(f'Reconstructions {'after' if trauma else 'before'} trauma')
+        fig.suptitle(title)
         plot_interactive(state)
 
         plt.show()
@@ -178,4 +189,4 @@ if __name__ == "__main__":
                 )
             )
     
-    view_reconstruction(DATA_PATH / sys.argv[1], env, trauma=True, mode= 'statistical')
+    view_reconstruction(DATA_PATH / sys.argv[1], env, agent_state='', mode= 'interactive')

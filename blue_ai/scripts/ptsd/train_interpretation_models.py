@@ -68,15 +68,17 @@ class RepresentationProbe:
         self._internal_activations[layer] = input[0]
 
 
-def train_interpretation_models (directory: Path, trauma: bool):
+def train_interpretation_models (directory: Path, agent_state: str):
+    if agent_state not in ['', '_traumatized', '_exposure_therapy']:
+        raise ValueError(f"Unknown agent state: {agent_state}")
+    
     # get the file names of the agents
     files = [
         filename
         for trial in range(N_TRIALS)
         for filename in [
-            f'{directory.name}/HealthyAgent_{trial}{"_traumatized" if trauma else ""}.pkl',
-            f'{directory.name}/PTSDAgent_{trial}{"_traumatized" if trauma else ""}.pkl'
-
+            f'{directory.name}/HealthyAgent_{trial}{agent_state}.pkl',
+            f'{directory.name}/PTSDAgent_{trial}{agent_state}.pkl'
         ]
     ]
 
@@ -91,12 +93,12 @@ def train_interpretation_models (directory: Path, trauma: bool):
         probe = RepresentationProbe(agent)
         lo = probe.fit()
         print(lo[-1])
-        row['interpretation_model'] = probe
         row['agent'] = agent
+        row['interpretation_model'] = probe
 
-    with open(directory / f'interpretation_models{"_traumatized" if trauma else ""}.pkl', 'wb') as f:
+    with open(directory / f'interpretation_models{agent_state}.pkl', 'wb') as f:
         pickle.dump(interpretation_models, f)
 
 
 if __name__ == '__main__':
-    train_interpretation_models(DATA_PATH / sys.argv[1], trauma=True)
+    train_interpretation_models(DATA_PATH / sys.argv[1], agent_state='_traumatized')

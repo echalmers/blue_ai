@@ -13,14 +13,17 @@ from blue_ai.scripts.ptsd.train_agents import load_trial
 
 
 
-def investigate_Qvalues(directory: Path, env: Image2VecWrapper, show_plots: bool, trauma: bool):
+def investigate_Qvalues(directory: Path, env: Image2VecWrapper, show_plots: bool, agent_state: str):
+    if agent_state not in ['', '_traumatized', '_exposure_therapy']:
+        raise ValueError(f"Unknown agent state: {agent_state}")
+    
     # get the file names of the agents
     files = [
         filename
         for trial in range(N_TRIALS)
         for filename in [
-            f'{directory.name}/HealthyAgent_{trial}{"_traumatized" if trauma else ""}.pkl',
-            f'{directory.name}/PTSDAgent_{trial}{"_traumatized" if trauma else ""}.pkl'
+            f'{directory.name}/HealthyAgent_{trial}{agent_state}.pkl',
+            f'{directory.name}/PTSDAgent_{trial}{agent_state}.pkl'
         ]
     ]
 
@@ -44,10 +47,10 @@ def investigate_Qvalues(directory: Path, env: Image2VecWrapper, show_plots: bool
     
     results = pd.DataFrame(results)
     print(results)
-    plotting(results, directory, show_plots, trauma)
+    plotting(results, directory, show_plots, agent_state)
     
 
-def plotting(df: pd.DataFrame, directory: Path, show_plots: bool, trauma: bool):
+def plotting(df: pd.DataFrame, directory: Path, show_plots: bool, agent_state: str):
 
     folder_path = directory / "img"
     folder_path.mkdir(parents=True, exist_ok=True)
@@ -73,8 +76,20 @@ def plotting(df: pd.DataFrame, directory: Path, show_plots: bool, trauma: bool):
     )
 
     plt.subplots_adjust(top=0.85)
-    plt.suptitle(f"Average Q-values per Action {'after' if trauma else 'before'} trauma, Split by Agent")
-    plt.savefig(folder_path / f"q_values_{"after" if trauma else "before"}_trauma.png")
+
+    match agent_state:
+        case "_traumatized":
+            title = "Average Q-values per Action after trauma, Split by Agent"
+            subpath = "q_values_after_trauma.png"
+        case "_exposure_therapy":
+            title = "Average Q-values per Action after exposure therapy, Split by Agent"
+            subpath = "q_values_after_exposure_therapy.png"
+        case _:
+            title= "Average Q-values per Action before trauma, Split by Agent"
+            subpath = "q_values_before_trauma.png"
+
+    plt.suptitle(title)
+    plt.savefig(folder_path / subpath)
     if show_plots:
         plt.show()
     
@@ -89,4 +104,4 @@ if __name__ == "__main__":
                     wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]], env_name='trauma_env'
                 )
             )
-    investigate_Qvalues(DATA_PATH / sys.argv[1], env, show_plots=True, trauma=True)
+    investigate_Qvalues(DATA_PATH / sys.argv[1], env, show_plots=True, agent_state='_exposure_therapy')

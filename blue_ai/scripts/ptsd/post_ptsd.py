@@ -5,6 +5,7 @@ from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.scripts.ptsd.train_agents import load_trial, save_trial, run_trial
+from blue_ai.scripts.ptsd.investigate_Qvalues import investigate_Qvalues
 
 
 def post_ptsd(directory: Path, exposure_env: Image2VecWrapper, n_exposure_updates: int):
@@ -30,6 +31,7 @@ def post_ptsd(directory: Path, exposure_env: Image2VecWrapper, n_exposure_update
         # save the results
         filename = (DATA_PATH / filename.replace("_traumatized.pkl", "_exposure_therapy.pkl",))
         save_trial(new_results, agent, env, filename)
+    
 
 if __name__ == "__main__":
     env = Image2VecWrapper(
