@@ -7,7 +7,7 @@ from copy import deepcopy
 from torch import nn
 import matplotlib.pyplot as plt
 
-from blue_ai.agents.agent_classes import BaseAgent, HealthyAgent, PTSDAgent
+from blue_ai.agents.agent_classes import BaseAgent, HealthyAgent, PTSDAgent, TraumaSynapticDeficitAgent
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.scripts.constants import DATA_PATH
@@ -51,7 +51,8 @@ def main():
     
     agents: List[BaseAgent] = [
         HealthyAgent(network= network),
-        PTSDAgent(network= network)
+        PTSDAgent(network= network),
+        TraumaSynapticDeficitAgent(network= network)
     ]
 
     learning_envs : List[Image2VecWrapper] = [Image2VecWrapper(
@@ -142,7 +143,7 @@ def save_env(env: Image2VecWrapper, name: str, directory):
     # create the image folder, if it doesn't exist yet
     folder_path = directory / "img"
     folder_path.mkdir(parents=True, exist_ok=True)
-
+    old_render_mode = env.unwrapped.render_mode
     env.unwrapped.render_mode = 'rgb_array'
     _, _ = env.reset()
 
@@ -151,6 +152,7 @@ def save_env(env: Image2VecWrapper, name: str, directory):
     ax.imshow(env.render())
     ax.set_title(name)
     plt.savefig(folder_path/f'{name}.png')
+    env.unwrapped.render_mode = old_render_mode
 
 
 if __name__ == "__main__":

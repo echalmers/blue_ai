@@ -78,7 +78,8 @@ def train_interpretation_models (directory: Path, agent_state: str):
         for trial in range(N_TRIALS)
         for filename in [
             f'{directory.name}/HealthyAgent_{trial}{agent_state}.pkl',
-            f'{directory.name}/PTSDAgent_{trial}{agent_state}.pkl'
+            f'{directory.name}/PTSDAgent_{trial}{agent_state}.pkl',
+            f'{directory.name}/TraumaSynapticDeficitAgent_{trial}{agent_state}.pkl',
         ]
     ]
 
@@ -90,6 +91,7 @@ def train_interpretation_models (directory: Path, agent_state: str):
 
     for _, row in interpretation_models.iterrows():
         _, agent, _ = load_trial(DATA_PATH / row['filename'])
+
         probe = RepresentationProbe(agent)
         lo = probe.fit()
         print(lo[-1])

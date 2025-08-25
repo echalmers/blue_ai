@@ -24,7 +24,8 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
         interpretation_models['agent_name'] = interpretation_models['agent']
         interpretation_models['agent_name'] = interpretation_models['agent_name'].astype(str).replace(
             {'HealthyAgent': 'Healthy',
-             'PTSDAgent': 'PTSD'
+             'PTSDAgent': 'PTSD',
+             'TraumaSynapticDeficitAgent': 'PTSDAfterTrauma'
              }
         )
     
@@ -40,7 +41,7 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
             subpath = "object_recon_before_trauma.png"
     
     def plot_interactive(state):
-        for i in range(3):
+        for i in range(4):
             ax[i].cla()
 
         ax[0].imshow(env.render())
@@ -56,17 +57,17 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
             #print(f'{recon} from {row['agent_name']}' )
             #print(Image2VecWrapper.observation_to_image(recon.cpu() ** 1.5, closest=True))
             ax[2 + index].imshow(Image2VecWrapper.observation_to_image(recon.cpu() ** 1.5, closest=True))
-            ax[2 + index].set_title(f"{row['agent_name']} reconstructed")  # ({round(float(mse), 2)})")
+            ax[2 + index].set_title(f"{row['agent_name']} reconstructed", fontsize = 10)  # ({round(float(mse), 2)})")
 
-        for i in range(4):
+        for i in range(5):
             ax[i].set_xticks([])
             ax[i].set_yticks([])
 
-        for i in range(1, 4):
+        for i in range(1, 5):
             t = plt.Polygon([[1.75, 4.25], [2.25, 4.25], [2, 3.75]], color='red')
             ax[i].add_patch(t)
 
-        ax[1].set_title('visual input')
+        ax[1].set_title('visual input', fontsize = 10)
         plt.pause(0.01)
     
     def plot_objects(df: pd.DataFrame):
@@ -105,7 +106,7 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
     
     if mode == 'interactive':
 
-        # make sure that the render mode is set to human
+        # make sure that the render mode is set to rgb_array
         env.unwrapped.render_mode = 'rgb_array'
         state, _ = env.reset()
 
@@ -133,7 +134,7 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
 
 
         # create figure window
-        fig, ax = plt.subplots(1, 4, figsize=(10, 4))
+        fig, ax = plt.subplots(1, 5, figsize=(13, 4), constrained_layout=True)
         fig.canvas.mpl_connect('key_press_event', process)
         fig.suptitle(title)
         plot_interactive(state)

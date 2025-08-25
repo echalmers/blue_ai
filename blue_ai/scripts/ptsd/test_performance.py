@@ -15,7 +15,8 @@ def test_performance(directory: Path, test_env: Image2VecWrapper, agent_state: s
         for trial in range(N_TRIALS)
         for filename in [
             f'{directory.name}/HealthyAgent_{trial}{agent_state}.pkl',
-            f'{directory.name}/PTSDAgent_{trial}{agent_state}.pkl'
+            f'{directory.name}/PTSDAgent_{trial}{agent_state}.pkl',
+            f'{directory.name}/TraumaSynapticDeficitAgent_{trial}{agent_state}.pkl'
         ]
     ]
 

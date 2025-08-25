@@ -15,7 +15,8 @@ def induce_traumatic_event(directory: Path, trauma_env: Image2VecWrapper, n_trau
         for trial in range(N_TRIALS)
         for filename in [
             f'{directory.name}/HealthyAgent_{trial}.pkl',
-            f'{directory.name}/PTSDAgent_{trial}.pkl'
+            f'{directory.name}/PTSDAgent_{trial}.pkl',
+            f'{directory.name}/TraumaSynapticDeficitAgent_{trial}.pkl',
         ]
     ]
 
@@ -27,8 +28,13 @@ def induce_traumatic_event(directory: Path, trauma_env: Image2VecWrapper, n_trau
         new_results, agent, env = run_trial(agent, trauma_env, steps=n_trauma_updates, trial_id=i, tbar=None, trauma=True)
         print(new_results)
         
-        filename = ( DATA_PATH / filename.replace(".pkl", "_traumatized.pkl") )
-        
+        filename = (DATA_PATH / filename.replace(".pkl", "_traumatized.pkl"))
+
+        # change the weight decay for the TraumaSynapticDeficitAgent after it got induced with the trauma
+        if agent.__class__.__name__ == "TraumaSynapticDeficitAgent":
+            for g in agent.optimizer.param_groups:
+                g['weight_decay'] = 1e-3
+
         save_trial(new_results, agent, env, filename)
 
 if __name__ == "__main__":

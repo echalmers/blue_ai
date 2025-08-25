@@ -24,7 +24,8 @@ class PerformancePlotter:
         if agent_classes is None and results_dataframe is None:
             agent_classes = (
                 classes.HealthyAgent,
-                classes.PTSDAgent
+                classes.PTSDAgent,
+                classes.TraumaSynapticDeficitAgent
             )
 
         if results_dataframe is not None:
@@ -153,8 +154,7 @@ def view_performance(directory: Path, name_suffix: str, show_plots: bool, agent_
     folder_path = directory / "img"
     folder_path.mkdir(parents=True, exist_ok=True)
 
-    f, ax = plt.subplots(1, 2, figsize=(9, 4))
-    # plot_sample_env(ax[0])
+    f, ax = plt.subplots(1, 2, figsize=(12, 4))
 
     plt.subplot(1, 2, 1)
     plotter.plot_learning_curves(ax[0])
@@ -162,8 +162,7 @@ def view_performance(directory: Path, name_suffix: str, show_plots: bool, agent_
     plt.subplot(1, 2, 2)
     plotter.plot_goals_per_episode(ax[1])
     
-    plt.tight_layout
-    plt.savefig(folder_path/f"performance_{name_suffix}.png")
+    plt.savefig(folder_path/f"performance{name_suffix}.png")
     if show_plots:
         plt.show()
 

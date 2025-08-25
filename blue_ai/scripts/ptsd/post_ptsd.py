@@ -7,7 +7,7 @@ from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.scripts.ptsd.train_agents import load_trial, save_trial, run_trial
 
 
-def post_ptsd(directory: Path, exposure_env: Image2VecWrapper, n_exposure_updates: int):
+def post_ptsd(directory: Path, exposure_env: Image2VecWrapper, n_exposure_updates: int, file_ending: str = "_exposure_therapy"):
 
     # get the file names of the agents
     files = [
@@ -15,7 +15,8 @@ def post_ptsd(directory: Path, exposure_env: Image2VecWrapper, n_exposure_update
         for trial in range(N_TRIALS)
         for filename in [
             f'{directory.name}/HealthyAgent_{trial}_traumatized.pkl',
-            f'{directory.name}/PTSDAgent_{trial}_traumatized.pkl'
+            f'{directory.name}/PTSDAgent_{trial}_traumatized.pkl',
+            f'{directory.name}/TraumaSynapticDeficitAgent_{trial}_traumatized.pkl',
         ]
     ]
 
@@ -28,7 +29,7 @@ def post_ptsd(directory: Path, exposure_env: Image2VecWrapper, n_exposure_update
         new_results, agent, env = run_trial(agent, exposure_env, steps=n_exposure_updates, trial_id=i, tbar=None, exposure_therapy = True)
         print(new_results)
         # save the results
-        filename = (DATA_PATH / filename.replace("_traumatized.pkl", "_exposure_therapy.pkl",))
+        filename = (DATA_PATH / filename.replace("_traumatized.pkl", f"{file_ending}.pkl"))
         save_trial(new_results, agent, env, filename)
     
 

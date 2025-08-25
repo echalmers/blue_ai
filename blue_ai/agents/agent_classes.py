@@ -231,3 +231,11 @@ class PTSDAgent(BaseAgent):
 
     def __init__(self, network: nn.Sequential | None = None):
         super().__init__(network = network , weight_decay=1e-3)
+
+
+class TraumaSynapticDeficitAgent(BaseAgent):
+
+    display_name = "spine loss after trauma"
+
+    def __init__(self, network: nn.Sequential | None = None):
+        super().__init__(network = network ,weight_decay=1e-5)

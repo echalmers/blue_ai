@@ -13,8 +13,8 @@ from blue_ai.scripts.ptsd.train_agents import load_trial
 
 
 
-def investigate_Qvalues(directory: Path, env: Image2VecWrapper, show_plots: bool, agent_state: str):
-    if agent_state not in ['', '_traumatized', '_exposure_therapy']:
+def investigate_Qvalues(directory: Path, env: Image2VecWrapper, show_plots: bool, agent_state: str, single_plot: bool = True):
+    if agent_state not in ['', '_traumatized', '_exposure_therapy', '_exposure_therapy_forward']:
         raise ValueError(f"Unknown agent state: {agent_state}")
     
     # get the file names of the agents
@@ -23,7 +23,8 @@ def investigate_Qvalues(directory: Path, env: Image2VecWrapper, show_plots: bool
         for trial in range(N_TRIALS)
         for filename in [
             f'{directory.name}/HealthyAgent_{trial}{agent_state}.pkl',
-            f'{directory.name}/PTSDAgent_{trial}{agent_state}.pkl'
+            f'{directory.name}/PTSDAgent_{trial}{agent_state}.pkl',
+            f'{directory.name}/TraumaSynapticDeficitAgent_{trial}{agent_state}.pkl'
         ]
     ]
 
@@ -46,8 +47,11 @@ def investigate_Qvalues(directory: Path, env: Image2VecWrapper, show_plots: bool
         #print(f"Agent: {agent.__class__.__name__}, Qvalues: {qvalues}")
     
     results = pd.DataFrame(results)
-    print(results)
-    plotting(results, directory, show_plots, agent_state)
+    #print(results)
+    if single_plot:
+        plotting(results, directory, show_plots, agent_state)
+
+    return results
     
 
 def plotting(df: pd.DataFrame, directory: Path, show_plots: bool, agent_state: str):

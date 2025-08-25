@@ -7,7 +7,7 @@ from tqdm import tqdm
 from torch import nn
 import pandas as pd
 
-from blue_ai.agents.agent_classes import BaseAgent, HealthyAgent, PTSDAgent
+from blue_ai.agents.agent_classes import BaseAgent, HealthyAgent, PTSDAgent, TraumaSynapticDeficitAgent
 from blue_ai.envs.transient_goals import TransientGoals, Actions
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
@@ -179,13 +179,14 @@ if __name__ == "__main__":
 
     agents: List[BaseAgent] = [
         HealthyAgent(network= ptsd_network),
-        PTSDAgent(network= ptsd_network)
+        PTSDAgent(network= ptsd_network),
+        TraumaSynapticDeficitAgent(network = ptsd_network)
     ]
 
     envs = [
         Image2VecWrapper(
                 TransientGoals(
-                    render_mode="none", transient_reward=0.25, termination_reward=1,
+                    render_mode="human", transient_reward=0.25, termination_reward=1,
                     n_transient_obstacles = 1,
                     wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]],
                     #hiding_penalty=True, hiding_penalty_value = 0.25
