@@ -5,7 +5,7 @@ A python implementation of a Reinforcement Learning approach to model PTSD. This
 ## Table of Contents
 
 * [Project Goal](#project-goal)
-* [Implemented Core Components](#implemented-components)
+* [Implemented Core Components](#implemented-core-components)
 * [Project Structure](#project-structure)
 * [Usage](#usage)
 * [Future Work](#future-work)
@@ -17,7 +17,7 @@ This project was conducted during a research internship organized by Mitacs at t
 
 The initial objective was to expose multiple Machine Learning agents with different cognitive impairments to an environment where they are challenged to find the path to a goal. Different simulated cognitive impairments lead to different bahaviours of the agent, where we want to draw conclusion about PTSD.
 
-## Implemeted Core Components
+## Implemented Core Components
 
 The following components have been implemented:
 
