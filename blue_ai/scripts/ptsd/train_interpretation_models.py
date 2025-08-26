@@ -87,14 +87,15 @@ def train_interpretation_models (directory: Path, agent_state: str):
         'filename': files,
         'agent': None,
         'interpretation_model': None,
+        'losses': None,
     })
 
     for _, row in interpretation_models.iterrows():
         _, agent, _ = load_trial(DATA_PATH / row['filename'])
 
         probe = RepresentationProbe(agent)
-        lo = probe.fit()
-        print(lo[-1])
+        row['losses'] = probe.fit()
+        print(row['losses'][-1])
         row['agent'] = agent
         row['interpretation_model'] = probe
 

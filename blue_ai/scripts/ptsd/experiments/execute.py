@@ -19,6 +19,7 @@ from blue_ai.scripts.ptsd.train_interpretation_models import train_interpretatio
 from blue_ai.scripts.ptsd.view_reconstruction import view_reconstruction 
 from blue_ai.scripts.ptsd.post_ptsd import post_ptsd
 from blue_ai.scripts.ptsd.test_performance import test_performance
+from blue_ai.scripts.ptsd.view_reconstruction_loss import view_reconstruction_loss
 
 
 
@@ -109,6 +110,11 @@ def main():
     train_interpretation_models(folder_path, agent_state = after_trauma)
 
 
+    # -- PLOT THE LOSS OF THE RECONSTRUCTIONS OVER THE STEPS
+    view_reconstruction_loss(folder_path, agent_state=before_trauma, show_plots = show_plots)
+    view_reconstruction_loss(folder_path, agent_state=after_trauma, show_plots = show_plots)
+
+
     # -- RECONSTRUCT WHAT THE AGENTS SEE --
     if show_plots:
         view_reconstruction(folder_path, post_trauma_env, agent_state = before_trauma, mode = 'interactive')
@@ -123,6 +129,7 @@ def main():
 
     investigate_Qvalues(folder_path, post_trauma_env, show_plots, agent_state = after_therapy)
     train_interpretation_models(folder_path, agent_state = after_therapy)
+    view_reconstruction_loss(folder_path, agent_state=after_therapy, show_plots = show_plots)
     if show_plots:
         view_reconstruction(folder_path, post_trauma_env, agent_state = after_therapy, mode = 'interactive')
     view_reconstruction(folder_path, post_trauma_env, agent_state = after_therapy, mode = 'statistical')
