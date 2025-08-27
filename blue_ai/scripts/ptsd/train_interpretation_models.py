@@ -69,7 +69,7 @@ class RepresentationProbe:
 
 
 def train_interpretation_models (directory: Path, agent_state: str):
-    if agent_state not in ['', '_traumatized', '_exposure_therapy']:
+    if agent_state not in ['', '_traumatized', '_exposure_therapy', '_relearned']:
         raise ValueError(f"Unknown agent state: {agent_state}")
     
     # get the file names of the agents

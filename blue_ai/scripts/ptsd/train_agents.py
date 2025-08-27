@@ -149,28 +149,27 @@ def trial(agent: BaseAgent, env, rep, trial_num, directory, tbar=None, steps=30_
     return trial_num
 
 
-def train_agents(agents: List[BaseAgent], envs: List[Image2VecWrapper], iter_per_trial: int, directory: str):
+def train_agents(agents: List[BaseAgent], env: Image2VecWrapper, iter_per_trial: int, directory: str):
     trial_num = 0
     tbar = tqdm(
         total=(len(agents) * N_TRIALS * iter_per_trial), initial=0
     )
 
     for rep in range(N_TRIALS):
-        for env in envs:
-            for agent in agents:
-                tbar.set_postfix(
-                    agent=agent.__class__.__name__, env=env.__class__.__name__, rep=rep
-                )
-                trial(
-                    deepcopy(agent),
-                    env,
-                    rep,
-                    trial_num,
-                    directory,
-                    tbar=tbar,
-                    steps=iter_per_trial
-                )
-                trial_num += 1
+        for agent in agents:
+            tbar.set_postfix(
+                agent=agent.__class__.__name__, env=env.__class__.__name__, rep=rep
+            )
+            trial(
+                deepcopy(agent),
+                env,
+                rep,
+                trial_num,
+                directory,
+                tbar=tbar,
+                steps=iter_per_trial
+            )
+            trial_num += 1
 
 if __name__ == "__main__":
     iterations_per_trial = 80_000

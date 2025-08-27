@@ -20,6 +20,7 @@ from blue_ai.scripts.ptsd.view_reconstruction import view_reconstruction
 from blue_ai.scripts.ptsd.post_ptsd import post_ptsd
 from blue_ai.scripts.ptsd.test_performance import test_performance
 from blue_ai.scripts.ptsd.view_reconstruction_loss import view_reconstruction_loss
+from blue_ai.scripts.ptsd.relearning_after_trauma import relearning_after_trauma
 
 
 
@@ -30,9 +31,10 @@ def main():
     show_plots = True
     trauma_penalty = -100
     n_trauma_updates = 1
-    n_exposure_updates = 10
+    n_exposure_updates = 100
     before_trauma = ''
     after_trauma = '_traumatized'
+    after_relearning = '_relearned'
     after_therapy = '_exposure_therapy'
     
 
@@ -56,7 +58,7 @@ def main():
         TraumaSynapticDeficitAgent(network= network)
     ]
 
-    learning_envs : List[Image2VecWrapper] = [Image2VecWrapper(
+    learning_env = Image2VecWrapper(
                 TransientGoals(
                     render_mode="none", transient_reward=0.25, termination_reward=1,
                     n_transient_obstacles = 1,
@@ -65,9 +67,7 @@ def main():
                     # see_through_walls = False IS NOT WORKING?
                 )
             )
-    ]
-    for env in learning_envs:
-        save_env(env, 'environment_during_learning', folder_path)
+    save_env(learning_env, 'environment_during_learning', folder_path)
 
 
     trauma_env = Image2VecWrapper(
@@ -88,7 +88,7 @@ def main():
 
 
     # -- TRAIN THE AGENTS --
-    train_agents(agents, learning_envs, iter_per_trial, folder_path)
+    train_agents(agents, learning_env, iter_per_trial, folder_path)
 
 
     # -- PLOT AND SAVE THE TRAINING PERFORMANCE --
@@ -123,6 +123,16 @@ def main():
     view_reconstruction(folder_path, post_trauma_env, agent_state = before_trauma, mode = 'statistical')
     view_reconstruction(folder_path, post_trauma_env, agent_state = after_trauma, mode = 'statistical')
 
+    # -- RELEARNING --
+    relearning_after_trauma(folder_path, learning_env, iter_per_trial)
+    view_performance(folder_path, "_relearning_in_learning_env_after_trauma", show_plots, '_relearned')
+    investigate_Qvalues(folder_path, post_trauma_env, show_plots, agent_state = after_relearning)
+    train_interpretation_models(folder_path, agent_state = after_relearning)
+    view_reconstruction_loss(folder_path, agent_state=after_relearning, show_plots = show_plots)
+    if show_plots:
+        view_reconstruction(folder_path, post_trauma_env, agent_state = after_relearning, mode = 'interactive')
+    view_reconstruction(folder_path, post_trauma_env, agent_state = after_relearning, mode = 'statistical')
+
 
     # -- EXPOSURE THERAPY --
     post_ptsd(folder_path, post_trauma_env, n_exposure_updates)
@@ -136,13 +146,15 @@ def main():
 
 
     # -- TEST THE PERFORMANCE DURING THE DIFFERENT STAGES --
-    test_performance(folder_path, learning_envs[0], before_trauma, iter_per_trial)
-    test_performance(folder_path, learning_envs[0], after_trauma, iter_per_trial)
-    test_performance(folder_path, learning_envs[0], after_therapy, iter_per_trial)
+    test_performance(folder_path, learning_env, before_trauma, iter_per_trial)
+    test_performance(folder_path, learning_env, after_trauma, iter_per_trial)
+    test_performance(folder_path, learning_env, after_relearning, iter_per_trial)
+    test_performance(folder_path, learning_env, after_therapy, iter_per_trial)
 
-    view_performance(folder_path, "testing_in_learning_env_before_trauma", show_plots, '_testing')
-    view_performance(folder_path, "testing_in_learning_env_after_trauma", show_plots, '_traumatized_testing')
-    view_performance(folder_path, "testing_in_learning_env_after_therapy", show_plots, '_exposure_therapy_testing')
+    view_performance(folder_path, "_testing_in_learning_env_before_trauma", show_plots, '_testing')
+    view_performance(folder_path, "_testing_in_learning_env_after_trauma", show_plots, '_traumatized_testing')
+    view_performance(folder_path, "_testing_in_learning_env_after_relearning", show_plots, '_relearned_testing')
+    view_performance(folder_path, "_testing_in_learning_env_after_therapy", show_plots, '_exposure_therapy_testing')
 
 
 

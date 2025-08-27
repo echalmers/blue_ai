@@ -14,7 +14,7 @@ from blue_ai.scripts.ptsd.train_agents import load_trial
 
 
 def investigate_Qvalues(directory: Path, env: Image2VecWrapper, show_plots: bool, agent_state: str, single_plot: bool = True):
-    if agent_state not in ['', '_traumatized', '_exposure_therapy', '_exposure_therapy_forward']:
+    if agent_state not in ['', '_traumatized', '_exposure_therapy', '_exposure_therapy_forward', '_relearned']:
         raise ValueError(f"Unknown agent state: {agent_state}")
     
     # get the file names of the agents
@@ -88,6 +88,9 @@ def plotting(df: pd.DataFrame, directory: Path, show_plots: bool, agent_state: s
         case "_exposure_therapy":
             title = "Average Q-values per Action after exposure therapy, Split by Agent"
             subpath = "q_values_after_exposure_therapy.png"
+        case "_relearned":
+            title = "Average Q-values per Action after relearning, Split by Agent"
+            subpath = "q_values_after_relearning.png"
         case _:
             title= "Average Q-values per Action before trauma, Split by Agent"
             subpath = "q_values_before_trauma.png"
@@ -102,10 +105,10 @@ if __name__ == "__main__":
     # place them in the exact position where they they would have gotten traumatized but without hazard
     env = Image2VecWrapper(
                 TransientGoals(
-                    render_mode="human", transient_reward=0.25, termination_reward=1, agent_start_pos=(3,1),
+                    render_mode="human", transient_reward=0.25, termination_reward=1, agent_start_pos=(5,6),
                     transient_locations=[[1,4],[4,2],[5,1]],
                     n_transient_obstacles=0,
                     wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]], env_name='trauma_env'
                 )
             )
-    investigate_Qvalues(DATA_PATH / sys.argv[1], env, show_plots=True, agent_state='_exposure_therapy')
+    investigate_Qvalues(DATA_PATH / sys.argv[1], env, show_plots=True, agent_state='_traumatized')

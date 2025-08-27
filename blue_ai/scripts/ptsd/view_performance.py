@@ -168,4 +168,4 @@ def view_performance(directory: Path, name_suffix: str, show_plots: bool, agent_
 
 
 if __name__ == "__main__":
-    view_performance(DATA_PATH / sys.argv[1], 'test', True, '_testing')
+    view_performance(DATA_PATH / sys.argv[1], '_after_relearning', True, '_relearned')

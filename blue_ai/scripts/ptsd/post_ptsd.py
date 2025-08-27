@@ -14,9 +14,9 @@ def post_ptsd(directory: Path, exposure_env: Image2VecWrapper, n_exposure_update
         filename
         for trial in range(N_TRIALS)
         for filename in [
-            f'{directory.name}/HealthyAgent_{trial}_traumatized.pkl',
-            f'{directory.name}/PTSDAgent_{trial}_traumatized.pkl',
-            f'{directory.name}/TraumaSynapticDeficitAgent_{trial}_traumatized.pkl',
+            f'{directory.name}/HealthyAgent_{trial}_relearned.pkl',
+            f'{directory.name}/PTSDAgent_{trial}_relearned.pkl',
+            f'{directory.name}/TraumaSynapticDeficitAgent_{trial}_relearned.pkl',
         ]
     ]
 

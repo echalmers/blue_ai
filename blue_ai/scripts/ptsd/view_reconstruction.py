@@ -36,6 +36,9 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
         case "_exposure_therapy":
             title = 'Objects reconstructed after exposure therapy'
             subpath = "object_recon_after_exposure_therapy.png"
+        case "_relearned":
+            title = 'Objects reconstructed after relearning'
+            subpath = "object_recon_after_relearning.png"
         case _:
             title= 'Objects reconstructed before trauma'
             subpath = "object_recon_before_trauma.png"
@@ -186,7 +189,9 @@ if __name__ == "__main__":
                 TransientGoals(
                     render_mode="none", transient_reward=0.25, termination_reward=1, 
                     transient_locations=[[1,4],[4,2],[5,1]],
-                    wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]]
+                    wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]],
+                    n_transient_obstacles=0,
+                    agent_start_pos=(3,1)
                 )
             )
     
