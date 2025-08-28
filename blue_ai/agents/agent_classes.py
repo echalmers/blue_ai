@@ -40,7 +40,7 @@ class BaseAgent(DQN):
         self,
         network: nn.Sequential | None = None,
         input_shape=(4, 5, 5),
-        replay_buffer_size=20000,
+        replay_buffer_size=80000,
         update_frequency=5,
         lr=0.01,
         sync_frequency=25,
@@ -195,7 +195,7 @@ class SchizophrenicAgentWithNoise(SchizophrenicAgent):
         super().__init__(alpha, embed_alpha_in_filename)
         for layer in self.policy_net:
             if hasattr(layer, 'std'):
-                print(f'starting noise layer std at 0.05')
+                print('starting noise layer std at 0.05')
                 layer.std = 0.01
 
 
