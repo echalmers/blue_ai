@@ -29,7 +29,7 @@ def post_ptsd(directory: Path, exposure_env: Image2VecWrapper, n_exposure_update
         new_results, agent, env = run_trial(agent, exposure_env, steps=n_exposure_updates, trial_id=i, tbar=None, exposure_therapy = True)
         print(new_results)
         # save the results
-        filename = (DATA_PATH / filename.replace("_traumatized.pkl", f"{file_ending}.pkl"))
+        filename = (DATA_PATH / filename.replace("_relearned.pkl", f"{file_ending}.pkl"))
         save_trial(new_results, agent, env, filename)
     
 
