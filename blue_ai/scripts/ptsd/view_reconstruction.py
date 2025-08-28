@@ -28,6 +28,8 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
              'TraumaSynapticDeficitAgent': 'PTSDAfterTrauma'
              }
         )
+    n_agents = interpretation_models['agent_name'].nunique()
+    n_plots = n_agents + 2
     
     match agent_state:
         case "_traumatized":
@@ -44,7 +46,7 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
             subpath = "object_recon_before_trauma.png"
     
     def plot_interactive(state):
-        for i in range(4):
+        for i in range(n_plots):
             ax[i].cla()
 
         ax[0].imshow(env.render())
@@ -62,11 +64,11 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
             ax[2 + index].imshow(Image2VecWrapper.observation_to_image(recon.cpu() ** 1.5, closest=True))
             ax[2 + index].set_title(f"{row['agent_name']} reconstructed", fontsize = 10)  # ({round(float(mse), 2)})")
 
-        for i in range(5):
+        for i in range(n_plots):
             ax[i].set_xticks([])
             ax[i].set_yticks([])
 
-        for i in range(1, 5):
+        for i in range(1, n_plots):
             t = plt.Polygon([[1.75, 4.25], [2.25, 4.25], [2, 3.75]], color='red')
             ax[i].add_patch(t)
 
@@ -137,7 +139,7 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
 
 
         # create figure window
-        fig, ax = plt.subplots(1, 5, figsize=(13, 4), constrained_layout=True)
+        fig, ax = plt.subplots(1, n_plots, figsize=(13, 4), constrained_layout=True)
         fig.canvas.mpl_connect('key_press_event', process)
         fig.suptitle(title)
         plot_interactive(state)

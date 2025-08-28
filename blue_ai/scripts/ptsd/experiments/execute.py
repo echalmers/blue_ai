@@ -29,7 +29,7 @@ def main():
     # -- HYPERPARAMETERS --
     iter_per_trial = 80_000
     show_plots = True
-    trauma_penalty = -100
+    trauma_penalty = -1000
     n_trauma_updates = 1
     n_exposure_updates = 100
     before_trauma = ''
@@ -55,7 +55,7 @@ def main():
     agents: List[BaseAgent] = [
         HealthyAgent(network= network),
         PTSDAgent(network= network),
-        TraumaSynapticDeficitAgent(network= network)
+        #TraumaSynapticDeficitAgent(network= network)
     ]
 
     learning_env = Image2VecWrapper(
@@ -92,22 +92,22 @@ def main():
 
 
     # -- PLOT AND SAVE THE TRAINING PERFORMANCE --
-    view_performance(folder_path, "_training_in_learning_env", show_plots, '')
+    view_performance(folder_path, agents, "_training_in_learning_env", show_plots, '')
 
 
     # -- INDUCE THE TRAUMATIV EVENT TO ALL AGENTS --
-    induce_traumatic_event(folder_path, trauma_env, n_trauma_updates)
+    induce_traumatic_event(folder_path, agents, trauma_env, n_trauma_updates)
 
 
     # -- INVESTIGATE THE Q-VALUES IN THE TRAUMA ENV BUT WITHOUT THE HAZARD --
     # Das gefällt mir noch nicht so gut, wäre schöner, wenn es einfach ein plot wäre
-    investigate_Qvalues(folder_path, post_trauma_env, show_plots, agent_state = before_trauma)
-    investigate_Qvalues(folder_path, post_trauma_env, show_plots, agent_state = after_trauma)
+    investigate_Qvalues(folder_path, agents, post_trauma_env, show_plots, agent_state = before_trauma)
+    investigate_Qvalues(folder_path, agents, post_trauma_env, show_plots, agent_state = after_trauma)
 
 
     # -- TRAIN THE MODLES WHICH RECONSTRUCT THE VISUAL INPUT --
-    train_interpretation_models(folder_path, agent_state = before_trauma)
-    train_interpretation_models(folder_path, agent_state = after_trauma)
+    train_interpretation_models(folder_path, agents, agent_state = before_trauma)
+    train_interpretation_models(folder_path, agents, agent_state = after_trauma)
 
 
     # -- PLOT THE LOSS OF THE RECONSTRUCTIONS OVER THE STEPS
@@ -117,44 +117,44 @@ def main():
 
     # -- RECONSTRUCT WHAT THE AGENTS SEE --
     if show_plots:
-        view_reconstruction(folder_path, post_trauma_env, agent_state = before_trauma, mode = 'interactive')
-        view_reconstruction(folder_path, post_trauma_env, agent_state = after_trauma, mode = 'interactive')
+       view_reconstruction(folder_path, post_trauma_env, agent_state = before_trauma, mode = 'interactive')
+       view_reconstruction(folder_path, post_trauma_env, agent_state = after_trauma, mode = 'interactive')
     
     view_reconstruction(folder_path, post_trauma_env, agent_state = before_trauma, mode = 'statistical')
     view_reconstruction(folder_path, post_trauma_env, agent_state = after_trauma, mode = 'statistical')
 
     # -- RELEARNING --
-    relearning_after_trauma(folder_path, learning_env, iter_per_trial)
-    view_performance(folder_path, "_relearning_in_learning_env_after_trauma", show_plots, '_relearned')
-    investigate_Qvalues(folder_path, post_trauma_env, show_plots, agent_state = after_relearning)
-    train_interpretation_models(folder_path, agent_state = after_relearning)
+    relearning_after_trauma(folder_path, agents, learning_env, iter_per_trial)
+    view_performance(folder_path, agents, "_relearning_in_learning_env_after_trauma", show_plots, '_relearned')
+    investigate_Qvalues(folder_path, agents, post_trauma_env, show_plots, agent_state = after_relearning)
+    train_interpretation_models(folder_path, agents, agent_state = after_relearning)
     view_reconstruction_loss(folder_path, agent_state=after_relearning, show_plots = show_plots)
     if show_plots:
-        view_reconstruction(folder_path, post_trauma_env, agent_state = after_relearning, mode = 'interactive')
+       view_reconstruction(folder_path, post_trauma_env, agent_state = after_relearning, mode = 'interactive')
     view_reconstruction(folder_path, post_trauma_env, agent_state = after_relearning, mode = 'statistical')
 
 
     # -- EXPOSURE THERAPY --
-    post_ptsd(folder_path, post_trauma_env, n_exposure_updates)
+    post_ptsd(folder_path, agents, post_trauma_env, n_exposure_updates)
 
-    investigate_Qvalues(folder_path, post_trauma_env, show_plots, agent_state = after_therapy)
-    train_interpretation_models(folder_path, agent_state = after_therapy)
+    investigate_Qvalues(folder_path, agents, post_trauma_env, show_plots, agent_state = after_therapy)
+    train_interpretation_models(folder_path, agents, agent_state = after_therapy)
     view_reconstruction_loss(folder_path, agent_state=after_therapy, show_plots = show_plots)
     if show_plots:
-        view_reconstruction(folder_path, post_trauma_env, agent_state = after_therapy, mode = 'interactive')
+       view_reconstruction(folder_path, post_trauma_env, agent_state = after_therapy, mode = 'interactive')
     view_reconstruction(folder_path, post_trauma_env, agent_state = after_therapy, mode = 'statistical')
 
 
     # -- TEST THE PERFORMANCE DURING THE DIFFERENT STAGES --
-    test_performance(folder_path, learning_env, before_trauma, iter_per_trial)
-    test_performance(folder_path, learning_env, after_trauma, iter_per_trial)
-    test_performance(folder_path, learning_env, after_relearning, iter_per_trial)
-    test_performance(folder_path, learning_env, after_therapy, iter_per_trial)
+    test_performance(folder_path, agents, learning_env, before_trauma, iter_per_trial/8)
+    test_performance(folder_path, agents, learning_env, after_trauma, iter_per_trial/8)
+    test_performance(folder_path, agents, learning_env, after_relearning, iter_per_trial/8)
+    test_performance(folder_path, agents, learning_env, after_therapy, iter_per_trial/8)
 
-    view_performance(folder_path, "_testing_in_learning_env_before_trauma", show_plots, '_testing')
-    view_performance(folder_path, "_testing_in_learning_env_after_trauma", show_plots, '_traumatized_testing')
-    view_performance(folder_path, "_testing_in_learning_env_after_relearning", show_plots, '_relearned_testing')
-    view_performance(folder_path, "_testing_in_learning_env_after_therapy", show_plots, '_exposure_therapy_testing')
+    view_performance(folder_path, agents, "_testing_in_learning_env_before_trauma", show_plots, '_testing')
+    view_performance(folder_path, agents, "_testing_in_learning_env_after_trauma", show_plots, '_traumatized_testing')
+    view_performance(folder_path, agents, "_testing_in_learning_env_after_relearning", show_plots, '_relearned_testing')
+    view_performance(folder_path, agents, "_testing_in_learning_env_after_therapy", show_plots, '_exposure_therapy_testing')
 
 
 

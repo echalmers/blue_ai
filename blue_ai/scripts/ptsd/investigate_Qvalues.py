@@ -5,7 +5,9 @@ import matplotlib.pyplot as plt
 
 import sys
 from pathlib import Path
+from typing import List
 
+from blue_ai.agents.agent_classes import BaseAgent
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
@@ -13,19 +15,15 @@ from blue_ai.scripts.ptsd.train_agents import load_trial
 
 
 
-def investigate_Qvalues(directory: Path, env: Image2VecWrapper, show_plots: bool, agent_state: str, single_plot: bool = True):
+def investigate_Qvalues(directory: Path, agents: List[BaseAgent], env: Image2VecWrapper, show_plots: bool, agent_state: str, single_plot: bool = True):
     if agent_state not in ['', '_traumatized', '_exposure_therapy', '_exposure_therapy_forward', '_relearned']:
         raise ValueError(f"Unknown agent state: {agent_state}")
     
     # get the file names of the agents
     files = [
-        filename
+        f"{directory.name}/{agent.__class__.__name__}_{trial}{agent_state}.pkl"
         for trial in range(N_TRIALS)
-        for filename in [
-            f'{directory.name}/HealthyAgent_{trial}{agent_state}.pkl',
-            f'{directory.name}/PTSDAgent_{trial}{agent_state}.pkl',
-            f'{directory.name}/TraumaSynapticDeficitAgent_{trial}{agent_state}.pkl'
-        ]
+        for agent in agents
     ]
 
     # make sure that the hazard is removed

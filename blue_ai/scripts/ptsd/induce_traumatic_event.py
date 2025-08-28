@@ -1,23 +1,21 @@
 import sys
 from pathlib import Path
+from typing import List
 
+from blue_ai.agents.agent_classes import BaseAgent
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.scripts.ptsd.train_agents import load_trial, save_trial, run_trial
 
 
-def induce_traumatic_event(directory: Path, trauma_env: Image2VecWrapper, n_trauma_updates: int = 1):
+def induce_traumatic_event(directory: Path, agents: List[BaseAgent], trauma_env: Image2VecWrapper, n_trauma_updates: int = 1):
 
     # get the file names of the right agents
     files = [
-        filename
+        f"{directory.name}/{agent.__class__.__name__}_{trial}.pkl"
         for trial in range(N_TRIALS)
-        for filename in [
-            f'{directory.name}/HealthyAgent_{trial}.pkl',
-            f'{directory.name}/PTSDAgent_{trial}.pkl',
-            f'{directory.name}/TraumaSynapticDeficitAgent_{trial}.pkl',
-        ]
+        for agent in agents
     ]
 
     # induce the trauma to each agent trial independently

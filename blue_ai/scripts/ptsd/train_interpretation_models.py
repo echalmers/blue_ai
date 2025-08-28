@@ -1,4 +1,5 @@
 from blue_ai.agents.dqn import DQN
+from blue_ai.agents.agent_classes import BaseAgent
 from blue_ai.scripts.ptsd.train_agents import load_trial
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 
@@ -8,6 +9,7 @@ import torch
 
 import pickle
 from pathlib import Path
+from typing import List
 import sys
 
 
@@ -46,7 +48,7 @@ class RepresentationProbe:
 
         # fit model
         losses = []
-        for i in range(5_000):
+        for i in range(5_0):
             observations, _, _, _, _ = self.memory_agent.transition_memory.sample(1000)
             with torch.no_grad():
                 self.agent.policy_net(observations)
@@ -68,19 +70,15 @@ class RepresentationProbe:
         self._internal_activations[layer] = input[0]
 
 
-def train_interpretation_models (directory: Path, agent_state: str):
+def train_interpretation_models (directory: Path, agents: List[BaseAgent], agent_state: str):
     if agent_state not in ['', '_traumatized', '_exposure_therapy', '_relearned']:
         raise ValueError(f"Unknown agent state: {agent_state}")
     
     # get the file names of the agents
     files = [
-        filename
+        f"{directory.name}/{agent.__class__.__name__}_{trial}{agent_state}.pkl"
         for trial in range(N_TRIALS)
-        for filename in [
-            f'{directory.name}/HealthyAgent_{trial}{agent_state}.pkl',
-            f'{directory.name}/PTSDAgent_{trial}{agent_state}.pkl',
-            f'{directory.name}/TraumaSynapticDeficitAgent_{trial}{agent_state}.pkl',
-        ]
+        for agent in agents
     ]
 
     interpretation_models = pd.DataFrame({

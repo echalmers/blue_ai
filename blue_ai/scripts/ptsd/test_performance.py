@@ -1,23 +1,21 @@
 from pathlib import Path
 import sys
+from typing import List
 
+from blue_ai.agents.agent_classes import BaseAgent
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.scripts.ptsd.train_agents import load_trial, save_trial, run_trial
 
 
-def test_performance(directory: Path, test_env: Image2VecWrapper, agent_state: str, iter_per_trial: int):
+def test_performance(directory: Path, agents: List[BaseAgent], test_env: Image2VecWrapper, agent_state: str, iter_per_trial: int):
 
     # get the file names of the agents
     files = [
-        filename
+        f"{directory.name}/{agent.__class__.__name__}_{trial}{agent_state}.pkl"
         for trial in range(N_TRIALS)
-        for filename in [
-            f'{directory.name}/HealthyAgent_{trial}{agent_state}.pkl',
-            f'{directory.name}/PTSDAgent_{trial}{agent_state}.pkl',
-            f'{directory.name}/TraumaSynapticDeficitAgent_{trial}{agent_state}.pkl'
-        ]
+        for agent in agents
     ]
 
     # training loop

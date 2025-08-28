@@ -4,7 +4,9 @@ import seaborn as sns
 
 from pathlib import Path
 import sys
+from typing import List
 
+from blue_ai.agents.agent_classes import BaseAgent
 import blue_ai.agents.agent_classes as classes
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.scripts.constants import DATA_PATH
@@ -35,7 +37,7 @@ class PerformancePlotter:
         else:
             self.agent_classes = agent_classes
             self.high_terminal_results = load_dataset(
-                [f"{directory.name}/{cls.__name__}_[!s]{agent_state}.pkl" for cls in agent_classes]
+                [f"{directory.name}/{cls.__class__.__name__}_[!s]{agent_state}.pkl" for cls in agent_classes]
             )
 
             print(self.high_terminal_results)
@@ -148,8 +150,8 @@ class PerformancePlotter:
         plt.xlabel("type of goal")
         plt.xlabel("")
 
-def view_performance(directory: Path, name_suffix: str, show_plots: bool, agent_state: str):
-    plotter = PerformancePlotter(directory, agent_state)
+def view_performance(directory: Path, agents: List[BaseAgent], name_suffix: str, show_plots: bool, agent_state: str):
+    plotter = PerformancePlotter(directory, agent_state, agent_classes= agents)
 
     folder_path = directory / "img"
     folder_path.mkdir(parents=True, exist_ok=True)

@@ -1,23 +1,21 @@
 from pathlib import Path
 import sys
+from typing import List
 
+from blue_ai.agents.agent_classes import BaseAgent
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.scripts.ptsd.train_agents import load_trial, save_trial, run_trial
 
 
-def post_ptsd(directory: Path, exposure_env: Image2VecWrapper, n_exposure_updates: int, file_ending: str = "_exposure_therapy"):
+def post_ptsd(directory: Path, agents: List[BaseAgent], exposure_env: Image2VecWrapper, n_exposure_updates: int, file_ending: str = "_exposure_therapy"):
 
     # get the file names of the agents
     files = [
-        filename
+        f"{directory.name}/{agent.__class__.__name__}_{trial}_relearned.pkl"
         for trial in range(N_TRIALS)
-        for filename in [
-            f'{directory.name}/HealthyAgent_{trial}_relearned.pkl',
-            f'{directory.name}/PTSDAgent_{trial}_relearned.pkl',
-            f'{directory.name}/TraumaSynapticDeficitAgent_{trial}_relearned.pkl',
-        ]
+        for agent in agents
     ]
 
     # agents in post trauma envs packen
