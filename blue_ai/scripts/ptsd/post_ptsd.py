@@ -2,20 +2,19 @@ from pathlib import Path
 import sys
 from typing import List
 
-from blue_ai.agents.agent_classes import BaseAgent
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.scripts.ptsd.train_agents import load_trial, save_trial, run_trial
 
 
-def post_ptsd(directory: Path, agents: List[BaseAgent], exposure_env: Image2VecWrapper, n_exposure_updates: int, file_ending: str = "_exposure_therapy"):
+def post_ptsd(directory: Path, agents_to_include: List[str], exposure_env: Image2VecWrapper, n_exposure_updates: int, file_ending: str = "_exposure_therapy"):
 
     # get the file names of the agents
     files = [
-        f"{directory.name}/{agent.__class__.__name__}_{trial}_relearned.pkl"
+        f"{directory.name}/{agent}_{trial}_relearned.pkl"
         for trial in range(N_TRIALS)
-        for agent in agents
+        for agent in agents_to_include
     ]
 
     # agents in post trauma envs packen
@@ -32,6 +31,11 @@ def post_ptsd(directory: Path, agents: List[BaseAgent], exposure_env: Image2VecW
     
 
 if __name__ == "__main__":
+    agents_to_include : List[str] = [
+        "HealthyAgent",
+        "PTSDAgent",
+        "TraumaSynapticDeficitAgent",
+    ]
     env = Image2VecWrapper(
                 TransientGoals(
                     render_mode="none", transient_reward=0.25, termination_reward=1,
@@ -42,4 +46,4 @@ if __name__ == "__main__":
                 )
             )
     
-    post_ptsd(DATA_PATH / sys.argv[1], env, 3)
+    post_ptsd(DATA_PATH / sys.argv[1], agents_to_include, env, 3)

@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 from typing import List
 
-from blue_ai.agents.agent_classes import BaseAgent
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
@@ -15,15 +14,15 @@ from blue_ai.scripts.ptsd.train_agents import load_trial
 
 
 
-def investigate_Qvalues(directory: Path, agents: List[BaseAgent], env: Image2VecWrapper, show_plots: bool, agent_state: str, single_plot: bool = True):
+def investigate_Qvalues(directory: Path, agents_to_include: List[str], env: Image2VecWrapper, show_plots: bool, agent_state: str, single_plot: bool = True):
     if agent_state not in ['', '_traumatized', '_exposure_therapy', '_exposure_therapy_forward', '_relearned']:
         raise ValueError(f"Unknown agent state: {agent_state}")
     
     # get the file names of the agents
     files = [
-        f"{directory.name}/{agent.__class__.__name__}_{trial}{agent_state}.pkl"
+        f"{directory.name}/{agent}_{trial}{agent_state}.pkl"
         for trial in range(N_TRIALS)
-        for agent in agents
+        for agent in agents_to_include
     ]
 
     # make sure that the hazard is removed
@@ -100,6 +99,11 @@ def plotting(df: pd.DataFrame, directory: Path, show_plots: bool, agent_state: s
     
 
 if __name__ == "__main__":
+    agents_to_include : List[str] = [
+        "HealthyAgent",
+        "PTSDAgent",
+        "TraumaSynapticDeficitAgent",
+    ]
     # place them in the exact position where they they would have gotten traumatized but without hazard
     env = Image2VecWrapper(
                 TransientGoals(
@@ -109,4 +113,4 @@ if __name__ == "__main__":
                     wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]], env_name='trauma_env'
                 )
             )
-    investigate_Qvalues(DATA_PATH / sys.argv[1], env, show_plots=True, agent_state='_traumatized')
+    investigate_Qvalues(DATA_PATH / sys.argv[1], agents_to_include, env, show_plots=True, agent_state='_traumatized')

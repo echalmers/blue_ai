@@ -1,12 +1,13 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+from torch import nn
 
 from pathlib import Path
 import sys
 from typing import List
 
-from blue_ai.agents.agent_classes import BaseAgent
+from blue_ai.agents.agent_classes import BaseAgent, HealthyAgent, PTSDAgent, TraumaSynapticDeficitAgent
 import blue_ai.agents.agent_classes as classes
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.scripts.constants import DATA_PATH
@@ -150,8 +151,8 @@ class PerformancePlotter:
         plt.xlabel("type of goal")
         plt.xlabel("")
 
-def view_performance(directory: Path, agents: List[BaseAgent], name_suffix: str, show_plots: bool, agent_state: str):
-    plotter = PerformancePlotter(directory, agent_state, agent_classes= agents)
+def view_performance(directory: Path, agents_to_include: List[str], name_suffix: str, show_plots: bool, agent_state: str):
+    plotter = PerformancePlotter(directory, agent_state, agent_classes= agents_to_include)
 
     folder_path = directory / "img"
     folder_path.mkdir(parents=True, exist_ok=True)
@@ -170,4 +171,16 @@ def view_performance(directory: Path, agents: List[BaseAgent], name_suffix: str,
 
 
 if __name__ == "__main__":
-    view_performance(DATA_PATH / sys.argv[1], '_after_relearning', True, '_relearned')
+    network = nn.Sequential(
+        nn.Flatten(1, -1),
+        nn.Linear(100, 25), nn.Tanh(),
+        nn.Linear(25, 4)
+    )
+    
+    agents: List[BaseAgent] = [
+        HealthyAgent(network= network),
+        PTSDAgent(network= network),
+        TraumaSynapticDeficitAgent(network= network)
+    ]
+
+    view_performance(DATA_PATH / sys.argv[1], agents, "_testing_in_learning_env_after_therapy", True, '_exposure_therapy_testing')

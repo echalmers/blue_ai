@@ -9,13 +9,13 @@ from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.scripts.ptsd.train_agents import load_trial, save_trial, run_trial
 
 
-def relearning_after_trauma(directory: Path, agents: List[BaseAgent], relearning_env: Image2VecWrapper, iter_per_trial: int):
+def relearning_after_trauma(directory: Path, agents_to_include: List[BaseAgent], relearning_env: Image2VecWrapper, iter_per_trial: int):
 
     # get the file names of the agents
     files = [
-        f"{directory.name}/{agent.__class__.__name__}_{trial}_traumatized.pkl"
+        f"{directory.name}/{agent}_{trial}_traumatized.pkl"
         for trial in range(N_TRIALS)
-        for agent in agents
+        for agent in agents_to_include
     ]
 
     # training loop
@@ -32,6 +32,11 @@ def relearning_after_trauma(directory: Path, agents: List[BaseAgent], relearning
     
 
 if __name__ == "__main__":
+    agents_to_include : List[str] = [
+        "HealthyAgent",
+        "PTSDAgent",
+        "TraumaSynapticDeficitAgent",
+    ]
     relearning_env = Image2VecWrapper(
                 TransientGoals(
                     render_mode="none", transient_reward=0.25, termination_reward=1,
@@ -40,5 +45,5 @@ if __name__ == "__main__":
                 )
             )
     
-    relearning_after_trauma(DATA_PATH / sys.argv[1], relearning_env, 80_000)
+    relearning_after_trauma(DATA_PATH / sys.argv[1], agents_to_include, relearning_env, 80_000)
 

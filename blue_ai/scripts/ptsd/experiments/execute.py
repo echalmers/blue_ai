@@ -27,11 +27,11 @@ from blue_ai.scripts.ptsd.relearning_after_trauma import relearning_after_trauma
 # before using this script, get yourself familiar with the README in the ptsd folder
 def main():
     # -- HYPERPARAMETERS --
-    iter_per_trial = 80_000
+    iter_per_trial = 40_000
     show_plots = True
-    trauma_penalty = -1000
+    trauma_penalty = -100
     n_trauma_updates = 1
-    n_exposure_updates = 100
+    n_exposure_updates = 50
     before_trauma = ''
     after_trauma = '_traumatized'
     after_relearning = '_relearned'
@@ -55,8 +55,9 @@ def main():
     agents: List[BaseAgent] = [
         HealthyAgent(network= network),
         PTSDAgent(network= network),
-        #TraumaSynapticDeficitAgent(network= network)
+        TraumaSynapticDeficitAgent(network= network)
     ]
+    agents_to_include = [agent.__class__.__name__ for agent in agents]
 
     learning_env = Image2VecWrapper(
                 TransientGoals(
@@ -96,18 +97,18 @@ def main():
 
 
     # -- INDUCE THE TRAUMATIV EVENT TO ALL AGENTS --
-    induce_traumatic_event(folder_path, agents, trauma_env, n_trauma_updates)
+    induce_traumatic_event(folder_path, agents_to_include, trauma_env, n_trauma_updates)
 
 
     # -- INVESTIGATE THE Q-VALUES IN THE TRAUMA ENV BUT WITHOUT THE HAZARD --
     # Das gefällt mir noch nicht so gut, wäre schöner, wenn es einfach ein plot wäre
-    investigate_Qvalues(folder_path, agents, post_trauma_env, show_plots, agent_state = before_trauma)
-    investigate_Qvalues(folder_path, agents, post_trauma_env, show_plots, agent_state = after_trauma)
+    investigate_Qvalues(folder_path, agents_to_include, post_trauma_env, show_plots, agent_state = before_trauma)
+    investigate_Qvalues(folder_path, agents_to_include, post_trauma_env, show_plots, agent_state = after_trauma)
 
 
     # -- TRAIN THE MODLES WHICH RECONSTRUCT THE VISUAL INPUT --
-    train_interpretation_models(folder_path, agents, agent_state = before_trauma)
-    train_interpretation_models(folder_path, agents, agent_state = after_trauma)
+    train_interpretation_models(folder_path, agents_to_include, agent_state = before_trauma)
+    train_interpretation_models(folder_path, agents_to_include, agent_state = after_trauma)
 
 
     # -- PLOT THE LOSS OF THE RECONSTRUCTIONS OVER THE STEPS
@@ -124,10 +125,10 @@ def main():
     view_reconstruction(folder_path, post_trauma_env, agent_state = after_trauma, mode = 'statistical')
 
     # -- RELEARNING --
-    relearning_after_trauma(folder_path, agents, learning_env, iter_per_trial)
+    relearning_after_trauma(folder_path, agents_to_include, learning_env, iter_per_trial)
     view_performance(folder_path, agents, "_relearning_in_learning_env_after_trauma", show_plots, '_relearned')
-    investigate_Qvalues(folder_path, agents, post_trauma_env, show_plots, agent_state = after_relearning)
-    train_interpretation_models(folder_path, agents, agent_state = after_relearning)
+    investigate_Qvalues(folder_path, agents_to_include, post_trauma_env, show_plots, agent_state = after_relearning)
+    train_interpretation_models(folder_path, agents_to_include, agent_state = after_relearning)
     view_reconstruction_loss(folder_path, agent_state=after_relearning, show_plots = show_plots)
     if show_plots:
        view_reconstruction(folder_path, post_trauma_env, agent_state = after_relearning, mode = 'interactive')
@@ -135,10 +136,10 @@ def main():
 
 
     # -- EXPOSURE THERAPY --
-    post_ptsd(folder_path, agents, post_trauma_env, n_exposure_updates)
+    post_ptsd(folder_path, agents_to_include, post_trauma_env, n_exposure_updates)
 
-    investigate_Qvalues(folder_path, agents, post_trauma_env, show_plots, agent_state = after_therapy)
-    train_interpretation_models(folder_path, agents, agent_state = after_therapy)
+    investigate_Qvalues(folder_path, agents_to_include, post_trauma_env, show_plots, agent_state = after_therapy)
+    train_interpretation_models(folder_path, agents_to_include, agent_state = after_therapy)
     view_reconstruction_loss(folder_path, agent_state=after_therapy, show_plots = show_plots)
     if show_plots:
        view_reconstruction(folder_path, post_trauma_env, agent_state = after_therapy, mode = 'interactive')
@@ -146,10 +147,10 @@ def main():
 
 
     # -- TEST THE PERFORMANCE DURING THE DIFFERENT STAGES --
-    test_performance(folder_path, agents, learning_env, before_trauma, iter_per_trial/8)
-    test_performance(folder_path, agents, learning_env, after_trauma, iter_per_trial/8)
-    test_performance(folder_path, agents, learning_env, after_relearning, iter_per_trial/8)
-    test_performance(folder_path, agents, learning_env, after_therapy, iter_per_trial/8)
+    test_performance(folder_path, agents_to_include, learning_env, before_trauma, 5000)
+    test_performance(folder_path, agents_to_include, learning_env, after_trauma, 5000)
+    test_performance(folder_path, agents_to_include, learning_env, after_relearning, 5000)
+    test_performance(folder_path, agents_to_include, learning_env, after_therapy, 5000)
 
     view_performance(folder_path, agents, "_testing_in_learning_env_before_trauma", show_plots, '_testing')
     view_performance(folder_path, agents, "_testing_in_learning_env_after_trauma", show_plots, '_traumatized_testing')

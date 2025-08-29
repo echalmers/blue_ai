@@ -2,20 +2,19 @@ import sys
 from pathlib import Path
 from typing import List
 
-from blue_ai.agents.agent_classes import BaseAgent
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.scripts.ptsd.train_agents import load_trial, save_trial, run_trial
 
 
-def induce_traumatic_event(directory: Path, agents: List[BaseAgent], trauma_env: Image2VecWrapper, n_trauma_updates: int = 1):
+def induce_traumatic_event(directory: Path, agents_to_include: List[str], trauma_env: Image2VecWrapper, n_trauma_updates: int = 1):
 
     # get the file names of the right agents
     files = [
-        f"{directory.name}/{agent.__class__.__name__}_{trial}.pkl"
+        f"{directory.name}/{agent}_{trial}.pkl"
         for trial in range(N_TRIALS)
-        for agent in agents
+        for agent in agents_to_include
     ]
 
     # induce the trauma to each agent trial independently
@@ -31,11 +30,17 @@ def induce_traumatic_event(directory: Path, agents: List[BaseAgent], trauma_env:
         # change the weight decay for the TraumaSynapticDeficitAgent after it got induced with the trauma
         if agent.__class__.__name__ == "TraumaSynapticDeficitAgent":
             for g in agent.optimizer.param_groups:
-                g['weight_decay'] = 1e-3
+                g['weight_decay'] = 3e-3
 
         save_trial(new_results, agent, env, filename)
 
 if __name__ == "__main__":
+    agents_to_include : List[str] = [
+        "HealthyAgent",
+        "PTSDAgent",
+        "TraumaSynapticDeficitAgent",
+    ]
+
     # create the environment which is used to induce the ptsd
     traumatic_env = Image2VecWrapper(
                 TransientGoals(
@@ -45,5 +50,5 @@ if __name__ == "__main__":
                 )
             )
 
-    induce_traumatic_event(DATA_PATH / sys.argv[1], traumatic_env)
+    induce_traumatic_event(DATA_PATH / sys.argv[1], agents_to_include, traumatic_env)
 

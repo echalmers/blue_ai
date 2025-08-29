@@ -1,5 +1,4 @@
 from blue_ai.agents.dqn import DQN
-from blue_ai.agents.agent_classes import BaseAgent
 from blue_ai.scripts.ptsd.train_agents import load_trial
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 
@@ -48,7 +47,7 @@ class RepresentationProbe:
 
         # fit model
         losses = []
-        for i in range(5_0):
+        for i in range(3_000):
             observations, _, _, _, _ = self.memory_agent.transition_memory.sample(1000)
             with torch.no_grad():
                 self.agent.policy_net(observations)
@@ -70,15 +69,15 @@ class RepresentationProbe:
         self._internal_activations[layer] = input[0]
 
 
-def train_interpretation_models (directory: Path, agents: List[BaseAgent], agent_state: str):
+def train_interpretation_models (directory: Path, agents_to_include: List[str], agent_state: str):
     if agent_state not in ['', '_traumatized', '_exposure_therapy', '_relearned']:
         raise ValueError(f"Unknown agent state: {agent_state}")
     
     # get the file names of the agents
     files = [
-        f"{directory.name}/{agent.__class__.__name__}_{trial}{agent_state}.pkl"
+        f"{directory.name}/{agent}_{trial}{agent_state}.pkl"
         for trial in range(N_TRIALS)
-        for agent in agents
+        for agent in agents_to_include
     ]
 
     interpretation_models = pd.DataFrame({
@@ -102,4 +101,9 @@ def train_interpretation_models (directory: Path, agents: List[BaseAgent], agent
 
 
 if __name__ == '__main__':
-    train_interpretation_models(DATA_PATH / sys.argv[1], agent_state='_traumatized')
+    agents_to_include : List[str] = [
+        "HealthyAgent",
+        "PTSDAgent",
+        "TraumaSynapticDeficitAgent",
+    ]
+    train_interpretation_models(DATA_PATH / sys.argv[1], agents_to_include, agent_state='_traumatized')

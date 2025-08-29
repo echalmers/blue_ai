@@ -2,20 +2,19 @@ from pathlib import Path
 import sys
 from typing import List
 
-from blue_ai.agents.agent_classes import BaseAgent
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.scripts.ptsd.train_agents import load_trial, save_trial, run_trial
 
 
-def test_performance(directory: Path, agents: List[BaseAgent], test_env: Image2VecWrapper, agent_state: str, iter_per_trial: int):
+def test_performance(directory: Path, agents_to_include: List[str], test_env: Image2VecWrapper, agent_state: str, iter_per_trial: int):
 
     # get the file names of the agents
     files = [
-        f"{directory.name}/{agent.__class__.__name__}_{trial}{agent_state}.pkl"
+        f"{directory.name}/{agent}_{trial}{agent_state}.pkl"
         for trial in range(N_TRIALS)
-        for agent in agents
+        for agent in agents_to_include
     ]
 
     # training loop
@@ -32,6 +31,12 @@ def test_performance(directory: Path, agents: List[BaseAgent], test_env: Image2V
     
 
 if __name__ == "__main__":
+    agents_to_include : List[str] = [
+        "HealthyAgent",
+        "PTSDAgent",
+        "TraumaSynapticDeficitAgent",
+    ]
+
     learning_env = Image2VecWrapper(
                 TransientGoals(
                     render_mode="none", transient_reward=0.25, termination_reward=1,
@@ -42,5 +47,5 @@ if __name__ == "__main__":
                 )
             )
     
-    test_performance(DATA_PATH / sys.argv[1], learning_env, '', 80_000)
+    test_performance(DATA_PATH / sys.argv[1], agents_to_include, learning_env, '_exposure_therapy', 5_000)
 
