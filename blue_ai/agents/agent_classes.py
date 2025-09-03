@@ -40,7 +40,7 @@ class BaseAgent(DQN):
         self,
         network: nn.Sequential | None = None,
         input_shape=(4, 5, 5),
-        replay_buffer_size=80000,
+        replay_buffer_size=20000,
         update_frequency=5,
         lr=0.01,
         sync_frequency=25,
@@ -230,7 +230,7 @@ class PTSDAgent(BaseAgent):
     display_name = "simulated ptsd"
 
     def __init__(self, network: nn.Sequential | None = None):
-        super().__init__(network = network , weight_decay=1e-3)
+        super().__init__(network = network , weight_decay=3e-3)
 
 
 class TraumaSynapticDeficitAgent(BaseAgent):

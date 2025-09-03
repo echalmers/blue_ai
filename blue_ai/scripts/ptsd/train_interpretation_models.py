@@ -1,8 +1,10 @@
 from blue_ai.agents.dqn import DQN
+from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.ptsd.train_agents import load_trial
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 
 import pandas as pd
+import numpy as np
 import torch.nn as nn
 import torch
 
@@ -47,6 +49,7 @@ class RepresentationProbe:
 
         # fit model
         losses = []
+        exact_match = []
         for i in range(3_000):
             observations, _, _, _, _ = self.memory_agent.transition_memory.sample(1000)
             with torch.no_grad():
@@ -54,10 +57,27 @@ class RepresentationProbe:
             reconstruction = self.model(torch.hstack(list(self._internal_activations.values())))
             loss = loss_fn(reconstruction, observations)
             losses.append(loss.item())
+
+            with torch.no_grad():
+                match = self.calculate_exact_match(observations)
+                exact_match.append(match)
+
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        return losses
+        return losses, exact_match
+    
+    def calculate_exact_match(self, observations):
+        with torch.no_grad():
+            reconstructions = self.get_reconstructions(observations=observations[:10])[1]
+            reconstructions[reconstructions < 0] = 0
+            match_percentage = []
+            for recon, obs in zip(reconstructions, observations[:10]):
+                rec_img = Image2VecWrapper.observation_to_image(recon.cpu() ** 1.5, closest=True)
+                obs_img = Image2VecWrapper.observation_to_image(obs.cpu() ** 1.5, closest=True)
+                matches = np.all(rec_img == obs_img, axis=-1)
+                match_percentage.append(matches.sum() / matches.size * 100)
+        return np.mean(match_percentage)
 
     def get_reconstructions(self, observations):
         with torch.no_grad():
@@ -85,13 +105,14 @@ def train_interpretation_models (directory: Path, agents_to_include: List[str], 
         'agent': None,
         'interpretation_model': None,
         'losses': None,
+        'exact_match' :None,
     })
 
     for _, row in interpretation_models.iterrows():
         _, agent, _ = load_trial(DATA_PATH / row['filename'])
 
         probe = RepresentationProbe(agent)
-        row['losses'] = probe.fit()
+        row['losses'], row['exact_match'] = probe.fit()
         print(row['losses'][-1])
         row['agent'] = agent
         row['interpretation_model'] = probe
@@ -106,4 +127,4 @@ if __name__ == '__main__':
         "PTSDAgent",
         "TraumaSynapticDeficitAgent",
     ]
-    train_interpretation_models(DATA_PATH / sys.argv[1], agents_to_include, agent_state='_traumatized')
+    train_interpretation_models(DATA_PATH / sys.argv[1], agents_to_include, agent_state='')

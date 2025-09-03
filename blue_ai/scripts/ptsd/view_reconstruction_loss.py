@@ -16,17 +16,21 @@ def view_reconstruction_loss(directory: Path, agent_state: bool, show_plots: boo
 
     match agent_state:
         case "_traumatized":
-            title = 'Loss of the interpretation model reconstructions after trauma'
-            subpath = "loss_reconstructions_after_trauma.png"
+            loss_title = 'Loss of the interpretation model reconstructions after trauma'
+            match_title = 'Match of the reconstructions and observations after trauma'
+            subpath = "loss_and_match_reconstructions_after_trauma.png"
         case "_exposure_therapy":
-            title = 'Loss of the interpretation model reconstructions after exposure therapy'
-            subpath = "loss_reconstructions_after_exposure_therapy.png"
+            loss_title = 'Loss of the interpretation model reconstructions after exposure therapy'
+            match_title = 'Match of the reconstructions and observations after exposure therapy'
+            subpath = "loss_and_match_reconstructions_after_exposure_therapy.png"
         case "_relearned":
-            title = 'Loss of the interpretation model reconstructions after relearning'
-            subpath = "loss_reconstructions_after_relearning.png"
+            loss_title = 'Loss of the interpretation model reconstructions after relearning'
+            match_title = 'Match of the reconstructions and observations after relearning'
+            subpath = "loss_and_match_reconstructions_after_relearning.png"
         case _:
-            title= 'Loss of the interpretation model reconstructions before trauma'
-            subpath = "loss_reconstructions_before_trauma.png"
+            loss_title= 'Loss of the interpretation model reconstructions before trauma'
+            match_title = 'Match of the reconstructions and observations before trauma'
+            subpath = "loss_and_matchreconstructions_before_trauma.png"
 
     with open(DATA_PATH / f'{directory.name}/interpretation_models{agent_state}.pkl', 'rb') as f:
         interpretation_models = pickle.load(f)
@@ -40,24 +44,40 @@ def view_reconstruction_loss(directory: Path, agent_state: bool, show_plots: boo
     results=[]
     for _, row in interpretation_models.iterrows():
         print(f"agent:{row['agent_name']} loss: {row['losses'][-1]}")
-        for i, loss in enumerate(row['losses']):
-            results.append({"agent":row['agent_name'] , "step": i , "loss":loss })
+        print(row['exact_match'])
+        for i, (loss, match) in enumerate(zip(row['losses'], row['exact_match'])):
+            results.append({"agent":row['agent_name'] , "step": i , "loss":loss, "match":match})
 
     results = pd.DataFrame(results)
     print(results)
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
     sns.lineplot(
             data=results,
             x="step",
             y="loss",
             hue="agent",
             n_boot=1,
+            ax = axes[0]
         )
-    plt.title(title)
-    plt.ylabel("Loss (MSE)")
-    plt.xlabel("time (steps in environment)")
+    axes[0].set_title(loss_title)
+    axes[0].set_ylabel("Loss (MSE)")
+    axes[0].set_xlabel("time (steps in environment)")
+    sns.lineplot(
+            data=results,
+            x="step",
+            y="match",
+            hue="agent",
+            n_boot=1,
+            ax = axes[1]
+        )
+    axes[1].set_title(match_title)
+    axes[1].set_ylabel("Match in Percent")
+    axes[1].set_xlabel("time (steps in environment)")
+
     plt.savefig(folder_path/subpath)
     if show_plots:
         plt.show()
 
 if __name__ == "__main__":
-    view_reconstruction_loss(DATA_PATH / sys.argv[1], '_traumatized', True)
+    view_reconstruction_loss(DATA_PATH / sys.argv[1], '', True)

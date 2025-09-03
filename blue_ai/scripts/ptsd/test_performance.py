@@ -42,10 +42,8 @@ if __name__ == "__main__":
                     render_mode="none", transient_reward=0.25, termination_reward=1,
                     n_transient_obstacles = 1,
                     wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]],
-                    # hiding_penalty=True, hiding_penalty_value = 0.25
-                    # see_through_walls = False IS NOT WORKING?
                 )
             )
     
-    test_performance(DATA_PATH / sys.argv[1], agents_to_include, learning_env, '_exposure_therapy', 5_000)
+    test_performance(DATA_PATH / sys.argv[1], agents_to_include, learning_env, '_exposure_therapy_2', 5_000)
 

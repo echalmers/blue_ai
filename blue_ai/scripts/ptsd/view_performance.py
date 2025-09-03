@@ -166,6 +166,7 @@ def view_performance(directory: Path, agents_to_include: List[str], name_suffix:
     plotter.plot_goals_per_episode(ax[1])
     
     plt.savefig(folder_path/f"performance{name_suffix}.png")
+    plt.title(name_suffix)
     if show_plots:
         plt.show()
 
@@ -183,4 +184,4 @@ if __name__ == "__main__":
         TraumaSynapticDeficitAgent(network= network)
     ]
 
-    view_performance(DATA_PATH / sys.argv[1], agents, "_testing_in_learning_env_after_therapy", True, '_exposure_therapy_testing')
+    view_performance(DATA_PATH / sys.argv[1], agents, "_testing_in_learning_env_after_new_therapy", True, '_exposure_therapy_2_testing')

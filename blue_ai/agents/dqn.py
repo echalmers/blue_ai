@@ -201,7 +201,7 @@ class DQN(AbstractAgent):
 
     def update_single(self, state, action, reward, new_state, done):
         
-        self.transition_memory.add(state, action, reward, new_state, done)
+        #self.transition_memory.add(state, action, reward, new_state, done)
         state = torch.tensor(
             np.expand_dims(state, 0).astype(np.float32), device=self.device
         )
