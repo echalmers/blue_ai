@@ -30,7 +30,7 @@ def view_reconstruction_loss(directory: Path, agent_state: bool, show_plots: boo
         case _:
             loss_title= 'Loss of the interpretation model reconstructions before trauma'
             match_title = 'Match of the reconstructions and observations before trauma'
-            subpath = "loss_and_matchreconstructions_before_trauma.png"
+            subpath = "loss_and_match_reconstructions_before_trauma.png"
 
     with open(DATA_PATH / f'{directory.name}/interpretation_models{agent_state}.pkl', 'rb') as f:
         interpretation_models = pickle.load(f)

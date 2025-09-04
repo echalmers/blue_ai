@@ -145,7 +145,7 @@ class PerformancePlotter:
             order=[a.display_name for a in self.agent_classes] if self.agent_classes else None,
             errorbar=('pi', 95)
         )
-        plt.title("objects reached")
+        plt.title("objects reached per episode")
         plt.ylabel("")
         # sns.move_legend(plt.gca(), "upper left")
         plt.xlabel("type of goal")
@@ -158,7 +158,7 @@ def view_performance(directory: Path, agents_to_include: List[str], name_suffix:
     folder_path.mkdir(parents=True, exist_ok=True)
 
     f, ax = plt.subplots(1, 2, figsize=(12, 4))
-
+    f.suptitle(name_suffix)
     plt.subplot(1, 2, 1)
     plotter.plot_learning_curves(ax[0])
 
@@ -166,7 +166,6 @@ def view_performance(directory: Path, agents_to_include: List[str], name_suffix:
     plotter.plot_goals_per_episode(ax[1])
     
     plt.savefig(folder_path/f"performance{name_suffix}.png")
-    plt.title(name_suffix)
     if show_plots:
         plt.show()
 
@@ -184,4 +183,4 @@ if __name__ == "__main__":
         TraumaSynapticDeficitAgent(network= network)
     ]
 
-    view_performance(DATA_PATH / sys.argv[1], agents, "_testing_in_learning_env_after_new_therapy", True, '_exposure_therapy_2_testing')
+    view_performance(DATA_PATH / sys.argv[1], agents, "_testing_in_learning_env_after_new_therapy", True, '_relearned')
