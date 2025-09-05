@@ -21,6 +21,7 @@ from blue_ai.scripts.ptsd.post_ptsd import post_ptsd
 from blue_ai.scripts.ptsd.test_performance import test_performance
 from blue_ai.scripts.ptsd.view_reconstruction_loss import view_reconstruction_loss
 from blue_ai.scripts.ptsd.relearning_after_trauma import relearning_after_trauma
+from blue_ai.scripts.ptsd.view_position_heatmap import view_position_heatmap
 
 
 
@@ -156,6 +157,11 @@ def main():
     view_performance(folder_path, agents, "_testing_in_learning_env_after_trauma", show_plots, '_traumatized_testing')
     view_performance(folder_path, agents, "_testing_in_learning_env_after_relearning", show_plots, '_relearned_testing')
     view_performance(folder_path, agents, "_testing_in_learning_env_after_therapy", show_plots, '_exposure_therapy_testing')
+
+    view_position_heatmap(folder_path, agents_to_include, show_plots, '_testing')
+    view_position_heatmap(folder_path, agents_to_include, show_plots, '_traumatized_testing')
+    view_position_heatmap(folder_path, agents_to_include, show_plots, '_relearned_testing')
+    view_position_heatmap(folder_path, agents_to_include, show_plots, '_exposure_therapy_testing')
 
 
 
