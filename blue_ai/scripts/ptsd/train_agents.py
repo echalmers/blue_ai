@@ -150,6 +150,21 @@ def trial(agent: BaseAgent, env, rep, trial_num, directory, tbar=None, steps=30_
 
 
 def train_agents(agents: List[BaseAgent], env: Image2VecWrapper, iter_per_trial: int, directory: str):
+    """
+    Train multiple agents across several trials in a specified environment and save their results.
+
+    This function iterates over a set of agents and runs them for a fixed number of 
+    iterations per trial across multiple repetitions. Each agent’s training progress 
+    and state are recorded and saved to disk. The procedure is designed to generate 
+    baseline training data before trauma induction, relearning, or exposure therapy.
+
+    Args:
+        agents (List[BaseAgent]): List of agent instances to be trained.
+        env (Image2VecWrapper): The wrapped environment in which agents are trained.
+        iter_per_trial (int): Number of training iterations per trial.
+        directory (str): Directory where the trained agent results will be saved.
+    """
+
     trial_num = 0
     tbar = tqdm(
         total=(len(agents) * N_TRIALS * iter_per_trial), initial=0

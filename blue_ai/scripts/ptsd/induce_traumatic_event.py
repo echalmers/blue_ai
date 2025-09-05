@@ -9,6 +9,20 @@ from blue_ai.scripts.ptsd.train_agents import load_trial, save_trial, run_trial
 
 
 def induce_traumatic_event(directory: Path, agents_to_include: List[str], trauma_env: Image2VecWrapper, n_trauma_updates: int = 1):
+    """
+    Induce a traumatic event for the agents by running them in a trauma-inducing environment 
+    and saving their updated states.
+
+    This function loads agents from a given directory, runs them in a special environment that 
+    simulates trauma, and stores the updated results. For agents of type `TraumaSynapticDeficitAgent`, the optimizer’s 
+    weight decay parameter is increased after the trauma induction.
+
+    Args:
+        directory (Path): Path to the directory containing the agent trial files.
+        agents_to_include (List[str]): List of agent class names to process (e.g., ["HealthyAgent", "PTSDAgent"]).
+        trauma_env (Image2VecWrapper): The wrapped environment used to induce trauma in the agents.
+        n_trauma_updates (int): Number of trauma updates applied per agent. Defaults to 1.
+    """
 
     # get the file names of the right agents
     files = [
@@ -51,4 +65,3 @@ if __name__ == "__main__":
             )
 
     induce_traumatic_event(DATA_PATH / sys.argv[1], agents_to_include, traumatic_env)
-

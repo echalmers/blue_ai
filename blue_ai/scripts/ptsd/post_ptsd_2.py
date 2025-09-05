@@ -12,6 +12,24 @@ from blue_ai.scripts.ptsd.train_agents import load_trial, save_trial
 
 
 def post_ptsd_2(directory: Path, agents_to_include: List[str], exposure_env: Image2VecWrapper, file_ending: str = "_exposure_therapy_2"):
+    """
+    Apply another approach to exposure therapy to previously traumatized agents by letting
+    them update their Qvalues by the actions another Healty Agent chooses.
+
+    This function loads agents that have already undergone trauma and relearning, 
+    forces them to perform the updates that the Healthy Agent chooses, 
+    and stores the updated results. The process is another approach to therapeutic  
+    exposure, allowing agents to adapt to the environment post-trauma.
+
+    Args:
+        directory (Path): Path to the directory containing the relearned agent trial files.
+        agents_to_include (List[str]): List of agent class names to process 
+            (e.g., ["HealthyAgent", "PTSDAgent"]).
+        exposure_env (Image2VecWrapper): The wrapped environment used for exposure therapy.
+        file_ending (str, optional): Suffix added to the saved trial filenames after exposure therapy. 
+            Defaults to "_exposure_therapy_2".
+    """
+
     # get the file names of the agents
     files = [
         f"{directory.name}/{agent}_{trial}_relearned.pkl"
@@ -19,15 +37,15 @@ def post_ptsd_2(directory: Path, agents_to_include: List[str], exposure_env: Ima
         for agent in agents_to_include
     ]
 
-    # agents in post trauma envs packen
+    # load agents and place them in the desired environment
     for i in range(len(files)):
-        # load the agent
         filename = files[i]
         _, agent, _ = load_trial(DATA_PATH / filename)
-        # force the agent through the exposure environment
+
+        # let the agents follow the lead from a healthy agent
         new_results, agent, env = run_trial_2(directory, agent, exposure_env, steps=1000, trial_id=i, tbar=None)
         print(new_results)
-        # save the results
+
         filename = (DATA_PATH / filename.replace("_relearned.pkl", f"{file_ending}.pkl"))
         save_trial(new_results, agent, env, filename)
 
@@ -119,4 +137,3 @@ if __name__ == "__main__":
             )
     
     post_ptsd_2(DATA_PATH / sys.argv[1], agents_to_include, env)
-

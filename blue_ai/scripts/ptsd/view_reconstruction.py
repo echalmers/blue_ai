@@ -16,6 +16,35 @@ import time
 import sys
 
 def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: bool, mode: str):
+    """
+    Visualize and/or statistically analyze object reconstructions from interpretation models.
+
+    This function provides two modes of operation for examining how different agents reconstruct
+    observations from the environment:
+
+    1. Interactive mode:
+        - Shows the current environment observation alongside the agent reconstructions.
+        - Displays reconstructed images for each agent in real time.
+        - Allows stepping through the environment using arrow keys:
+        - left, right, up for movement
+        - 'z' to save the current figure
+
+    2. Statistical mode:
+        - Runs multiple environment states (default 1,000) and counts occurrences of key objects
+          (# Goals, # Transient Goals, # Hazards) in the reconstructions.
+        - Displays a bar plot summarizing the reconstructed objects across agents.
+
+    Args:
+        directory (Path): Path to the directory containing the interpretation model pickle files 
+                          and where the plots will be saved.
+        env (Image2VecWrapper): Environment wrapper capable of converting observations into images.
+        agent_state (str): Identifier for the agent state, used to select the pickle file and 
+                           determine titles.
+        mode (str): Operation mode, must be either:
+                    - "interactive": live visualization with environment stepping
+                    - "statistical": batch analysis with summary plots
+    """
+
     if mode not in ['interactive', 'statistical']:
         raise ValueError("There are just two valid modes: interactive and statistical")
 
@@ -41,9 +70,12 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
         case "_relearned":
             title = 'Objects reconstructed after relearning'
             subpath = "object_recon_after_relearning.png"
-        case _:
+        case "":
             title= 'Objects reconstructed before trauma'
             subpath = "object_recon_before_trauma.png"
+        case _:
+            title= 'Objects reconstructed at unknown point'
+            subpath = "object_recon_at_unknown_point.png"
     
     def plot_interactive(state):
         for i in range(n_plots):
@@ -59,8 +91,7 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
             mse = nn.MSELoss()(recon, state)
             print(row['filename'], mse)
             recon[recon < 0] = 0
-            #print(f'{recon} from {row['agent_name']}' )
-            #print(Image2VecWrapper.observation_to_image(recon.cpu() ** 1.5, closest=True))
+
             ax[2 + index].imshow(Image2VecWrapper.observation_to_image(recon.cpu() ** 1.5, closest=True))
             ax[2 + index].set_title(f"{row['agent_name']} reconstructed", fontsize = 10)  # ({round(float(mse), 2)})")
 
@@ -81,10 +112,10 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
             folder_path = directory / "img"
             folder_path.mkdir(parents=True, exist_ok=True)
 
-            # Reset index so that the categories become a column
+            # reset index so that the categories become a column
             df_reset = df.reset_index().rename(columns={'index': 'Group'})
 
-            # Melt the DataFrame to long format
+            # melt the DataFrame to long format
             df_melted = df_reset.melt(id_vars='Group', var_name='Metric', value_name='Count')
 
             # assign the right colors
@@ -164,8 +195,7 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
             state = env.observation(env.unwrapped.gen_obs())
             state = torch.tensor(np.expand_dims(state, 0).astype(np.float32),
                                 device=interpretation_models['agent'][0].device)
-            # env.render()
-            # time.sleep(10)
+
             for _, row in interpretation_models.iterrows():
                 # get the reconstruction
                 recon = row['interpretation_model'].get_reconstructions(observations=state)[1][0]
@@ -173,7 +203,6 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
 
                 # convert it to an image
                 rgb = Image2VecWrapper.observation_to_image(recon.cpu() ** 1.5, closest=True)
-                #print(row['agent_name'], rgb)
 
                 # update the counter inside the dictionary
                 recon_dict[row['agent_name']]["# Goals"] += torch.all(rgb == goal_target, dim=-1).sum().item()

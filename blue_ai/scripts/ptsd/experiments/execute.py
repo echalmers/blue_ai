@@ -63,7 +63,7 @@ def main():
                 TransientGoals(
                     render_mode="none", transient_reward=0.25, termination_reward=1,
                     n_transient_obstacles = 1,
-                    wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]],
+                    wall_locations =[[3,2],[3,3],[3,4],[3,5]]#,[3,6]],
                     # hiding_penalty=True, hiding_penalty_value = 0.25
                     # see_through_walls = False IS NOT WORKING?
                 )
@@ -76,7 +76,7 @@ def main():
                     render_mode="none", transient_reward=0.25, termination_reward=1, 
                     agent_start_pos=(3,1), n_transient_obstacles=1, transient_penalty = trauma_penalty, 
                     transient_locations=[[1,4],[4,2],[5,1]], transient_obstacles=[[4,1]],
-                    wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]]
+                    wall_locations =[[3,2],[3,3],[3,4],[3,5]]#,[3,6]]
                 )
             )
     save_env(trauma_env, 'environment_during_trauma_experience', folder_path)

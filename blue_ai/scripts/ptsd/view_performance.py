@@ -151,7 +151,26 @@ class PerformancePlotter:
         plt.xlabel("type of goal")
         plt.xlabel("")
 
+
 def view_performance(directory: Path, agents_to_include: List[str], name_suffix: str, show_plots: bool, agent_state: str):
+    """
+    Generate and save performance plots for a set of agents based on trial results.
+
+    This function uses the PerformancePlotter class to visualize agent performance in terms of:
+    1. Cumulative reward over time during training/testing.
+    2. Number of goals (required, optional, hazards) reached per episode.
+
+    The plots are saved as an image file in a subdirectory "img" within the provided directory.
+    Optionally, the plots can also be displayed interactively.
+
+    Args:
+        directory (Path): Path to the directory containing trial results and where plots will be saved.
+        agents_to_include (List[str]): List of agent class instances to include in the plots.
+        name_suffix (str): Suffix to append to the saved plot filename for identification.
+        show_plots (bool): If True, the plots will be displayed interactively.
+        agent_state (str): Identifier string for the state of the agents (e.g., "_traumatized", "_relearned").
+    """
+
     plotter = PerformancePlotter(directory, agent_state, agent_classes= agents_to_include)
 
     folder_path = directory / "img"

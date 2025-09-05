@@ -10,6 +10,24 @@ from pathlib import Path
 import sys
 
 def view_reconstruction_loss(directory: Path, agent_state: bool, show_plots: bool):
+    """
+    Visualize and save the reconstruction loss and pixel match percentage of interpretation models
+    for agents at a specific stage.
+
+    This function loads precomputed interpretation model results from a pickle file, constructs
+    a DataFrame containing loss and match over time for each agent, and plots two line charts:
+    1. Reconstruction loss (Mean Squared Error) over environment steps.
+    2. Reconstruction-observation pixel match (percentage) over environment steps.
+
+    The plots are saved in a subdirectory "img" inside the provided directory, with a filename
+    automatically selected based on the agent_state.
+
+    Args:
+        directory (Path): Path to the directory containing the interpretation model pickle files
+                          and where the plots will be saved.
+        agent_state (str): Identifier for the agent state, used to select the file and titles.
+        show_plots (bool): If True, the plots will be displayed.
+    """
 
     folder_path = directory / "img"
     folder_path.mkdir(parents=True, exist_ok=True)
@@ -27,10 +45,14 @@ def view_reconstruction_loss(directory: Path, agent_state: bool, show_plots: boo
             loss_title = 'Loss of the interpretation model reconstructions after relearning'
             match_title = 'Match of the reconstructions and observations after relearning'
             subpath = "loss_and_match_reconstructions_after_relearning.png"
-        case _:
+        case "":
             loss_title= 'Loss of the interpretation model reconstructions before trauma'
             match_title = 'Match of the reconstructions and observations before trauma'
             subpath = "loss_and_match_reconstructions_before_trauma.png"
+        case _:
+            loss_title= 'Loss of the interpretation model reconstructions at unknown point'
+            match_title = 'Match of the reconstructions and observations at unknown point'
+            subpath = "loss_and_match_reconstructions_at_unknown_point.png"
 
     with open(DATA_PATH / f'{directory.name}/interpretation_models{agent_state}.pkl', 'rb') as f:
         interpretation_models = pickle.load(f)
@@ -41,17 +63,18 @@ def view_reconstruction_loss(directory: Path, agent_state: bool, show_plots: boo
              'TraumaSynapticDeficitAgent': 'PTSDAfterTrauma'
              }
         )
+    
     results=[]
     for _, row in interpretation_models.iterrows():
         print(f"agent:{row['agent_name']} loss: {row['losses'][-1]}")
-        print(row['exact_match'])
+
         for i, (loss, match) in enumerate(zip(row['losses'], row['exact_match'])):
             results.append({"agent":row['agent_name'] , "step": i , "loss":loss, "match":match})
 
     results = pd.DataFrame(results)
     print(results)
 
-    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    _, axes = plt.subplots(1, 2, figsize=(12, 5))
     sns.lineplot(
             data=results,
             x="step",
