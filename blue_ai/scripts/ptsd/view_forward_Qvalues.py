@@ -36,7 +36,7 @@ def view_forward_Qvalues(directory: Path, env: Image2VecWrapper, upper_bound: in
             post_ptsd(directory, env, i+1, "_exposure_therapy_forward")
             df = investigate_Qvalues(directory, env, False, "_exposure_therapy_forward", False)
 
-        q_df = pd.DataFrame(df['qvalues'].tolist(), columns=['left', 'right', 'forward', 'hide'])
+        q_df = pd.DataFrame(df['qvalues'].tolist(), columns=['left', 'right', 'forward'])
         df = pd.concat([df[['agent']], q_df], axis=1)
 
         # Average per agent

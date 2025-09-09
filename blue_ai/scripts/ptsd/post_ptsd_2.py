@@ -41,7 +41,7 @@ def post_ptsd_2(directory: Path, agents_to_include: List[str], exposure_env: Ima
     for i in range(len(files)):
         filename = files[i]
         _, agent, _ = load_trial(DATA_PATH / filename)
-
+        exposure_env.unwrapped.agent_start_pos=(1,1)
         # let the agents follow the lead from a healthy agent
         new_results, agent, env = run_trial_2(directory, agent, exposure_env, steps=1000, trial_id=i, tbar=None)
         print(new_results)
@@ -86,12 +86,7 @@ def run_trial_2(directory: Path, agent: BaseAgent, env, steps=5000, trial_id="",
         else:
             state = new_state
 
-        # if there is a hiding penalty, account for it in the hazard detection
-        if env.unwrapped.hiding_penalty:
-            lava = reward < -env.unwrapped.hiding_penalty_value
-        else: 
-            lava = reward < 0
-
+        lava = reward < 0
         transient_goal = reward == env.unwrapped.transient_reward
         terminal_goal = reward == env.unwrapped.termination_reward
         stuck = max(pos.values()) > 2000

@@ -39,7 +39,7 @@ def post_ptsd(directory: Path, agents_to_include: List[str], exposure_env: Image
     for i in range(len(files)):
         filename = files[i]
         _, agent, _ = load_trial(DATA_PATH / filename)
-
+        exposure_env.unwrapped.agent_start_pos=(3,1)
         # force the agent through the exposure experience
         new_results, agent, env = run_trial(agent, exposure_env, steps=n_exposure_updates, trial_id=i, tbar=None, exposure_therapy = True)
         print(new_results)

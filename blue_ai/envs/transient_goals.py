@@ -19,10 +19,6 @@ class Actions(IntEnum):
     left = 0
     right = 1
     forward = 2
-    hide = 3
-
-    # Done completing task
-    done = 4
 
 
 class TransientGoals(MiniGridEnv):
@@ -46,8 +42,6 @@ class TransientGoals(MiniGridEnv):
         wall_locations = None,
         env_name = None,
         see_through_walls = True,
-        hiding_penalty = False,
-        hiding_penalty_value = 0.01,
         **kwargs,
     ):
 
@@ -70,8 +64,6 @@ class TransientGoals(MiniGridEnv):
         self.wall_locations = wall_locations
         self.env_name = env_name
         self.see_through_walls = see_through_walls
-        self.hiding_penalty = hiding_penalty
-        self.hiding_penalty_value = hiding_penalty_value
 
         mission_space = MissionSpace(mission_func=self._gen_mission)
         max_steps = 4 * len(self.im) ** 2
@@ -178,12 +170,6 @@ class TransientGoals(MiniGridEnv):
                 self._turn_right()
             case Actions.forward:
                 terminated, reward = self._handle_forward()
-            case Actions.hide:
-                if self.hiding_penalty:
-                    reward-= self.hiding_penalty_value
-                pass
-            case Actions.done:
-                terminated = True
             case action:
                 raise ValueError(f"Unknown action {action}")
 

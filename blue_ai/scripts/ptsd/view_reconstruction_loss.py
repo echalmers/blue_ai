@@ -41,6 +41,10 @@ def view_reconstruction_loss(directory: Path, agent_state: bool, show_plots: boo
             loss_title = 'Loss of the interpretation model reconstructions after exposure therapy'
             match_title = 'Match of the reconstructions and observations after exposure therapy'
             subpath = "loss_and_match_reconstructions_after_exposure_therapy.png"
+        case "_exposure_therapy_2":
+            loss_title = 'Loss of the interpretation model reconstructions after exposure therapy 2'
+            match_title = 'Match of the reconstructions and observations after exposure therapy 2'
+            subpath = "loss_and_match_reconstructions_after_exposure_therapy_2.png"
         case "_relearned":
             loss_title = 'Loss of the interpretation model reconstructions after relearning'
             match_title = 'Match of the reconstructions and observations after relearning'

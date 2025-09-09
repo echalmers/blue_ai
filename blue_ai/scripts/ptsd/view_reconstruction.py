@@ -1,6 +1,6 @@
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.envs.transient_goals import TransientGoals
-from blue_ai.scripts.constants import DATA_PATH
+from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 
 import numpy as np
 import pandas as pd
@@ -67,6 +67,9 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
         case "_exposure_therapy":
             title = 'Objects reconstructed after exposure therapy'
             subpath = "object_recon_after_exposure_therapy.png"
+        case "_exposure_therapy_2":
+            title = 'Objects reconstructed after exposure therapy 2'
+            subpath = "object_recon_after_exposure_therapy_2.png"
         case "_relearned":
             title = 'Objects reconstructed after relearning'
             subpath = "object_recon_after_relearning.png"
@@ -179,7 +182,9 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
 
     if mode == 'statistical':
         # create an dictionary to keep track of the number of items in the reconstructions
-        recon_dict = {agent: {"# Goals": 0,  "# Transient Goals": 0, "# Hazards": 0,} for agent in interpretation_models['agent_name'].unique()}
+        recon_dict = {agent: {"# Goals": 0,  "# Transient Goals": 0, "# Hazards": 0} for agent in interpretation_models['agent_name'].unique()}
+        ground_truth_dict = {"# Goals": 0,  "# Transient Goals": 0, "# Hazards": 0}
+        
 
         # the target values for important world objects
         hazard_target = torch.tensor([1.0, 0.0, 0.0])
@@ -195,12 +200,16 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
             state = env.observation(env.unwrapped.gen_obs())
             state = torch.tensor(np.expand_dims(state, 0).astype(np.float32),
                                 device=interpretation_models['agent'][0].device)
+            truth_image = Image2VecWrapper.observation_to_image(state[0].cpu() ** 1.5, closest=True)
+
+            ground_truth_dict["# Goals"] += torch.all(truth_image == goal_target, dim=-1).sum().item()
+            ground_truth_dict["# Transient Goals"] += torch.all(truth_image == t_goal_target, dim=-1).sum().item()
+            ground_truth_dict["# Hazards"] += torch.all(truth_image == hazard_target, dim=-1).sum().item()
 
             for _, row in interpretation_models.iterrows():
                 # get the reconstruction
                 recon = row['interpretation_model'].get_reconstructions(observations=state)[1][0]
                 recon[recon < 0] = 0
-
                 # convert it to an image
                 rgb = Image2VecWrapper.observation_to_image(recon.cpu() ** 1.5, closest=True)
 
@@ -209,9 +218,11 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
                 recon_dict[row['agent_name']]["# Transient Goals"] += torch.all(rgb == t_goal_target, dim=-1).sum().item()
                 recon_dict[row['agent_name']]["# Hazards"] += torch.all(rgb == hazard_target, dim=-1).sum().item()
 
-        df = pd.DataFrame.from_dict(recon_dict, orient="index")
-        print(df)
-        plot_objects(df)
+        ground_truth_dict = {k: v * N_TRIALS for k, v in ground_truth_dict.items()}
+        recon_dict["GroundTruth"] = ground_truth_dict
+        recon_df = pd.DataFrame.from_dict(recon_dict, orient="index")
+        print(recon_df)
+        plot_objects(recon_df)
 
     
 if __name__ == "__main__":
@@ -226,4 +237,4 @@ if __name__ == "__main__":
                 )
             )
     
-    view_reconstruction(DATA_PATH / sys.argv[1], env, agent_state='', mode= 'interactive')
+    view_reconstruction(DATA_PATH / sys.argv[1], env, agent_state='_traumatized', mode= 'statistical')

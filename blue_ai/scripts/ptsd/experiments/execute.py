@@ -1,8 +1,6 @@
 import sys
 from typing import List
 from copy import deepcopy
-#from pathlib import Path
-#import time
 
 from torch import nn
 import matplotlib.pyplot as plt
@@ -17,7 +15,7 @@ from blue_ai.scripts.ptsd.induce_traumatic_event import induce_traumatic_event
 from blue_ai.scripts.ptsd.investigate_Qvalues import investigate_Qvalues
 from blue_ai.scripts.ptsd.train_interpretation_models import train_interpretation_models
 from blue_ai.scripts.ptsd.view_reconstruction import view_reconstruction 
-from blue_ai.scripts.ptsd.post_ptsd import post_ptsd
+from blue_ai.scripts.ptsd.post_ptsd_2 import post_ptsd_2
 from blue_ai.scripts.ptsd.test_performance import test_performance
 from blue_ai.scripts.ptsd.view_reconstruction_loss import view_reconstruction_loss
 from blue_ai.scripts.ptsd.relearning_after_trauma import relearning_after_trauma
@@ -32,11 +30,10 @@ def main():
     show_plots = True
     trauma_penalty = -100
     n_trauma_updates = 1
-    n_exposure_updates = 50
     before_trauma = ''
     after_trauma = '_traumatized'
     after_relearning = '_relearned'
-    after_therapy = '_exposure_therapy'
+    after_therapy_2 = '_exposure_therapy_2'
     
 
     # -- CREATE THE DIRECTORY --
@@ -50,7 +47,7 @@ def main():
     network = nn.Sequential(
         nn.Flatten(1, -1),
         nn.Linear(100, 25), nn.Tanh(),
-        nn.Linear(25, 4)
+        nn.Linear(25, 3)
     )
     
     agents: List[BaseAgent] = [
@@ -65,8 +62,6 @@ def main():
                     render_mode="none", transient_reward=0.25, termination_reward=1,
                     n_transient_obstacles = 1,
                     wall_locations =[[3,2],[3,3],[3,4],[3,5]]#,[3,6]],
-                    # hiding_penalty=True, hiding_penalty_value = 0.25
-                    # see_through_walls = False IS NOT WORKING?
                 )
             )
     save_env(learning_env, 'environment_during_learning', folder_path)
@@ -88,6 +83,16 @@ def main():
     post_trauma_env.unwrapped.transient_obstacles = None
     save_env(post_trauma_env, 'environment_after_trauma_experience', folder_path)
 
+    therapy_env = Image2VecWrapper(
+                TransientGoals(
+                    render_mode="none", transient_reward=0.25, termination_reward=1,
+                    n_transient_obstacles = 0,
+                    transient_locations=[[4,1],[3,1],[2,1]],
+                    wall_locations =[[3,2],[3,3],[3,4],[3,5]]#,[3,6]],
+                )
+            )
+    save_env(therapy_env, 'environment_during_therapy', folder_path)
+
 
     # -- TRAIN THE AGENTS --
     train_agents(agents, learning_env, iter_per_trial, folder_path)
@@ -102,7 +107,6 @@ def main():
 
 
     # -- INVESTIGATE THE Q-VALUES IN THE TRAUMA ENV BUT WITHOUT THE HAZARD --
-    # Das gefällt mir noch nicht so gut, wäre schöner, wenn es einfach ein plot wäre
     investigate_Qvalues(folder_path, agents_to_include, post_trauma_env, show_plots, agent_state = before_trauma)
     investigate_Qvalues(folder_path, agents_to_include, post_trauma_env, show_plots, agent_state = after_trauma)
 
@@ -136,32 +140,32 @@ def main():
     view_reconstruction(folder_path, post_trauma_env, agent_state = after_relearning, mode = 'statistical')
 
 
-    # -- EXPOSURE THERAPY --
-    post_ptsd(folder_path, agents_to_include, post_trauma_env, n_exposure_updates)
+    # -- EXPOSURE THERAPY v 2.0--
+    post_ptsd_2(folder_path, agents_to_include, therapy_env)
 
-    investigate_Qvalues(folder_path, agents_to_include, post_trauma_env, show_plots, agent_state = after_therapy)
-    train_interpretation_models(folder_path, agents_to_include, agent_state = after_therapy)
-    view_reconstruction_loss(folder_path, agent_state=after_therapy, show_plots = show_plots)
+    investigate_Qvalues(folder_path, agents_to_include, post_trauma_env, show_plots, agent_state = after_therapy_2)
+    train_interpretation_models(folder_path, agents_to_include, agent_state = after_therapy_2)
+    view_reconstruction_loss(folder_path, agent_state=after_therapy_2, show_plots = show_plots)
     if show_plots:
-       view_reconstruction(folder_path, post_trauma_env, agent_state = after_therapy, mode = 'interactive')
-    view_reconstruction(folder_path, post_trauma_env, agent_state = after_therapy, mode = 'statistical')
+       view_reconstruction(folder_path, post_trauma_env, agent_state = after_therapy_2, mode = 'interactive')
+    view_reconstruction(folder_path, post_trauma_env, agent_state = after_therapy_2, mode = 'statistical')
 
 
     # -- TEST THE PERFORMANCE DURING THE DIFFERENT STAGES --
     test_performance(folder_path, agents_to_include, learning_env, before_trauma, 5000)
     test_performance(folder_path, agents_to_include, learning_env, after_trauma, 5000)
     test_performance(folder_path, agents_to_include, learning_env, after_relearning, 5000)
-    test_performance(folder_path, agents_to_include, learning_env, after_therapy, 5000)
+    test_performance(folder_path, agents_to_include, learning_env, after_therapy_2, 5000)
 
     view_performance(folder_path, agents, "_testing_in_learning_env_before_trauma", show_plots, '_testing')
     view_performance(folder_path, agents, "_testing_in_learning_env_after_trauma", show_plots, '_traumatized_testing')
     view_performance(folder_path, agents, "_testing_in_learning_env_after_relearning", show_plots, '_relearned_testing')
-    view_performance(folder_path, agents, "_testing_in_learning_env_after_therapy", show_plots, '_exposure_therapy_testing')
+    view_performance(folder_path, agents, "_testing_in_learning_env_after_therapy_2", show_plots, '_exposure_therapy_2_testing')
 
     view_position_heatmap(folder_path, agents_to_include, show_plots, '_testing')
     view_position_heatmap(folder_path, agents_to_include, show_plots, '_traumatized_testing')
     view_position_heatmap(folder_path, agents_to_include, show_plots, '_relearned_testing')
-    view_position_heatmap(folder_path, agents_to_include, show_plots, '_exposure_therapy_testing')
+    view_position_heatmap(folder_path, agents_to_include, show_plots, '_exposure_therapy_2_testing')
 
 
 

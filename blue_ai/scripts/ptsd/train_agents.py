@@ -13,11 +13,10 @@ from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 
 
-# introduce a fourth action 'hide'
 ptsd_network = nn.Sequential(
     nn.Flatten(1, -1),
     nn.Linear(100, 25), nn.Tanh(),
-    nn.Linear(25, 4)
+    nn.Linear(25, 3)
 )
 
 
@@ -62,12 +61,7 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None, trauma
         else:
             state = new_state
 
-        # if there is a hiding penalty, account for it in the hazard detection
-        if env.unwrapped.hiding_penalty:
-            lava = reward < -env.unwrapped.hiding_penalty_value
-        else: 
-            lava = reward < 0
-
+        lava = reward < 0
         transient_goal = reward == env.unwrapped.transient_reward
         terminal_goal = reward == env.unwrapped.termination_reward
         stuck = max(pos.values()) > 2000
@@ -203,8 +197,6 @@ if __name__ == "__main__":
                     render_mode="human", transient_reward=0.25, termination_reward=1,
                     n_transient_obstacles = 1,
                     wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]],
-                    #hiding_penalty=True, hiding_penalty_value = 0.25
-                    # see_through_walls = False IS NOT WORKING?
                 )
             )
     ]

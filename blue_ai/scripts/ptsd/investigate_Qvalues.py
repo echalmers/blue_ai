@@ -72,7 +72,7 @@ def plotting(df: pd.DataFrame, directory: Path, show_plots: bool, agent_state: s
     folder_path.mkdir(parents=True, exist_ok=True)
 
     # Expand Q_values into columns
-    q_df = pd.DataFrame(df['qvalues'].tolist(), columns=['left', 'right', 'forward', 'hide'])
+    q_df = pd.DataFrame(df['qvalues'].tolist(), columns=['left', 'right', 'forward'])
     df = pd.concat([df[['agent']], q_df], axis=1)
 
     # Average per agent
@@ -100,6 +100,9 @@ def plotting(df: pd.DataFrame, directory: Path, show_plots: bool, agent_state: s
         case "_exposure_therapy":
             title = "Average Q-values per Action after exposure therapy, Split by Agent"
             subpath = "q_values_after_exposure_therapy.png"
+        case "_exposure_therapy_2":
+            title = "Average Q-values per Action after exposure therapy 2, Split by Agent"
+            subpath = "q_values_after_exposure_therapy_2.png"
         case "_relearned":
             title = "Average Q-values per Action after relearning, Split by Agent"
             subpath = "q_values_after_relearning.png"

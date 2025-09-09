@@ -38,12 +38,14 @@ def test_performance(directory: Path, agents_to_include: List[str], test_env: Im
         # load the agent
         filename = files[i]
         _, agent, _ = load_trial(DATA_PATH / filename)
-
+        #epsilon = agent.epsilon
+        #agent.epsilon = 0
         # test the agents in the testing env
         new_results, agent, env = run_trial(agent, test_env, steps=iter_per_trial, trial_id=i, tbar=None, testing=True)
+        #agent.epsilon = epsilon
         print(new_results)
 
-        filename = (DATA_PATH / filename.replace(".pkl", "_testing.pkl",))
+        filename = (DATA_PATH / filename.replace(".pkl", "_testing_test_eps.pkl",))
         save_trial(new_results, agent, env, filename)
     
 
@@ -56,10 +58,10 @@ if __name__ == "__main__":
 
     learning_env = Image2VecWrapper(
                 TransientGoals(
-                    render_mode="human", transient_reward=0.25, termination_reward=1,
+                    render_mode="none", transient_reward=0.25, termination_reward=1,
                     n_transient_obstacles = 1,
-                    wall_locations =[[3,2],[3,3],[3,4],[3,5]],
+                    wall_locations =[[3,2],[3,3],[3,4],[3,5]]#,[3,6]],
                 )
             )
     
-    test_performance(DATA_PATH / sys.argv[1], agents_to_include, learning_env, '_relearned', 5_000)
+    test_performance(DATA_PATH / sys.argv[1], agents_to_include, learning_env, '', 5_000)
