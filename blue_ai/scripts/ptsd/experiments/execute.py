@@ -20,6 +20,7 @@ from blue_ai.scripts.ptsd.test_performance import test_performance
 from blue_ai.scripts.ptsd.view_reconstruction_loss import view_reconstruction_loss
 from blue_ai.scripts.ptsd.relearning_after_trauma import relearning_after_trauma
 from blue_ai.scripts.ptsd.view_position_heatmap import view_position_heatmap
+from blue_ai.scripts.ptsd.view_Qvalue_differences import view_Qvalue_differences
 
 
 
@@ -28,7 +29,7 @@ def main():
     # -- HYPERPARAMETERS --
     iter_per_trial = 40_000
     show_plots = True
-    trauma_penalty = -100
+    trauma_penalty = -1000
     n_trauma_updates = 1
     before_trauma = ''
     after_trauma = '_traumatized'
@@ -111,7 +112,7 @@ def main():
     investigate_Qvalues(folder_path, agents_to_include, post_trauma_env, show_plots, agent_state = after_trauma)
 
 
-    # -- TRAIN THE MODLES WHICH RECONSTRUCT THE VISUAL INPUT --
+    # -- TRAIN THE MODELS WHICH RECONSTRUCT THE VISUAL INPUT --
     train_interpretation_models(folder_path, agents_to_include, agent_state = before_trauma)
     train_interpretation_models(folder_path, agents_to_include, agent_state = after_trauma)
 
@@ -126,8 +127,8 @@ def main():
        view_reconstruction(folder_path, post_trauma_env, agent_state = before_trauma, mode = 'interactive')
        view_reconstruction(folder_path, post_trauma_env, agent_state = after_trauma, mode = 'interactive')
     
-    view_reconstruction(folder_path, post_trauma_env, agent_state = before_trauma, mode = 'statistical')
-    view_reconstruction(folder_path, post_trauma_env, agent_state = after_trauma, mode = 'statistical')
+    view_reconstruction(folder_path, learning_env, agent_state = before_trauma, mode = 'statistical')
+    view_reconstruction(folder_path, learning_env, agent_state = after_trauma, mode = 'statistical')
 
     # -- RELEARNING --
     relearning_after_trauma(folder_path, agents_to_include, learning_env, iter_per_trial)
@@ -137,7 +138,7 @@ def main():
     view_reconstruction_loss(folder_path, agent_state=after_relearning, show_plots = show_plots)
     if show_plots:
        view_reconstruction(folder_path, post_trauma_env, agent_state = after_relearning, mode = 'interactive')
-    view_reconstruction(folder_path, post_trauma_env, agent_state = after_relearning, mode = 'statistical')
+    view_reconstruction(folder_path, learning_env, agent_state = after_relearning, mode = 'statistical')
 
 
     # -- EXPOSURE THERAPY v 2.0--
@@ -148,7 +149,7 @@ def main():
     view_reconstruction_loss(folder_path, agent_state=after_therapy_2, show_plots = show_plots)
     if show_plots:
        view_reconstruction(folder_path, post_trauma_env, agent_state = after_therapy_2, mode = 'interactive')
-    view_reconstruction(folder_path, post_trauma_env, agent_state = after_therapy_2, mode = 'statistical')
+    view_reconstruction(folder_path, learning_env, agent_state = after_therapy_2, mode = 'statistical')
 
 
     # -- TEST THE PERFORMANCE DURING THE DIFFERENT STAGES --
@@ -162,11 +163,17 @@ def main():
     view_performance(folder_path, agents, "_testing_in_learning_env_after_relearning", show_plots, '_relearned_testing')
     view_performance(folder_path, agents, "_testing_in_learning_env_after_therapy_2", show_plots, '_exposure_therapy_2_testing')
 
+    # -- CREATE A HEATMAP SHOWING THE POSITION OF THE AGENT DURING THE TESTING --
     view_position_heatmap(folder_path, agents_to_include, show_plots, '_testing')
     view_position_heatmap(folder_path, agents_to_include, show_plots, '_traumatized_testing')
     view_position_heatmap(folder_path, agents_to_include, show_plots, '_relearned_testing')
     view_position_heatmap(folder_path, agents_to_include, show_plots, '_exposure_therapy_2_testing')
 
+    # -- CREATE A PLOT AND A HEATMAP COMPARING THE QVALUES AT DIFFERENT STAGES AND POSITIONS--
+    view_Qvalue_differences(folder_path, agents_to_include, before_trauma, post_trauma_env, show_plots)
+    view_Qvalue_differences(folder_path, agents_to_include, after_trauma, post_trauma_env, show_plots)
+    view_Qvalue_differences(folder_path, agents_to_include, after_relearning, post_trauma_env, show_plots)
+    view_Qvalue_differences(folder_path, agents_to_include, after_therapy_2, post_trauma_env, show_plots)
 
 
 def save_env(env: Image2VecWrapper, name: str, directory):

@@ -45,7 +45,7 @@ def test_performance(directory: Path, agents_to_include: List[str], test_env: Im
         #agent.epsilon = epsilon
         print(new_results)
 
-        filename = (DATA_PATH / filename.replace(".pkl", "_testing_test_eps.pkl",))
+        filename = (DATA_PATH / filename.replace(".pkl", "_testing.pkl",))
         save_trial(new_results, agent, env, filename)
     
 
