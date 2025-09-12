@@ -15,7 +15,7 @@ from pathlib import Path
 import time
 import sys
 
-def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: bool, mode: str):
+def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: bool, mode: str, show_plots: bool = True):
     """
     Visualize and/or statistically analyze object reconstructions from interpretation models.
 
@@ -43,6 +43,7 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
         mode (str): Operation mode, must be either:
                     - "interactive": live visualization with environment stepping
                     - "statistical": batch analysis with summary plots
+        show_plots (bool): If True, the plots will be displayed.
     """
 
     if mode not in ['interactive', 'statistical']:
@@ -62,23 +63,35 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
     
     match agent_state:
         case "_traumatized":
-            title = 'Objects reconstructed after trauma'
-            subpath = "object_recon_after_trauma.png"
+            object_title = 'Objects reconstructed after trauma'
+            object_subpath = "object_recon_after_trauma.png"
+            match_title = 'Mean pixel match after trauma'
+            match_subpath = 'mean_pixel_match_after_trauma.png'
         case "_exposure_therapy":
-            title = 'Objects reconstructed after exposure therapy'
-            subpath = "object_recon_after_exposure_therapy.png"
+            object_title = 'Objects reconstructed after exposure therapy'
+            object_subpath = "object_recon_after_exposure_therapy.png"
+            match_title = 'Mean pixel match after exposure therapy'
+            match_subpath = 'mean_pixel_match_after_exposure_therapy.png'
         case "_exposure_therapy_2":
-            title = 'Objects reconstructed after exposure therapy 2'
-            subpath = "object_recon_after_exposure_therapy_2.png"
+            object_title = 'Objects reconstructed after exposure therapy 2'
+            object_subpath = "object_recon_after_exposure_therapy_2.png"
+            match_title = 'Mean pixel match after exposure therapy 2'
+            match_subpath = 'mean_pixel_match_after_exposure_therapy_2.png'
         case "_relearned":
-            title = 'Objects reconstructed after relearning'
-            subpath = "object_recon_after_relearning.png"
+            object_title = 'Objects reconstructed after relearning'
+            object_subpath = "object_recon_after_relearning.png"
+            match_title = 'Mean pixel match after relearning'
+            match_subpath = 'mean_pixel_match_after_relearning.png'
         case "":
-            title= 'Objects reconstructed before trauma'
-            subpath = "object_recon_before_trauma.png"
+            object_title= 'Objects reconstructed before trauma'
+            object_subpath = "object_recon_before_trauma.png"
+            match_title = 'Mean pixel match before trauma'
+            match_subpath = 'mean_pixel_match_before_trauma.png'
         case _:
-            title= 'Objects reconstructed at unknown point'
-            subpath = "object_recon_at_unknown_point.png"
+            object_title= 'Objects reconstructed at unknown point'
+            object_subpath = "object_recon_at_unknown_point.png"
+            match_title = 'Mean pixel match at unknown point'
+            match_subpath = 'mean_pixel_match_at_unknown_point.png'
     
     def plot_interactive(state):
         for i in range(n_plots):
@@ -124,8 +137,8 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
             # assign the right colors
             colors = {
                 '# Goals': 'tab:green',
-                 '# Transient Goals': 'tab:blue',
-                 '# Hazards': 'tab:red'
+                '# Transient Goals': 'tab:blue',
+                '# Hazards': 'tab:red'
             }
 
             # Create bar plot
@@ -133,15 +146,31 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
             sns.barplot(data=df_melted, x='Group', y='Count', hue='Metric', palette=colors)
             
             # Add titles and labels
-            plt.title(title, fontsize=16)
+            plt.title(object_title, fontsize=16)
             plt.xlabel('Group', fontsize=12)
             plt.ylabel('Count', fontsize=12)
             plt.legend(title='Metrics')
             
             # Show plot
             plt.tight_layout()
-            plt.savefig(folder_path/subpath)
+            plt.savefig(folder_path/object_subpath)
+            if show_plots:
+                plt.show()
+    
+    def plot_matches(matches: pd.DataFrame):
+        # create the image folder, if it doesn't exist yet
+        folder_path = directory / "img"
+        folder_path.mkdir(parents=True, exist_ok=True)
+        plt.figure(figsize=(5, 5))
+        sns.barplot(data=matches, x='agent', y='pixel_match', hue='agent')
+        plt.title(match_title, fontsize=12)
+        plt.ylim(0,100)
+        plt.tight_layout()
+        plt.savefig(folder_path/match_subpath)
+        if show_plots:
             plt.show()
+
+        
     
     if mode == 'interactive':
 
@@ -175,7 +204,7 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
         # create figure window
         fig, ax = plt.subplots(1, n_plots, figsize=(13, 4), constrained_layout=True)
         fig.canvas.mpl_connect('key_press_event', process)
-        fig.suptitle(title)
+        fig.suptitle(object_title)
         plot_interactive(state)
 
         plt.show()
@@ -184,7 +213,7 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
         # create an dictionary to keep track of the number of items in the reconstructions
         recon_dict = {agent: {"# Goals": 0,  "# Transient Goals": 0, "# Hazards": 0} for agent in interpretation_models['agent_name'].unique()}
         ground_truth_dict = {"# Goals": 0,  "# Transient Goals": 0, "# Hazards": 0}
-        
+        pixel_matches = []
 
         # the target values for important world objects
         hazard_target = torch.tensor([1.0, 0.0, 0.0])
@@ -207,6 +236,10 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
             ground_truth_dict["# Hazards"] += torch.all(truth_image == hazard_target, dim=-1).sum().item()
 
             for _, row in interpretation_models.iterrows():
+
+                match = calculate_exact_match(row['interpretation_model'], state)
+                pixel_matches.append({"agent": row['agent_name'], "pixel_match": match})
+
                 # get the reconstruction
                 recon = row['interpretation_model'].get_reconstructions(observations=state)[1][0]
                 recon[recon < 0] = 0
@@ -223,6 +256,19 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
         recon_df = pd.DataFrame.from_dict(recon_dict, orient="index")
         print(recon_df)
         plot_objects(recon_df)
+
+        pixel_matches = pd.DataFrame(pixel_matches)
+        matches_per_agent = pixel_matches.groupby(['agent']).mean()
+        plot_matches(matches_per_agent)
+
+def calculate_exact_match(model, observation):
+    with torch.no_grad():
+        reconstruction = model.get_reconstructions(observations=observation)[1][0]
+        reconstruction[reconstruction < 0] = 0
+        rec_img = Image2VecWrapper.observation_to_image(reconstruction.cpu() ** 1.5, closest=True)
+        obs_img = Image2VecWrapper.observation_to_image(observation[0].cpu() ** 1.5, closest=True)
+        matches = np.all(rec_img == obs_img, axis=-1)
+    return matches.sum() / matches.size * 100
 
     
 if __name__ == "__main__":
