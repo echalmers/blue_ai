@@ -125,4 +125,4 @@ if __name__ == '__main__':
         "PTSDAgent",
         "TraumaSynapticDeficitAgent",
     ]
-    train_interpretation_models(DATA_PATH / sys.argv[1], agents_to_include, agent_state='')
+    train_interpretation_models(DATA_PATH / sys.argv[1], agents_to_include, agent_state='_connectivity_restoration')

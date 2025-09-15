@@ -109,6 +109,9 @@ def plotting(df: pd.DataFrame, directory: Path, show_plots: bool, agent_state: s
         case "":
             title = "Average Q-values per Action before trauma, Split by Agent"
             subpath = "q_values_before_trauma.png"
+        case "_connectivity_restoration":
+            title = "Average Q-values per Action after connectivity restoration, Split by Agent"
+            subpath = "q_values_after_connectivity_restoration.png"
         case _:
             title = "Average Q-values per Action at unspecified point, Split by Agent"
             subpath = "q_values_unspecified.png"
@@ -128,11 +131,11 @@ if __name__ == "__main__":
     # place them in the exact position where they they would have gotten traumatized but without hazard
     env = Image2VecWrapper(
                 TransientGoals(
-                    render_mode="human", transient_reward=0.25, termination_reward=1, agent_start_pos=(4,4),
+                    render_mode="human", transient_reward=0.25, termination_reward=1, agent_start_pos=(3,1),
                     transient_locations=[[1,4],[4,2],[5,1]],
                     n_transient_obstacles=0,
                     #transient_obstacles=[[5,4]],
-                    wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]]
+                    wall_locations =[[3,2],[3,3],[3,4],[3,5]]
                 )
             )
-    investigate_Qvalues(DATA_PATH / sys.argv[1], agents_to_include, env, show_plots=True, agent_state='_traumatized')
+    investigate_Qvalues(DATA_PATH / sys.argv[1], agents_to_include, env, show_plots=True, agent_state='')

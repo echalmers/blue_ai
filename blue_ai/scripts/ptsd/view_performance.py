@@ -202,4 +202,4 @@ if __name__ == "__main__":
         TraumaSynapticDeficitAgent(network= network)
     ]
 
-    view_performance(DATA_PATH / sys.argv[1], agents, "_testing_in_learning_env_after_therapy_2", True, '_exposure_therapy_2_testing_test_eps')
+    view_performance(DATA_PATH / sys.argv[1], agents, "_during_connectivity_restoration", True, '_connectivity_restoration')

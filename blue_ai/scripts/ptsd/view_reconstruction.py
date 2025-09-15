@@ -1,6 +1,7 @@
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
+from blue_ai.scripts.ptsd.train_interpretation_models import RepresentationProbe
 
 import numpy as np
 import pandas as pd
@@ -87,6 +88,11 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
             object_subpath = "object_recon_before_trauma.png"
             match_title = 'Mean pixel match before trauma'
             match_subpath = 'mean_pixel_match_before_trauma.png'
+        case "_connectivity_restoration":
+            object_title= 'Objects reconstructed after restoration'
+            object_subpath = "object_recon_after_connectivity_restoration.png"
+            match_title = 'Mean pixel match after restoration'
+            match_subpath = 'mean_pixel_match_after_connectivity_restoration.png'
         case _:
             object_title= 'Objects reconstructed at unknown point'
             object_subpath = "object_recon_at_unknown_point.png"
@@ -153,7 +159,8 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
             
             # Show plot
             plt.tight_layout()
-            plt.savefig(folder_path/object_subpath)
+            path2 = 'np_test' + object_subpath
+            plt.savefig(folder_path/path2)
             if show_plots:
                 plt.show()
     
@@ -166,7 +173,8 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
         plt.title(match_title, fontsize=12)
         plt.ylim(0,100)
         plt.tight_layout()
-        plt.savefig(folder_path/match_subpath)
+        path = 'np_test'+ match_subpath
+        plt.savefig(folder_path/path)
         if show_plots:
             plt.show()
 
@@ -283,4 +291,4 @@ if __name__ == "__main__":
                 )
             )
     
-    view_reconstruction(DATA_PATH / sys.argv[1], env, agent_state='_exposure_therapy_2', mode= 'statistical')
+    view_reconstruction(DATA_PATH / sys.argv[1], env, agent_state='_connectivity_restoration', mode= 'statistical')

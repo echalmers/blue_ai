@@ -31,7 +31,7 @@ def view_Qvalue_differences(directory: Path, agents_to_include: List[str], agent
         env (Image2VecWrapper): The wrapped environment used to evaluate the agents’ Q-values.
         show_plots (bool): Whether to display the generated plots.
     """
-
+    former_start_pos = env.unwrapped.agent_start_pos
     # determine which places to visit
     places_to_visit = []
     for i in range(1,7):
@@ -53,6 +53,8 @@ def view_Qvalue_differences(directory: Path, agents_to_include: List[str], agent
         df = investigate_Qvalues(directory, agents_to_include, env, show_plots=False, agent_state=agent_state, single_plot=False)
         df['position'] = [pos] * len(df)
         results.append(df)
+    
+    env.unwrapped.agent_start_pos = former_start_pos
 
     results = pd.concat(results, ignore_index=True)
 
@@ -92,22 +94,25 @@ def plot_results(directory: Path, results: pd.DataFrame, agent_state: str, show_
 
     match agent_state:
         case "_traumatized":
-            title = "Comparison of mean Qvalue and Qvalue at trauma position, Split by Agent (after trauma)"
+            title = "Comparison of mean Qvalue and Qvalue at trauma position after trauma"
             subpath = "q_values_forward_comparison_after_trauma.png"
         case "_exposure_therapy":
-            title = "Comparison of mean Qvalue and Qvalue at trauma position, Split by Agent (after exp. therapy)"
+            title = "Comparison of mean Qvalue and Qvalue at trauma position after exp. therapy"
             subpath = "q_values_forward_comparison_after_exposure_therapy.png"
         case "_exposure_therapy_2":
-            title = "Comparison of mean Qvalue and Qvalue at trauma position, Split by Agent (after exp. therapy 2)"
+            title = "Comparison of mean Qvalue and Qvalue at trauma position after exp. therapy 2"
             subpath = "q_values_forward_comparison_after_exposure_therapy_2.png"
         case "_relearned":
-            title = "Comparison of mean Qvalue and Qvalue at trauma position, Split by Agent (after relearning)"
+            title = "Comparison of mean Qvalue and Qvalue at trauma position after relearning"
             subpath = "q_values_forward_comparison_after_relearning.png"
         case "":
-            title = "Comparison of mean Qvalue and Qvalue at trauma position, Split by Agent (before trauma)"
+            title = "Comparison of mean Qvalue and Qvalue at trauma position before trauma"
             subpath = "q_values_forward_comparison_before_trauma.png"
+        case "_connectivity_restoration":
+            title = "Comparison of mean Qvalue and Qvalue at trauma position after restoration"
+            subpath = "q_values_forward_comparison_after_connectivity_restoration.png"
         case _:
-            title = "Comparison of mean Qvalue and Qvalue at trauma position, Split by Agent (unspecified)"
+            title = "Comparison of mean Qvalue and Qvalue at trauma position unspecified"
             subpath = "q_values_forward_comparison_unspecified.png"
 
     # reshape to long format
@@ -131,20 +136,23 @@ def plot_heatmap(directory: Path, results: pd.DataFrame, agent_state: str, show_
 
     match agent_state:
         case "_traumatized":
-            title = "Heatmap of Qvalues going forward to the right, Split by Agent (after trauma)"
+            title = "Heatmap of Qvalues going forward to the right after trauma"
             subpath = "heatmap_q_values_after_trauma.png"
         case "_exposure_therapy":
-            title = "Heatmap of Qvalues going forward to the right, Split by Agent (after exposure therapy)"
+            title = "Heatmap of Qvalues going forward to the right after exposure therapy"
             subpath = "heatmap_q_values_after_exposure_therapy.png"
         case "_exposure_therapy_2":
-            title = "Heatmap of Qvalues going forward to the right, Split by Agent (after exposure tharapy 2)"
+            title = "Heatmap of Qvalues going forward to the right after exposure tharapy 2"
             subpath = "heatmap_q_values_after_exposure_therapy_2.png"
         case "_relearned":
-            title = "Heatmap of Qvalues going forward to the right, Split by Agent (after relearning)"
+            title = "Heatmap of Qvalues going forward to the right after relearning"
             subpath = "heatmap_q_values_after_relearning.png"
         case "":
-            title = "Heatmap of Qvalues going forward to the right, Split by Agent (before trauma)"
+            title = "Heatmap of Qvalues going forward to the right before trauma"
             subpath = "heatmap_q_values_before_trauma.png"
+        case "_connectivity_restoration":
+            title = "Heatmap of Qvalues going forward to the right after restoration"
+            subpath = "heatmap_q_values_after_connectivity_restoration.png"
         case _:
             title = "Heatmap of Qvalues going forward to the right, Split by Agent (unspecified)"
             subpath = "heatmap_q_values_unspecified.png"
@@ -152,8 +160,8 @@ def plot_heatmap(directory: Path, results: pd.DataFrame, agent_state: str, show_
 
     agents = results.index.get_level_values("agent").unique()
 
-    global_min = results.qvalues.min()
-    global_max = results.qvalues.max()
+    #global_min = results.qvalues.min()
+    #global_max = results.qvalues.max()
 
     fig, axes = plt.subplots(1, len(agents), figsize=(4*len(agents), 4))
 
@@ -172,7 +180,7 @@ def plot_heatmap(directory: Path, results: pd.DataFrame, agent_state: str, show_
             heatmap.at[y, x] = value
 
         # plot heatmap for each agent
-        im = ax.imshow(heatmap.values, cmap="YlGnBu", origin="upper", vmin=global_min, vmax=global_max)
+        im = ax.imshow(heatmap.values, cmap="YlGnBu", origin="upper", vmin=-2, vmax=2)
         ax.set_title(agent, fontsize=14)
         ax.set_xticks(range(6))
         ax.set_yticks(range(6))
@@ -202,4 +210,4 @@ if __name__ == "__main__":
                 )
             )
     
-    view_Qvalue_differences(DATA_PATH / sys.argv[1], agents_to_include, agent_state= '_exposure_therapy_2', env= env, show_plots=True)
+    view_Qvalue_differences(DATA_PATH / sys.argv[1], agents_to_include, agent_state= '_connectivity_restoration', env= env, show_plots=True)

@@ -50,6 +50,9 @@ def view_position_heatmap(directory: Path, agents_to_include: List[str], show_pl
         case "_testing":
             title = 'Heatmap of agent positions before trauma'
             subpath = "position_heatmap_before_trauma.png"
+        case "_connectivity_restoration_testing":
+            title = 'Heatmap of agent positions after connectivity restoration'
+            subpath = "position_heatmap_after_connectivity_restoration.png"
         case _:
             title = 'Heatmap of agent positions at unknown point'
             subpath = "position_heatmap_at_unknown_point.png"
@@ -115,4 +118,4 @@ if __name__ == "__main__":
         "PTSDAgent",
         "TraumaSynapticDeficitAgent",
     ]
-    view_position_heatmap(DATA_PATH / sys.argv[1], agents_to_include, show_plots=True, agent_state='_relearned_testing')
+    view_position_heatmap(DATA_PATH / sys.argv[1], agents_to_include, show_plots=True, agent_state='_connectivity_restoration_testing')

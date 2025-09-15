@@ -23,8 +23,9 @@ The following components have been implemented:
 
 - **Agents:**
     - HealtyAgent: Our agents which simulates a healty brain structure
-    - PTSDAgent: Increased weight decay of 0.001 simulating assumed spine loss in PTSD patients
+    - PTSDAgent: Increased weight decay of 0.003 simulating assumed spine loss in PTSD patients
     - TraumaSynapticDeficitAgent: The increased weight decay is active after the trauma got induced to the agent
+    
     -> All of these agents are based on a DQN architecture.
 
 - **Environments:**

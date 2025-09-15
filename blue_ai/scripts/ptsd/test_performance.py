@@ -64,4 +64,4 @@ if __name__ == "__main__":
                 )
             )
     
-    test_performance(DATA_PATH / sys.argv[1], agents_to_include, learning_env, '', 5_000)
+    test_performance(DATA_PATH / sys.argv[1], agents_to_include, learning_env, '_connectivity_restoration', 5_000)
