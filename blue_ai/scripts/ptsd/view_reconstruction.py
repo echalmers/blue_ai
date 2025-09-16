@@ -159,8 +159,7 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
             
             # Show plot
             plt.tight_layout()
-            path2 = 'np_test' + object_subpath
-            plt.savefig(folder_path/path2)
+            plt.savefig(folder_path/object_subpath)
             if show_plots:
                 plt.show()
     
@@ -173,8 +172,7 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
         plt.title(match_title, fontsize=12)
         plt.ylim(0,100)
         plt.tight_layout()
-        path = 'np_test'+ match_subpath
-        plt.savefig(folder_path/path)
+        plt.savefig(folder_path/match_subpath)
         if show_plots:
             plt.show()
 
@@ -270,7 +268,7 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
                 state = torch.tensor(np.expand_dims(state, 0).astype(np.float32),
                                     device=interpretation_models['agent'][0].device)
                 truth_image = Image2VecWrapper.observation_to_image(state[0].cpu() ** 1.5, closest=True)
-                
+
                 ground_truth_dict["# Goals"] += torch.all(truth_image == goal_target, dim=-1).sum().item()
                 ground_truth_dict["# Transient Goals"] += torch.all(truth_image == t_goal_target, dim=-1).sum().item()
                 ground_truth_dict["# Hazards"] += torch.all(truth_image == hazard_target, dim=-1).sum().item()
