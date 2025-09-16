@@ -16,7 +16,7 @@ from pathlib import Path
 import time
 import sys
 
-def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: bool, mode: str, show_plots: bool = True):
+def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: bool, mode: str, show_plots: bool = True, seed: int = 0):
     """
     Visualize and/or statistically analyze object reconstructions from interpretation models.
 
@@ -228,36 +228,68 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
         t_goal_target = torch.tensor([0.0, 0.0, 1.0])
         goal_target = torch.tensor([0.0, 1.0, 0.0])
 
+        # create a seed for reprodiction
+        np.random.seed(seed)
 
-        state, _ = env.reset()
-        
-        for _ in range(1_000):
-            # place the agent in a random free position and direction
-            env.unwrapped.place_agent(rand_dir = True)
-            state = env.observation(env.unwrapped.gen_obs())
-            state = torch.tensor(np.expand_dims(state, 0).astype(np.float32),
-                                device=interpretation_models['agent'][0].device)
-            truth_image = Image2VecWrapper.observation_to_image(state[0].cpu() ** 1.5, closest=True)
+        # place three tarnsient goals on empty spaces
+        transient_locations = []
+        while len(transient_locations) < 3:
+            candidate = [np.random.randint(1,7),np.random.randint(1,7)]
+            if candidate not in env.unwrapped.wall_locations and candidate not in [[6,6]]:
+                transient_locations.append(candidate)
+        env.unwrapped.transient_locations = transient_locations
 
-            ground_truth_dict["# Goals"] += torch.all(truth_image == goal_target, dim=-1).sum().item()
-            ground_truth_dict["# Transient Goals"] += torch.all(truth_image == t_goal_target, dim=-1).sum().item()
-            ground_truth_dict["# Hazards"] += torch.all(truth_image == hazard_target, dim=-1).sum().item()
+        # place one hazard on and empty space
+        hazard_location = []
+        while len(hazard_location) < 1:
+            candidate = [np.random.randint(1,7),np.random.randint(1,7)]
+            if candidate not in env.unwrapped.wall_locations and candidate not in env.unwrapped.transient_locations and candidate not in [[6,6]]:
+                hazard_location.append(candidate)
+        env.unwrapped.transient_obstacles = hazard_location
 
-            for _, row in interpretation_models.iterrows():
+        # get all the spaces to visit 
+        places_to_visit = []
+        for i in range(1,7):
+            for j in range(1,7):
+                places_to_visit.append((i,j))
+        for i in range(len(env.unwrapped.transient_locations)):
+            places_to_visit.remove(tuple(env.unwrapped.transient_locations[i]))
+        for i in range(len(env.unwrapped.wall_locations)):
+            places_to_visit.remove(tuple(env.unwrapped.wall_locations[i]))
+        places_to_visit.remove((6,6))
 
-                match = calculate_exact_match(row['interpretation_model'], state)
-                pixel_matches.append({"agent": row['agent_name'], "pixel_match": match})
+        # place the agent in every state with every direction
+        for i in range(4):
+            for pos in places_to_visit:
+                env.unwrapped.agent_start_pos = pos
+                env.unwrapped.agent_start_dir = i
+                _,_ = env.reset()
 
-                # get the reconstruction
-                recon = row['interpretation_model'].get_reconstructions(observations=state)[1][0]
-                recon[recon < 0] = 0
-                # convert it to an image
-                rgb = Image2VecWrapper.observation_to_image(recon.cpu() ** 1.5, closest=True)
+                # get the state and the ground truth image  
+                state = env.observation(env.unwrapped.gen_obs())
+                state = torch.tensor(np.expand_dims(state, 0).astype(np.float32),
+                                    device=interpretation_models['agent'][0].device)
+                truth_image = Image2VecWrapper.observation_to_image(state[0].cpu() ** 1.5, closest=True)
+                
+                ground_truth_dict["# Goals"] += torch.all(truth_image == goal_target, dim=-1).sum().item()
+                ground_truth_dict["# Transient Goals"] += torch.all(truth_image == t_goal_target, dim=-1).sum().item()
+                ground_truth_dict["# Hazards"] += torch.all(truth_image == hazard_target, dim=-1).sum().item()
 
-                # update the counter inside the dictionary
-                recon_dict[row['agent_name']]["# Goals"] += torch.all(rgb == goal_target, dim=-1).sum().item()
-                recon_dict[row['agent_name']]["# Transient Goals"] += torch.all(rgb == t_goal_target, dim=-1).sum().item()
-                recon_dict[row['agent_name']]["# Hazards"] += torch.all(rgb == hazard_target, dim=-1).sum().item()
+                for _, row in interpretation_models.iterrows():
+
+                    match = calculate_exact_match(row['interpretation_model'], state)
+                    pixel_matches.append({"agent": row['agent_name'], "pixel_match": match})
+
+                    # get the reconstruction
+                    recon = row['interpretation_model'].get_reconstructions(observations=state)[1][0]
+                    recon[recon < 0] = 0
+                    # convert it to an image
+                    rgb = Image2VecWrapper.observation_to_image(recon.cpu() ** 1.5, closest=True)
+
+                    # update the counter inside the dictionary
+                    recon_dict[row['agent_name']]["# Goals"] += torch.all(rgb == goal_target, dim=-1).sum().item()
+                    recon_dict[row['agent_name']]["# Transient Goals"] += torch.all(rgb == t_goal_target, dim=-1).sum().item()
+                    recon_dict[row['agent_name']]["# Hazards"] += torch.all(rgb == hazard_target, dim=-1).sum().item()
 
         ground_truth_dict = {k: v * N_TRIALS for k, v in ground_truth_dict.items()}
         recon_dict["GroundTruth"] = ground_truth_dict
@@ -291,4 +323,4 @@ if __name__ == "__main__":
                 )
             )
     
-    view_reconstruction(DATA_PATH / sys.argv[1], env, agent_state='_connectivity_restoration', mode= 'statistical')
+    view_reconstruction(DATA_PATH / sys.argv[1], env, agent_state='_connectivity_restoration', mode= 'statistical', seed = 0)
