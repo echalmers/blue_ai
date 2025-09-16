@@ -150,7 +150,7 @@ def main():
     # -- RELEARNING --
     relearning_after_trauma(folder_path, agents_to_include, deepcopy(learning_env), iter_per_trial)
 
-    view_performance(folder_path, agents, "_relearning_in_learning_env_after_trauma", show_plots, '_relearned')
+    view_performance(folder_path, agents, "_relearning_in_learning_env_after_trauma", show_plots, after_relearning)
     investigate_Qvalues(folder_path, agents_to_include, deepcopy(post_trauma_env), show_plots, after_relearning)
     train_interpretation_models(folder_path, agents_to_include, after_relearning)
     view_reconstruction_loss(folder_path, after_relearning, show_plots)
@@ -183,6 +183,7 @@ def main():
     # -- CONNECTIVITY RESTORATION --
     post_ptsd_3(folder_path, agents_to_include, deepcopy(learning_env), iter_per_trial)
 
+    view_performance(folder_path, agents, "_in_learning_env_after_connectivity_restoration", show_plots, after_restoration)
     investigate_Qvalues(folder_path, agents_to_include, deepcopy(post_trauma_env), show_plots, after_restoration)
     train_interpretation_models(folder_path, agents_to_include, after_restoration)
     view_reconstruction_loss(folder_path, after_restoration, show_plots)
