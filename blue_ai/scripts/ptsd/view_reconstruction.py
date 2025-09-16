@@ -252,6 +252,8 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
                 places_to_visit.append((i,j))
         for i in range(len(env.unwrapped.transient_locations)):
             places_to_visit.remove(tuple(env.unwrapped.transient_locations[i]))
+        for i in range(len(env.unwrapped.transient_obstacles)):
+            places_to_visit.remove(tuple(env.unwrapped.transient_obstacles[i]))
         for i in range(len(env.unwrapped.wall_locations)):
             places_to_visit.remove(tuple(env.unwrapped.wall_locations[i]))
         places_to_visit.remove((6,6))
