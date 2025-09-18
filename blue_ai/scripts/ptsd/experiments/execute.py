@@ -22,7 +22,9 @@ from blue_ai.scripts.ptsd.induce_traumatic_event import induce_traumatic_event
 from blue_ai.scripts.ptsd.relearning_after_trauma import relearning_after_trauma
 from blue_ai.scripts.ptsd.view_Qvalue_differences import view_Qvalue_differences
 from blue_ai.scripts.ptsd.view_reconstruction_loss import view_reconstruction_loss
+from blue_ai.scripts.ptsd.view_reconstruction_change import view_reconstruction_change
 from blue_ai.scripts.ptsd.train_interpretation_models import train_interpretation_models
+
 
 
 
@@ -161,6 +163,7 @@ def main():
     view_performance(folder_path, agents, "_testing_in_learning_env_after_relearning", show_plots, '_relearned_testing')
     view_position_heatmap(folder_path, agents_to_include, show_plots, '_relearned_testing')
     view_Qvalue_differences(folder_path, agents_to_include, after_relearning, deepcopy(post_trauma_env), show_plots)
+    view_reconstruction_change(folder_path)
 
 
 

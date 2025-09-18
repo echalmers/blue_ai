@@ -104,6 +104,10 @@ def load_trial(filename):
         data = pickle.load(f)
     return data["results"], data["agent"], data["env"]
 
+def load_results(filename):
+    with open(filename, "rb") as f:
+        data = pickle.load(f)
+    return data["results"]
 
 def load_dataset(filename_patterns, return_agents=False):
     if isinstance(filename_patterns, str):
