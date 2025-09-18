@@ -94,6 +94,10 @@ def save_trial(results, agent, env, filename):
     with open(filename, "wb") as f:
         pickle.dump({"results": results, "agent": agent, "env": env}, f)
 
+def save_results(results, filename):
+    with open(filename, "wb") as f:
+        pickle.dump({"results": results}, f)
+
 
 def load_trial(filename):
     with open(filename, "rb") as f:

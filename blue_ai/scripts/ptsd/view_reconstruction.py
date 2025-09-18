@@ -2,6 +2,7 @@ from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.scripts.ptsd.train_interpretation_models import RepresentationProbe
+from blue_ai.scripts.ptsd.train_agents import save_results
 
 import numpy as np
 import pandas as pd
@@ -131,8 +132,13 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
     def plot_objects(df: pd.DataFrame):
 
             # create the image folder, if it doesn't exist yet
-            folder_path = directory / "img"
-            folder_path.mkdir(parents=True, exist_ok=True)
+            img_path = directory / "img"
+            img_path.mkdir(parents=True, exist_ok=True)
+
+            results_path = directory / "results"
+            results_path.mkdir(parents=True, exist_ok=True)
+
+            save_results(df, results_path / object_subpath.replace("png", "pkl"))
 
             # reset index so that the categories become a column
             df_reset = df.reset_index().rename(columns={'index': 'Group'})
@@ -159,7 +165,7 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
             
             # Show plot
             plt.tight_layout()
-            plt.savefig(folder_path/object_subpath)
+            plt.savefig(img_path/object_subpath)
             if show_plots:
                 plt.show()
     
@@ -167,6 +173,11 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
         # create the image folder, if it doesn't exist yet
         folder_path = directory / "img"
         folder_path.mkdir(parents=True, exist_ok=True)
+
+        results_path = directory / "results"
+        results_path.mkdir(parents=True, exist_ok=True)
+        save_results(matches, results_path / match_subpath.replace("png", "pkl"))
+
         plt.figure(figsize=(5, 5))
         sns.barplot(data=matches, x='agent', y='pixel_match', hue='agent')
         plt.title(match_title, fontsize=12)

@@ -7,7 +7,7 @@ import sys
 from typing import List
 
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
-from blue_ai.scripts.ptsd.train_agents import load_trial
+from blue_ai.scripts.ptsd.train_agents import load_trial, save_results
 
 
 def view_position_heatmap(directory: Path, agents_to_include: List[str], show_plots: bool, agent_state: str):
@@ -79,10 +79,14 @@ def view_position_heatmap(directory: Path, agents_to_include: List[str], show_pl
     )
     print(heatmap_data)
 
+    # save the results
+    results_path = directory / "results"
+    results_path.mkdir(parents=True, exist_ok=True)
+    save_results(heatmap_data, results_path / subpath.replace("png", "pkl"))
 
     #plot heatmap
-    folder_path = directory / "img"
-    folder_path.mkdir(parents=True, exist_ok=True)
+    img_path = directory / "img"
+    img_path.mkdir(parents=True, exist_ok=True)
 
     num_agents = len(agents_to_include)
     _, axes = plt.subplots(1, num_agents, figsize=(4*num_agents, 4))
@@ -106,7 +110,7 @@ def view_position_heatmap(directory: Path, agents_to_include: List[str], show_pl
     plt.tight_layout()
     plt.subplots_adjust(top=0.85)
     plt.suptitle(title)
-    plt.savefig(folder_path/subpath)
+    plt.savefig(img_path/subpath)
     if show_plots:
         plt.show()
 

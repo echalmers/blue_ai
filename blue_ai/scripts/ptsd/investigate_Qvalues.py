@@ -10,7 +10,7 @@ from typing import List
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
-from blue_ai.scripts.ptsd.train_agents import load_trial
+from blue_ai.scripts.ptsd.train_agents import load_trial, save_results
 
 
 
@@ -68,8 +68,11 @@ def investigate_Qvalues(directory: Path, agents_to_include: List[str], env: Imag
 
 def plotting(df: pd.DataFrame, directory: Path, show_plots: bool, agent_state: str):
 
-    folder_path = directory / "img"
-    folder_path.mkdir(parents=True, exist_ok=True)
+    img_path = directory / "img"
+    img_path.mkdir(parents=True, exist_ok=True)
+
+    results_path = directory / "results"
+    results_path.mkdir(parents=True, exist_ok=True)
 
     # Expand Q_values into columns
     q_df = pd.DataFrame(df['qvalues'].tolist(), columns=['left', 'right', 'forward'])
@@ -116,8 +119,10 @@ def plotting(df: pd.DataFrame, directory: Path, show_plots: bool, agent_state: s
             title = "Average Q-values per Action at unspecified point, Split by Agent"
             subpath = "q_values_unspecified.png"
 
+    save_results(mean_df, results_path / subpath.replace("png", "pkl"))
+
     plt.suptitle(title)
-    plt.savefig(folder_path / subpath)
+    plt.savefig(img_path / subpath)
     if show_plots:
         plt.show()
     

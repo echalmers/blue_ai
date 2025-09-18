@@ -9,6 +9,7 @@ from typing import List
 from blue_ai.envs.transient_goals import TransientGoals
 from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.constants import DATA_PATH
+from blue_ai.scripts.ptsd.train_agents import save_results
 from blue_ai.scripts.ptsd.investigate_Qvalues import investigate_Qvalues
 
 def view_Qvalue_differences(directory: Path, agents_to_include: List[str], agent_state: str, env: Image2VecWrapper, show_plots=True):
@@ -89,8 +90,11 @@ def view_Qvalue_differences(directory: Path, agents_to_include: List[str], agent
 
 def plot_results(directory: Path, results: pd.DataFrame, agent_state: str, show_plots: bool):
 
-    folder_path = directory / "img"
-    folder_path.mkdir(parents=True, exist_ok=True)
+    img_path = directory / "img"
+    img_path.mkdir(parents=True, exist_ok=True)
+
+    results_path = directory / "results"
+    results_path.mkdir(parents=True, exist_ok=True)
 
     match agent_state:
         case "_traumatized":
@@ -114,6 +118,9 @@ def plot_results(directory: Path, results: pd.DataFrame, agent_state: str, show_
         case _:
             title = "Comparison of mean Qvalue and Qvalue at trauma position unspecified"
             subpath = "q_values_forward_comparison_unspecified.png"
+    
+    # save the grouped results
+    save_results(results, results_path / subpath.replace("png", "pkl"))
 
     # reshape to long format
     df_long = results.reset_index().melt(id_vars="agent", 
@@ -124,15 +131,18 @@ def plot_results(directory: Path, results: pd.DataFrame, agent_state: str, show_
     sns.barplot(data=df_long, x="agent", y="qvalue", hue="condition")
     plt.title(title)
     plt.tight_layout()
-    plt.savefig(folder_path /subpath)
+    plt.savefig(img_path /subpath)
     if show_plots:
         plt.show()
 
 def plot_heatmap(directory: Path, results: pd.DataFrame, agent_state: str, show_plots:bool):
 
 
-    folder_path = directory / "img"
-    folder_path.mkdir(parents=True, exist_ok=True)
+    img_path = directory / "img"
+    img_path.mkdir(parents=True, exist_ok=True)
+
+    results_path = directory / "results"
+    results_path.mkdir(parents=True, exist_ok=True)
 
     match agent_state:
         case "_traumatized":
@@ -157,6 +167,8 @@ def plot_heatmap(directory: Path, results: pd.DataFrame, agent_state: str, show_
             title = "Heatmap of Qvalues going forward to the right, Split by Agent (unspecified)"
             subpath = "heatmap_q_values_unspecified.png"
 
+    # save the results of each state
+    save_results(results, results_path / subpath.replace("png", "pkl"))
 
     agents = results.index.get_level_values("agent").unique()
 
@@ -190,7 +202,7 @@ def plot_heatmap(directory: Path, results: pd.DataFrame, agent_state: str, show_
     # add one colorbar for all
     fig.colorbar(im, ax=axes.ravel().tolist(), shrink=0.7, label="qvalues")
     plt.suptitle(title)
-    plt.savefig(folder_path/subpath)
+    plt.savefig(img_path/subpath)
     if show_plots:
         plt.show()
 

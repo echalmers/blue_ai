@@ -7,7 +7,7 @@ from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
 from blue_ai.scripts.ptsd.train_agents import load_trial, save_trial, run_trial
 
-
+# CURRENTLY NOT IN USE 
 def post_ptsd(directory: Path, agents_to_include: List[str], exposure_env: Image2VecWrapper, n_exposure_updates: int, file_ending: str = "_exposure_therapy"):
     """
     Apply exposure therapy to previously traumatized agents by running them in a 

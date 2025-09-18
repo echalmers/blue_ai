@@ -1,5 +1,6 @@
 from blue_ai.scripts.constants import DATA_PATH
 from blue_ai.scripts.ptsd.train_interpretation_models import RepresentationProbe
+from blue_ai.scripts.ptsd.train_agents import save_results
 
 import pandas as pd
 import seaborn as sns
@@ -29,8 +30,11 @@ def view_reconstruction_loss(directory: Path, agent_state: bool, show_plots: boo
         show_plots (bool): If True, the plots will be displayed.
     """
 
-    folder_path = directory / "img"
-    folder_path.mkdir(parents=True, exist_ok=True)
+    img_path = directory / "img"
+    img_path.mkdir(parents=True, exist_ok=True)
+
+    results_path = directory / "results"
+    results_path.mkdir(parents=True, exist_ok=True)
 
     match agent_state:
         case "_traumatized":
@@ -81,6 +85,7 @@ def view_reconstruction_loss(directory: Path, agent_state: bool, show_plots: boo
 
     results = pd.DataFrame(results)
     print(results)
+    save_results(results, results_path / subpath.replace("png", "pkl"))
 
     _, axes = plt.subplots(1, 2, figsize=(12, 5))
     sns.lineplot(
@@ -106,7 +111,7 @@ def view_reconstruction_loss(directory: Path, agent_state: bool, show_plots: boo
     axes[1].set_ylabel("Match in Percent")
     axes[1].set_xlabel("time (steps in environment)")
 
-    plt.savefig(folder_path/subpath)
+    plt.savefig(img_path/subpath)
     if show_plots:
         plt.show()
 

@@ -11,6 +11,7 @@ from blue_ai.scripts.constants import DATA_PATH
 from blue_ai.scripts.ptsd.post_ptsd import post_ptsd
 from blue_ai.scripts.ptsd.investigate_Qvalues import investigate_Qvalues
 
+#CURRENTLY NOT IN USE
 def view_forward_Qvalues(directory: Path, env: Image2VecWrapper, upper_bound: int = 100):
     """
     Analyze and visualize the evolution of agents' forward Q-values during repeated exposure therapy.
