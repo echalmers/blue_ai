@@ -32,7 +32,7 @@ from blue_ai.scripts.ptsd.train_interpretation_models import train_interpretatio
 def main():
     # -- HYPERPARAMETERS --
     iter_per_trial = 40_000
-    show_plots = True
+    show_plots = False
     trauma_penalty = -1000
     n_trauma_updates = 1
     before_trauma = ''
@@ -163,7 +163,7 @@ def main():
     view_performance(folder_path, agents, "_testing_in_learning_env_after_relearning", show_plots, '_relearned_testing')
     view_position_heatmap(folder_path, agents_to_include, show_plots, '_relearned_testing')
     view_Qvalue_differences(folder_path, agents_to_include, after_relearning, deepcopy(post_trauma_env), show_plots)
-    view_reconstruction_change(folder_path)
+    view_reconstruction_change(folder_path, show_plots)
 
 
 
