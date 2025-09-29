@@ -327,11 +327,11 @@ if __name__ == "__main__":
     env = Image2VecWrapper(
                 TransientGoals(
                     render_mode="none", transient_reward=0.25, termination_reward=1, 
-                    #transient_locations=[[1,4],[4,2],[5,1]],
+                    transient_locations=[[1,4],[4,2],[5,1]],
                     wall_locations =[[3,2],[3,3],[3,4],[3,5]],#,[3,6]],
-                    n_transient_obstacles=1,
+                    n_transient_obstacles=0,
                     agent_start_pos=(3,1)
                 )
             )
     
-    view_reconstruction(DATA_PATH / sys.argv[1], env, agent_state='_connectivity_restoration', mode= 'statistical', seed = 0)
+    view_reconstruction(DATA_PATH / sys.argv[1], env, agent_state='_relearned', mode= 'interactive', seed = 0)

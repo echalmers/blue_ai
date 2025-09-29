@@ -33,16 +33,26 @@ The following components have been implemented:
     - Image2VecWrapper: Wrapper to create the input for the DQN network
 
 - **Scripts:**
-    - execute: Main script which starts a full trial and calls all the following functions/scripts
-    - train_agents: Train the agents for a given number of steps in a given environment
-    - view_performance: Plot the cumulative rewards obtained by the agents during a trial and the objects reached per episode
-    - induce_traumatic_event: Exposes the agents to an traumatic event, where they are forced to perform an action leading to a high negative reward
-    - investigate_Qvalues: Plot the Qvalues of the agents in a given state, which represents the willingness of the agents to perform the action (turn left, turn right, move forward, hide/do nothing)
-    - train_interpretation_models: Train an additional model which reconstructs the state the agents see, just by getting the activations as input
-    - view_reconstruction_loss: Plot the loss during the training of the interpretation models
-    - view_reconstruction: Interactively move through an environment and plot the reconstructions, and plot a statistical analysis of the reconstructions
-    - post_ptsd: Re-exposes the agents to the situation of the trauma, but this time without the negative reward (exposure therapy)
-    - test_performance: Test the current performance of the agents
+   
+    - **execute**: Main script which starts a full trial and calls all the following functions/scripts
+    - **induce_traumatic_event**: Exposes the agents to an traumatic event, where they are forced to perform an action leading to a high negative reward
+    - **investigate_Qvalues**: Plot the Qvalues of the agents in a given state, which represents the willingness of the agents to perform the action (turn left, turn right, move forward, hide/do nothing)
+    - **post_ptsd**: Re-exposes the agents to the situation of the trauma, but this time without the negative reward (exposure therapy, not actively in use)
+    - **post_ptsd_2**: Guide the agents through the environment with the help of a healthy agent. (exposure therapy)
+    - **post_ptsd_3**: Restore the connectivity impairment of the PTSD agent and the TraumaSynapticDeficit agent.
+    - **relearning_after_trauma**: Load the agents in the initial learning environment after the trauma.
+    - **test_performance**: Test the current performance of the agents
+    - **train_agents**: Train the agents for a given number of steps in a given environment
+    - **train_interpretation_models**: Train an additional model which reconstructs the state the agents see, just by getting the activations as input
+    - **view_forward_Qvalues**: Analyze and visualize the evolution of agents' forward Q-values during repeated exposure therapy. (currently not in use)
+    - **view_performance**: Plot the cumulative rewards obtained by the agents during a trial and the objects reached per episode
+    - **view_position_heatmap**: Create a heatmap of the positions the agent visits during a trial.
+    - **view_Qvalue_differneces**: Compare agents' Q-values at the trauma location versus other positions in the environment.
+    - **view_reconstruction_change**: Plot the change in proportion of hazards reconstructed.
+    - **view_reconstruction_loss**: Plot the loss during the training of the interpretation models
+    - **view_reconstruction**: Interactively move through an environment and plot the reconstructions, and plot a statistical analysis of the reconstructions
+    
+    
 
 ## Project Structure:
 
@@ -81,14 +91,20 @@ blue_ai/
 │   │   │   │    
 │   │   │   ├── __init__.py  
 │   │   │   ├── induce_traumatic_event.py 
-│   │   │   ├── investigate_Qvalues.py 
+│   │   │   ├── investigate_Qvalues.py
+│   │   │   ├── post_ptsd_3.py 
+│   │   │   ├── post_ptsd_2.py 
 │   │   │   ├── post_ptsd.py 
 │   │   │   ├── README.md        # PTSD project documentation (you are reading this) 
+│   │   │   ├── relearning_after_trauma.py 
 │   │   │   ├── test_performance.py 
 │   │   │   ├── train_agents.py 
 │   │   │   ├── train_interpretation_models.py 
 │   │   │   ├── view_forward_Qvalues.py
 │   │   │   ├── view_performance.py  
+│   │   │   ├── view_position_heatmap.py 
+│   │   │   ├── view_Qvalue_differences.py 
+│   │   │   ├── view_reconstruction_change.py 
 │   │   │   ├── view_reconstruction_loss.py 
 │   │   │   └── view_reconstruction.py
 │   │   │   

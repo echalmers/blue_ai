@@ -90,6 +90,22 @@ class RepresentationProbe:
 
 
 def train_interpretation_models (directory: Path, agents_to_include: List[str], agent_state: str):
+    """
+    Train interpretation models that reconstruct agent inputs from their internal representations.
+
+    For each agent in the given directory, this function initializes a 
+    `RepresentationProbe` that captures hidden activations of the agent’s policy network. 
+    A reconstruction model is then trained to map these activations back to the original 
+    state observations. Training loss and exact match statistics are recorded for each agent. 
+    All probes and results are stored in a serialized DataFrame for later analysis.
+
+    Args:
+        directory (Path): Path to the directory containing the agent trial files.
+        agents_to_include (List[str]): List of agent class names to include in the analysis 
+            (e.g., ["HealthyAgent", "PTSDAgent"]).
+        agent_state (str): Suffix indicating the state of the agents 
+            (e.g., "_traumatized", "_exposure_therapy", "_relearned", or custom).
+    """
     
     # get the file names of the agents
     files = [

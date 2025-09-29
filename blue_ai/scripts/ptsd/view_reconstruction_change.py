@@ -8,6 +8,19 @@ from pathlib import Path
 import sys
 
 def view_reconstruction_change (directory: Path, show_plot: bool = True):
+    """
+    Compare agents' reconstructed hazards before trauma and after relearning.
+
+    This function loads reconstruction results saved as `.pkl` files, computes the 
+    proportion of hazards relative to all reconstructed elements (goals, transient goals, 
+    and hazards), and compares the values before trauma and after relearning. Results 
+    are combined into a summary DataFrame, saved to disk, and optionally plotted.
+
+    Args:
+        directory (Path): Path to the directory containing the agents’ reconstruction results.
+        show_plot (bool, optional): Whether to display the plot after saving it. Defaults to True.
+
+    """
 
     files = {
         "before": "object_recon_before_trauma.pkl",
