@@ -23,7 +23,7 @@ print('filenames loaded:\n',data['filename'].unique())
 # get an image of the environment
 env = TransientGoals(
                     render_mode="rgb_array",
-                    n_transient_obstacles = 0, n_transient_goals=0,
+                    n_transient_obstacles = 0, n_transient_goals=0, agent_start_dir=1,
                     wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]], # <--- I thought there was a doorway at the bottom of the env, but this is the wall setup I'm seeing in Benito's code
                     highlight=False
                 )
