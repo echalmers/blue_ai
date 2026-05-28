@@ -6,6 +6,8 @@ import numpy as np
 import torch
 from torch import nn
 
+from blue_ai.agents.abstract import AbstractAgent
+
 
 def softmax(values, t=1.0):
     return torch.softmax(values / t, dim=0)
@@ -71,7 +73,7 @@ class TransitionMemory:
         )
 
 
-class DQN:
+class DQN(AbstractAgent):
     """
     A deep Q network that optionally implements the rule from our paper:
      Brain-Inspired modulation of reward-prediction error improves reinforcement learning adaptation to environmental
@@ -198,7 +200,8 @@ class DQN:
             return loss.item()
 
     def update_single(self, state, action, reward, new_state, done):
-
+        
+        #self.transition_memory.add(state, action, reward, new_state, done)
         state = torch.tensor(
             np.expand_dims(state, 0).astype(np.float32), device=self.device
         )

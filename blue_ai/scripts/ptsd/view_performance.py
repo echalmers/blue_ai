@@ -1,17 +1,25 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from blue_ai.scripts.train_agents import load_dataset
-from blue_ai.envs.transient_goals import TransientGoals
-import blue_ai.agents.agent_classes as classes
+from torch import nn
 
-from blue_ai.scripts.constants import FIGURE_PATH
+from pathlib import Path
+import sys
+from typing import List
+
+from blue_ai.agents.agent_classes import BaseAgent, HealthyAgent, PTSDAgent, TraumaSynapticDeficitAgent
+import blue_ai.agents.agent_classes as classes
+from blue_ai.envs.transient_goals import TransientGoals
+from blue_ai.scripts.constants import DATA_PATH
+from blue_ai.scripts.ptsd.train_agents import load_dataset
 
 
 class PerformancePlotter:
 
     def __init__(
         self,
+        directory: Path = None,
+        agent_state: str = None,
         agent_classes=None,
         results_dataframe=None
     ):
@@ -19,10 +27,8 @@ class PerformancePlotter:
         if agent_classes is None and results_dataframe is None:
             agent_classes = (
                 classes.HealthyAgent,
-                #classes.SpineLossDepression,
-                #classes.SchizophrenicAgent,
-                # agent_classes.PrunedAgent
-                classes.PTSDAgent
+                classes.PTSDAgent,
+                classes.TraumaSynapticDeficitAgent
             )
 
         if results_dataframe is not None:
@@ -32,7 +38,7 @@ class PerformancePlotter:
         else:
             self.agent_classes = agent_classes
             self.high_terminal_results = load_dataset(
-                [f"{cls.__name__}_[!s]*.pkl" for cls in agent_classes]
+                [f"{directory.name}/{cls.__class__.__name__}_[!s]{agent_state}.pkl" for cls in agent_classes]
             )
 
             print(self.high_terminal_results)
@@ -122,7 +128,7 @@ class PerformancePlotter:
         plt.ylabel("")
         plt.xlabel("time (steps in environment)")
 
-    def plot_goals_per_episode(self, ax, n_boot=1, last_n_steps=None):
+    def plot_goals_per_episode(self, ax, n_boot=1, last_n_steps=None, **kwargs):
         plt.sca(ax)
 
         high_terminal_goals = self.aggregate_goals(
@@ -137,7 +143,8 @@ class PerformancePlotter:
             n_boot=n_boot,
             palette=["tab:green", "tab:blue", "tab:red"],
             order=[a.display_name for a in self.agent_classes] if self.agent_classes else None,
-            errorbar=('pi', 95)
+            errorbar=('pi', 95),
+            **kwargs
         )
         plt.title("objects reached per episode")
         plt.ylabel("")
@@ -146,19 +153,54 @@ class PerformancePlotter:
         plt.xlabel("")
 
 
-if __name__ == "__main__":
-    plotter = PerformancePlotter()
+def view_performance(directory: Path, agents_to_include: List[str], name_suffix: str, show_plots: bool, agent_state: str):
+    """
+    Generate and save performance plots for a set of agents based on trial results.
 
-    f, ax = plt.subplots(1, 2, figsize=(9, 3))
-    # plot_sample_env(ax[0])
+    This function uses the PerformancePlotter class to visualize agent performance in terms of:
+    1. Cumulative reward over time during training/testing.
+    2. Number of goals (required, optional, hazards) reached per episode.
 
+    The plots are saved as an image file in a subdirectory "img" within the provided directory.
+    Optionally, the plots can also be displayed interactively.
+
+    Args:
+        directory (Path): Path to the directory containing trial results and where plots will be saved.
+        agents_to_include (List[str]): List of agent class instances to include in the plots.
+        name_suffix (str): Suffix to append to the saved plot filename for identification.
+        show_plots (bool): If True, the plots will be displayed interactively.
+        agent_state (str): Identifier string for the state of the agents (e.g., "_traumatized", "_relearned").
+    """
+
+    plotter = PerformancePlotter(directory, agent_state, agent_classes= agents_to_include)
+
+    folder_path = directory / "img"
+    folder_path.mkdir(parents=True, exist_ok=True)
+
+    f, ax = plt.subplots(1, 2, figsize=(12, 4))
+    f.suptitle(name_suffix)
     plt.subplot(1, 2, 1)
     plotter.plot_learning_curves(ax[0])
 
     plt.subplot(1, 2, 2)
     plotter.plot_goals_per_episode(ax[1])
     
-    plt.savefig(FIGURE_PATH / "performance.png")
-    plt.show()
+    plt.savefig(folder_path/f"performance{name_suffix}.png")
+    if show_plots:
+        plt.show()
 
-    exit()
+
+if __name__ == "__main__":
+    network = nn.Sequential(
+        nn.Flatten(1, -1),
+        nn.Linear(100, 25), nn.Tanh(),
+        nn.Linear(25, 4)
+    )
+    
+    agents: List[BaseAgent] = [
+        HealthyAgent(network= network),
+        PTSDAgent(network= network),
+        TraumaSynapticDeficitAgent(network= network)
+    ]
+
+    view_performance(DATA_PATH / sys.argv[1], agents, "_during_connectivity_restoration", True, '_connectivity_restoration')

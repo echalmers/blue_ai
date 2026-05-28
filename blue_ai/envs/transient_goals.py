@@ -3,7 +3,7 @@ from blue_ai.envs.custom_world_objects import ObstacleNoTerminate
 from enum import IntEnum
 from minigrid.core.grid import Grid, WorldObj
 from minigrid.core.mission import MissionSpace
-from minigrid.core.world_object import Goal, Wall, Lava, Floor
+from minigrid.core.world_object import Goal, Wall, Floor #, Lava
 
 from minigrid.minigrid_env import MiniGridEnv
 
@@ -19,9 +19,6 @@ class Actions(IntEnum):
     left = 0
     right = 1
     forward = 2
-
-    # Done completing task
-    done = 3
 
 
 class TransientGoals(MiniGridEnv):
@@ -42,6 +39,9 @@ class TransientGoals(MiniGridEnv):
         transient_obstacles=None,
         replace_transient_obstacles=False,
         max_steps=500,
+        wall_locations = None,
+        env_name = None,
+        see_through_walls = True,
         **kwargs,
     ):
 
@@ -61,6 +61,9 @@ class TransientGoals(MiniGridEnv):
         self.n_transient_obstacles = n_transient_obstacles
         self.transient_obstacles = transient_obstacles
         self.replace_transient_obstacles = replace_transient_obstacles
+        self.wall_locations = wall_locations
+        self.env_name = env_name
+        self.see_through_walls = see_through_walls
 
         mission_space = MissionSpace(mission_func=self._gen_mission)
         max_steps = 4 * len(self.im) ** 2
@@ -69,7 +72,7 @@ class TransientGoals(MiniGridEnv):
             mission_space=mission_space,
             width=len(self.im[0]),
             height=len(self.im),
-            see_through_walls=True,
+            see_through_walls=see_through_walls,
             max_steps=max_steps,
             agent_view_size=5,
             **kwargs,
@@ -167,8 +170,6 @@ class TransientGoals(MiniGridEnv):
                 self._turn_right()
             case Actions.forward:
                 terminated, reward = self._handle_forward()
-            case Actions.done:
-                terminated = True
             case action:
                 raise ValueError(f"Unknown action {action}")
 
@@ -185,6 +186,7 @@ class TransientGoals(MiniGridEnv):
 
     def _gen_grid(self, width, height):
         # Create an empty grid
+        #DOES NOT ADD ANYTHING, SICE ENV IS DOING IT ALREADY
         self.grid = Grid(width, height)
         hasGoal = False
 
@@ -217,9 +219,24 @@ class TransientGoals(MiniGridEnv):
         else:
             self.place_agent()
 
+        #self.walls = []
+        if self.wall_locations is not None:
+            for location in self.wall_locations:
+                self.grid.set(location[0], location[1], Wall())
+
+
         # add transient goals
         self.obstacles = []
         if self.transient_locations is not None:
+            # check for overlap with obstacles and walls first
+            if self.transient_obstacles is not None:
+                overlap = self.test_overlap(self.transient_locations, self.transient_obstacles)
+                if overlap:
+                    raise ValueError("Overlap detected in between Transient Goals and Transient Obstacles Locations")
+            if self.wall_locations is not None:
+                overlap = self.test_overlap(self.transient_locations, self.wall_locations)
+                if overlap:
+                    raise ValueError("Overlap detected in between Transient Goals and Wall Locations")
             for location in self.transient_locations:
                 self.obstacles.append(GoalNoTerminate(reward=self.transient_reward))
                 self.grid.set(location[0], location[1], self.obstacles[0])
@@ -231,6 +248,10 @@ class TransientGoals(MiniGridEnv):
         # add transient obstacles
         self.penalties = []
         if self.transient_obstacles is not None:
+            if self.wall_locations is not None:
+                overlap = self.test_overlap(self.transient_obstacles, self.wall_locations)
+                if overlap:
+                    raise ValueError("Overlap detected in between Transient Obstacles and Wall Locations")
             for location in self.transient_obstacles:
                 self.penalties.append(
                     ObstacleNoTerminate(reward=self.transient_penalty)
@@ -246,3 +267,23 @@ class TransientGoals(MiniGridEnv):
         # Place a goal square in the bottom-right corner
         if hasGoal is False:
             self.put_obj(Goal(), width - 2, height - 2)
+
+    def test_overlap(self, arr1, arr2):
+        """
+        Check for overlaps between two arrays of [x, y] coordinates.
+
+        Parameters:
+        arr1 (list of list of int): First list of [x, y] coordinates.
+        arr2 (list of list of int): Second list of [x, y] coordinates.
+
+        Returns:
+        bool: True if there is no overlap, False if any coordinate overlaps.
+        """
+        set1 = set(tuple(coord) for coord in arr1)
+        set2 = set(tuple(coord) for coord in arr2)
+        # Check for intersection
+        overlap = set1.intersection(set2)
+
+
+        return len(overlap) > 0
+

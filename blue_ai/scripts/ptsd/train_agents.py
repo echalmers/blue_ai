@@ -1,29 +1,28 @@
-from typing import Any, Dict, List, Tuple, TypedDict
-import pandas as pd
+from typing import Dict, List, Tuple
+import sys
 import pickle
 from copy import deepcopy
-import torch
-from torch import nn
-
-from blue_ai.envs.transient_goals import TransientGoals
-from blue_ai.envs.custom_wrappers import Image2VecWrapper
 from tqdm import tqdm
 
-from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
-from blue_ai.agents.agent_classes import *
+from torch import nn
+import pandas as pd
 
-# test a fourth action 'stand' 
+from blue_ai.agents.agent_classes import BaseAgent, HealthyAgent, PTSDAgent, TraumaSynapticDeficitAgent
+from blue_ai.envs.transient_goals import TransientGoals, Actions
+from blue_ai.envs.custom_wrappers import Image2VecWrapper
+from blue_ai.scripts.constants import DATA_PATH, N_TRIALS
+
+
 ptsd_network = nn.Sequential(
     nn.Flatten(1, -1),
     nn.Linear(100, 25), nn.Tanh(),
-    nn.Linear(25, 4)
+    nn.Linear(25, 3)
 )
 
 
-def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
+def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None, trauma = False, exposure_therapy = False, testing = False):
     state, _ = env.reset()
     # setup variables to track progress
-    steps_this_episode = 0
     episode_num = 0
     cumulative_reward = 0
 
@@ -37,31 +36,34 @@ def run_trial(agent: BaseAgent, env, steps=30000, trial_id="", tbar=None):
             agent=agent.__class__.__name__, env=env.__class__.__name__, trial=trial_id
         )
 
+    # actual training loop
     for step in range(steps):
-        steps_this_episode += 1
 
         # record position
         pos[env.unwrapped.agent_pos] = pos.get(env.unwrapped.agent_pos, 0) + 1
 
         # get & execute action
-        action = agent.select_action(state)
-        new_state, reward, done, truncated, _ = env.step(action)
-
-        # use this experience to update agent
-        agent.update(state, action, reward, new_state, done=False)
+        if trauma or exposure_therapy:
+            action = Actions.forward
+            new_state, reward, done, truncated, _ = env.step(action)
+            agent.update_single(state, action, reward, new_state, done=False)
+            done = True
+        else:
+            action = agent.select_action(state)
+            new_state, reward, done, truncated, _ = env.step(action)
+            if not testing :
+                agent.update(state, action, reward, new_state, done=False)
 
         # reset environment if done (ideally env would do this itself)
         if truncated or done:
             state, _ = env.reset()
-            episode_num = 0
-            steps_this_episode = 0
+            episode_num += 1
         else:
             state = new_state
 
-        # add results to the history
+        lava = reward < 0
         transient_goal = reward == env.unwrapped.transient_reward
         terminal_goal = reward == env.unwrapped.termination_reward
-        lava = reward < 0
         stuck = max(pos.values()) > 2000
         cumulative_reward += reward
 
@@ -92,12 +94,20 @@ def save_trial(results, agent, env, filename):
     with open(filename, "wb") as f:
         pickle.dump({"results": results, "agent": agent, "env": env}, f)
 
+def save_results(results, filename):
+    with open(filename, "wb") as f:
+        pickle.dump({"results": results}, f)
+
 
 def load_trial(filename):
     with open(filename, "rb") as f:
         data = pickle.load(f)
     return data["results"], data["agent"], data["env"]
 
+def load_results(filename):
+    with open(filename, "rb") as f:
+        data = pickle.load(f)
+    return data["results"]
 
 def load_dataset(filename_patterns, return_agents=False):
     if isinstance(filename_patterns, str):
@@ -125,7 +135,7 @@ def load_dataset(filename_patterns, return_agents=False):
     return results
 
 
-def trial(agent: BaseAgent, env, rep, trial_num, tbar=None, steps=30_000):
+def trial(agent: BaseAgent, env, rep, trial_num, directory, tbar=None, steps=30_000):
     results, agent, env = run_trial(
         agent,
         env,
@@ -134,82 +144,69 @@ def trial(agent: BaseAgent, env, rep, trial_num, tbar=None, steps=30_000):
         tbar=tbar,
     )
 
-    filename = (
-        DATA_PATH
-        / f'{agent.file_display_name()}_{rep}_tanh.pkl'
-    )
+    filename = (f'{directory}/{agent.file_display_name()}_{rep}.pkl')
+    
 
     save_trial(results, agent, env, filename)
     return trial_num
 
 
-def main():
-    iterations_per_trial = 80_000
+def train_agents(agents: List[BaseAgent], env: Image2VecWrapper, iter_per_trial: int, directory: str):
+    """
+    Train multiple agents across several trials in a specified environment and save their results.
+
+    This function iterates over a set of agents and runs them for a fixed number of 
+    iterations per trial across multiple repetitions. Each agent’s training progress 
+    and state are recorded and saved to disk. The procedure is designed to generate 
+    baseline training data before trauma induction, relearning, or exposure therapy.
+
+    Args:
+        agents (List[BaseAgent]): List of agent instances to be trained.
+        env (Image2VecWrapper): The wrapped environment in which agents are trained.
+        iter_per_trial (int): Number of training iterations per trial.
+        directory (str): Directory where the trained agent results will be saved.
+    """
+
     trial_num = 0
-
-    agents: List[BaseAgent] = [
-        HealthyAgent(network= ptsd_network),
-        # SpineLossDepression(),
-        # ContextDependentLearningRate(),
-        # HighDiscountRate(),
-        # ScaledTargets(),
-        # HighExploration(),
-        # ShiftedTargets(),
-        # SchizophrenicAgent(),
-        # SchizophrenicAgentWithNoise(),
-        # ReluActivation(),
-        # ReluLossActivation(),
-        # PrunedAgent(),
-        # ReverseImbalanceAgent(),
-        PTSDAgent(network= ptsd_network)
-    ]
-
-    envs = [
-        # Image2VecWrapper(
-        #     TransientGoals(
-        #         render_mode="human", transient_reward=0.25, termination_reward=1, n_transient_obstacles=0, n_transient_goals=3,
-        #         #wall_locations =[[3,1],[3,2],[3,3],[3,5],[3,6]]
-        #     ),
-        #     #noise_level=0.0
-        # ),
-        Image2VecWrapper(
-                TransientGoals(
-                    render_mode="none", transient_reward=0.25, termination_reward=1,
-                    n_transient_obstacles = 0,
-                    wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]],
-                    # see_through_walls = False IS NOT WORKING?
-                )
-            )
-        # swapped reward structure
-        # Image2VecWrapper(TransientGoals(render_mode='none', transient_reward=1, termination_reward=0.25)),
-    ]
-
-    # # Setup agent sweep
-    # agents += [
-    #     PositiveLossAgent(alpha=(2**-x), embed_alpha_in_filename=True)
-    #     for x in range(1, 6)
-    # ]
-
     tbar = tqdm(
-        total=(len(agents) * len(envs) * N_TRIALS * iterations_per_trial), initial=0
+        total=(len(agents) * N_TRIALS * iter_per_trial), initial=0
     )
 
     for rep in range(N_TRIALS):
-        for env in envs:
-            for agent in agents:
-                tbar.set_postfix(
-                    agent=agent.__class__.__name__, env=env.__class__.__name__, rep=rep
-                )
-                trial(
-                    deepcopy(agent),
-                    env,
-                    rep,
-                    trial_num,
-                    tbar=tbar,
-                    steps=iterations_per_trial,
-                )
-                trial_num += 1
-
+        for agent in agents:
+            tbar.set_postfix(
+                agent=agent.__class__.__name__, env=env.__class__.__name__, rep=rep
+            )
+            trial(
+                deepcopy(agent),
+                env,
+                rep,
+                trial_num,
+                directory,
+                tbar=tbar,
+                steps=iter_per_trial
+            )
+            trial_num += 1
 
 if __name__ == "__main__":
-    main()
+    iterations_per_trial = 80_000
+    directory = DATA_PATH / sys.argv[1]
+    directory.mkdir(parents=True, exist_ok=True)
+
+    agents: List[BaseAgent] = [
+        HealthyAgent(network= ptsd_network),
+        PTSDAgent(network= ptsd_network),
+        TraumaSynapticDeficitAgent(network = ptsd_network)
+    ]
+
+    envs = [
+        Image2VecWrapper(
+                TransientGoals(
+                    render_mode="human", transient_reward=0.25, termination_reward=1,
+                    n_transient_obstacles = 1,
+                    wall_locations =[[3,2],[3,3],[3,4],[3,5],[3,6]],
+                )
+            )
+    ]
+    
+    train_agents(agents, envs, iterations_per_trial, directory)
