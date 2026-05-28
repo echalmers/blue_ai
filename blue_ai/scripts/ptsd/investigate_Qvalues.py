@@ -42,7 +42,7 @@ def investigate_Qvalues(directory: Path, agents_to_include: List[str], env: Imag
 
     # get the file names of the agents
     files = [
-        f"{directory.name}/{agent}_{trial}{agent_state}.pkl"
+        f"{agent}_{trial}{agent_state}.pkl"
         for trial in range(N_TRIALS)
         for agent in agents_to_include
     ]
@@ -143,4 +143,4 @@ if __name__ == "__main__":
                     wall_locations =[[3,2],[3,3],[3,4],[3,5]]
                 )
             )
-    investigate_Qvalues(DATA_PATH / sys.argv[1], agents_to_include, env, show_plots=True, agent_state='')
+    investigate_Qvalues(DATA_PATH, agents_to_include, env, show_plots=True, agent_state='')

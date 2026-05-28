@@ -17,7 +17,7 @@ from pathlib import Path
 import time
 import sys
 
-def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: bool, mode: str, show_plots: bool = True, seed: int = 0):
+def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: bool, mode: str, show_plots: bool = True, seed: int = 0, reference_envs=None):
     """
     Visualize and/or statistically analyze object reconstructions from interpretation models.
 
@@ -46,12 +46,14 @@ def view_reconstruction(directory: Path ,env: Image2VecWrapper, agent_state: boo
                     - "interactive": live visualization with environment stepping
                     - "statistical": batch analysis with summary plots
         show_plots (bool): If True, the plots will be displayed.
+        reference_envs (iterable): similarity between reconstructions and these reference envs will also be calculated
+                                    (in statistical mode)
     """
 
     if mode not in ['interactive', 'statistical']:
         raise ValueError("There are just two valid modes: interactive and statistical")
 
-    with open(DATA_PATH / f'{directory.name}/interpretation_models{agent_state}.pkl', 'rb') as f:
+    with open(f'{directory}/interpretation_models{agent_state}.pkl', 'rb') as f:
         interpretation_models = pickle.load(f)
         interpretation_models['agent_name'] = interpretation_models['agent']
         interpretation_models['agent_name'] = interpretation_models['agent_name'].astype(str).replace(
@@ -326,12 +328,12 @@ if __name__ == "__main__":
 
     env = Image2VecWrapper(
                 TransientGoals(
-                    render_mode="none", transient_reward=0.25, termination_reward=1, 
+                    render_mode="none", transient_reward=0.25, termination_reward=1,
                     transient_locations=[[1,4],[4,2],[5,1]],
                     wall_locations =[[3,2],[3,3],[3,4],[3,5]],#,[3,6]],
                     n_transient_obstacles=0,
                     agent_start_pos=(3,1)
                 )
             )
-    
+
     view_reconstruction(DATA_PATH / sys.argv[1], env, agent_state='_relearned', mode= 'interactive', seed = 0)

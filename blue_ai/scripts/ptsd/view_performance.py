@@ -18,8 +18,8 @@ class PerformancePlotter:
 
     def __init__(
         self,
-        directory: Path,
-        agent_state: str,
+        directory: Path = None,
+        agent_state: str = None,
         agent_classes=None,
         results_dataframe=None
     ):
@@ -128,7 +128,7 @@ class PerformancePlotter:
         plt.ylabel("")
         plt.xlabel("time (steps in environment)")
 
-    def plot_goals_per_episode(self, ax, n_boot=1, last_n_steps=None):
+    def plot_goals_per_episode(self, ax, n_boot=1, last_n_steps=None, **kwargs):
         plt.sca(ax)
 
         high_terminal_goals = self.aggregate_goals(
@@ -143,7 +143,8 @@ class PerformancePlotter:
             n_boot=n_boot,
             palette=["tab:green", "tab:blue", "tab:red"],
             order=[a.display_name for a in self.agent_classes] if self.agent_classes else None,
-            errorbar=('pi', 95)
+            errorbar=('pi', 95),
+            **kwargs
         )
         plt.title("objects reached per episode")
         plt.ylabel("")

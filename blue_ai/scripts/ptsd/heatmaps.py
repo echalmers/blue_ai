@@ -7,13 +7,13 @@ from blue_ai.envs.transient_goals import TransientGoals
 import matplotlib.colors as mcolors
 from skimage.transform import resize
 
-interpolation_order = 1  # <--- try 0, 1, 2, maybe 3. Gives different visual effects when interpolating the heatmap
+interpolation_order = 2  # <--- try 0, 1, 2, maybe 3. Gives different visual effects when interpolating the heatmap
 gamma_correction = 0.9  # <--- smaller numbers make hotspots in the heatmap less dramatic. Bigger numbers make them more dramatic
 env_weight = 0.2  # <--- adjust between 0-1. Smaller makes the env fainter in the final image
 
 data = load_dataset(
     [
-        f'TraumaSynapticDeficitAgent_{trial}_connectivity_restoration_testing.pkl'  # <--- set desired filename pattern here
+        f'HealthyAgent_{trial}_traumatized_testing.pkl'  # <--- set desired filename pattern here
         for trial in range(0, 30)
     ]
 )
